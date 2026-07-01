@@ -10,8 +10,9 @@ _Medicine _$MedicineFromJson(Map<String, dynamic> json) => _Medicine(
   id: json['id'] as String,
   name: json['name'] as String,
   dose: json['dose'] as String,
-  period: $enumDecode(_$PeriodEnumMap, json['period']),
-  time: json['time'] as String,
+  times: (json['times'] as List<dynamic>)
+      .map((e) => DoseTime.fromJson(e as Map<String, dynamic>))
+      .toList(),
   withFood: json['withFood'] as bool,
   kind: $enumDecode(_$PillKindEnumMap, json['kind']),
   c1: (json['c1'] as num).toInt(),
@@ -25,8 +26,7 @@ Map<String, dynamic> _$MedicineToJson(_Medicine instance) => <String, dynamic>{
   'id': instance.id,
   'name': instance.name,
   'dose': instance.dose,
-  'period': _$PeriodEnumMap[instance.period]!,
-  'time': instance.time,
+  'times': instance.times,
   'withFood': instance.withFood,
   'kind': _$PillKindEnumMap[instance.kind]!,
   'c1': instance.c1,
@@ -34,12 +34,6 @@ Map<String, dynamic> _$MedicineToJson(_Medicine instance) => <String, dynamic>{
   'supply': instance.supply,
   'cap': instance.cap,
   'c2': instance.c2,
-};
-
-const _$PeriodEnumMap = {
-  Period.morning: 'morning',
-  Period.afternoon: 'afternoon',
-  Period.evening: 'evening',
 };
 
 const _$PillKindEnumMap = {

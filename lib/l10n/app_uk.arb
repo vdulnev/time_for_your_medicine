@@ -53,6 +53,7 @@
   "addTimeLabel": "ЧАС",
   "addTimeHint": "08:00",
   "addTimeOfDayLabel": "ЧАС ДОБИ",
+  "addAnotherTime": "Додати ще один час",
   "addFoodLabel": "ЇЖА",
   "addSaveButton": "Зберегти ліки",
 
@@ -60,6 +61,7 @@
   "detailFood": "ЇЖА",
   "detailLeft": "ЗАЛИШИЛОСЬ",
   "detailLast7Days": "ОСТАННІ 7 ДНІВ",
+  "detailTodaysDoses": "ПРИЙОМИ СЬОГОДНІ",
   "detailMarkAsTaken": "Позначити як прийнято",
   "detailTakenToday": "Прийнято сьогодні ✓",
   "detailDoseAndKind": "{dose}, {kind}",

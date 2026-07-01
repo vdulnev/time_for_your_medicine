@@ -81,6 +81,7 @@
   "addTimeLabel": "TIME",
   "addTimeHint": "8:00 AM",
   "addTimeOfDayLabel": "TIME OF DAY",
+  "addAnotherTime": "Add another time",
   "addFoodLabel": "FOOD",
   "addSaveButton": "Save medicine",
 
@@ -88,6 +89,7 @@
   "detailFood": "FOOD",
   "detailLeft": "LEFT",
   "detailLast7Days": "LAST 7 DAYS",
+  "detailTodaysDoses": "TODAY'S DOSES",
   "detailMarkAsTaken": "Mark as taken",
   "detailTakenToday": "Taken today ✓",
   "detailDoseAndKind": "{dose} {kind}",

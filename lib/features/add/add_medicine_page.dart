@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/models/add_draft.dart';
 import '../../core/models/period.dart';
 import '../../core/state/providers.dart';
 import '../../core/theme/app_colors.dart';
@@ -23,13 +24,11 @@ class AddMedicinePage extends ConsumerStatefulWidget {
 class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
   late final TextEditingController _name = TextEditingController();
   late final TextEditingController _dose = TextEditingController();
-  late final TextEditingController _time = TextEditingController();
 
   @override
   void dispose() {
     _name.dispose();
     _dose.dispose();
-    _time.dispose();
     super.dispose();
   }
 
@@ -90,60 +89,45 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
                     onNameChanged: form.setName,
                   ),
                   const SizedBox(height: 14),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _FieldLabel(l10n.addDoseLabel),
-                            _Field(
-                              controller: _dose,
-                              hint: l10n.addDoseHint,
-                              onChanged: form.setDose,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _FieldLabel(l10n.addTimeLabel),
-                            _Field(
-                              controller: _time,
-                              hint: l10n.addTimeHint,
-                              onChanged: form.setTime,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  _FieldLabel(l10n.addDoseLabel),
+                  _Field(
+                    controller: _dose,
+                    hint: l10n.addDoseHint,
+                    onChanged: form.setDose,
                   ),
                   const SizedBox(height: 14),
-                  _FieldLabel(l10n.addTimeOfDayLabel),
-                  Row(
-                    children: [
-                      for (final period in Period.values) ...[
-                        Expanded(
-                          child: _SegmentButton(
-                            label: period.label(l10n),
-                            selected: draft.period == period,
-                            font: AppText.bricolage(
-                              size: 12,
-                              color: draft.period == period
-                                  ? Colors.white
-                                  : AppColors.muted2,
-                            ),
-                            onTap: () => form.setPeriod(period),
+                  for (var i = 0; i < draft.times.length; i++) ...[
+                    _TimeSlotCard(
+                      key: ValueKey('time-slot-$i'),
+                      index: i,
+                      slot: draft.times[i],
+                      removable: draft.times.length > 1,
+                      onTimeChanged: (v) => form.setTimeAt(i, v),
+                      onPeriodChanged: (p) => form.setPeriodAt(i, p),
+                      onRemove: () => form.removeTimeSlotAt(i),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  GestureDetector(
+                    onTap: form.addTimeSlot,
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.add_rounded,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          l10n.addAnotherTime,
+                          style: AppText.jakarta(
+                            size: 12.5,
+                            weight: FontWeight.w700,
+                            color: AppColors.primary,
                           ),
                         ),
-                        if (period != Period.values.last)
-                          const SizedBox(width: 7),
                       ],
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 14),
                   _FieldLabel(l10n.addFoodLabel),
@@ -238,6 +222,108 @@ class _FieldLabel extends StatelessWidget {
           color: AppColors.muted,
           letterSpacing: 0.5,
         ),
+      ),
+    );
+  }
+}
+
+/// One editable dose-time row in the Add form: a time field, a period
+/// segmented control, and (when there's more than one slot) a remove
+/// button — lets a medicine be scheduled several times a day.
+class _TimeSlotCard extends StatelessWidget {
+  const _TimeSlotCard({
+    super.key,
+    required this.index,
+    required this.slot,
+    required this.removable,
+    required this.onTimeChanged,
+    required this.onPeriodChanged,
+    required this.onRemove,
+  });
+
+  final int index;
+  final DraftTime slot;
+  final bool removable;
+  final ValueChanged<String> onTimeChanged;
+  final ValueChanged<Period> onPeriodChanged;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: _FieldLabel(l10n.addTimeLabel)),
+              if (removable)
+                GestureDetector(
+                  onTap: onRemove,
+                  child: const Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                    color: AppColors.muted2,
+                  ),
+                ),
+            ],
+          ),
+          TextFormField(
+            key: ValueKey('time-field-$index'),
+            initialValue: slot.time,
+            onChanged: onTimeChanged,
+            style: AppText.jakarta(size: 14, weight: FontWeight.w700),
+            cursorColor: AppColors.primary,
+            decoration: InputDecoration(
+              isDense: true,
+              filled: true,
+              fillColor: AppColors.surface,
+              hintText: l10n.addTimeHint,
+              hintStyle: AppText.jakarta(
+                size: 14,
+                weight: FontWeight.w700,
+                color: AppColors.muted2,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 14,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _FieldLabel(l10n.addTimeOfDayLabel),
+          Row(
+            children: [
+              for (final period in Period.values) ...[
+                Expanded(
+                  child: _SegmentButton(
+                    label: period.label(l10n),
+                    selected: slot.period == period,
+                    font: AppText.bricolage(
+                      size: 12,
+                      color: slot.period == period
+                          ? Colors.white
+                          : AppColors.muted2,
+                    ),
+                    onTap: () => onPeriodChanged(period),
+                  ),
+                ),
+                if (period != Period.values.last) const SizedBox(width: 7),
+              ],
+            ],
+          ),
+        ],
       ),
     );
   }

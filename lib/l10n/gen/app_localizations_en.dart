@@ -160,6 +160,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addTimeOfDayLabel => 'TIME OF DAY';
 
   @override
+  String get addAnotherTime => 'Add another time';
+
+  @override
   String get addFoodLabel => 'FOOD';
 
   @override
@@ -176,6 +179,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailLast7Days => 'LAST 7 DAYS';
+
+  @override
+  String get detailTodaysDoses => 'TODAY\'S DOSES';
 
   @override
   String get detailMarkAsTaken => 'Mark as taken';

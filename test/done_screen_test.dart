@@ -34,7 +34,7 @@ void main() {
 
     // The test fixture has m1 already taken; tap the remaining three.
     for (final id in ['m2', 'm3', 'm4']) {
-      final finder = find.byKey(ValueKey('toggle-$id'));
+      final finder = find.byKey(ValueKey('toggle-$id-t1'));
       await tester.ensureVisible(finder);
       await tester.pumpAndSettle();
       await tester.tap(finder);

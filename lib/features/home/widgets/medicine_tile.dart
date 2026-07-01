@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/models/dose_time.dart';
 import '../../../core/models/medicine.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -7,16 +8,25 @@ import '../../../core/widgets/pill_shape.dart';
 import '../../../l10n/l10n_extensions.dart';
 
 /// A single medicine row on the Home list, with a tap-to-toggle check.
+/// One row per scheduled [doseTime] — a medicine taken several times a day
+/// appears once per slot.
 class MedicineTile extends StatelessWidget {
   const MedicineTile({
     super.key,
     required this.med,
+    required this.doseTime,
+    required this.showTime,
     required this.taken,
     required this.onOpen,
     required this.onToggle,
   });
 
   final Medicine med;
+  final DoseTime doseTime;
+
+  /// Whether to show this slot's time next to the name, to disambiguate
+  /// medicines with more than one dose slot per day.
+  final bool showTime;
   final bool taken;
   final VoidCallback onOpen;
   final VoidCallback onToggle;
@@ -59,9 +69,30 @@ class MedicineTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    med.name,
-                    style: AppText.jakarta(size: 14, weight: FontWeight.w700),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          med.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.jakarta(
+                            size: 14,
+                            weight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      if (showTime) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          doseTime.time,
+                          style: AppText.jakarta(
+                            size: 11,
+                            weight: FontWeight.w600,
+                            color: AppColors.muted2,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -79,7 +110,7 @@ class MedicineTile extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           _CheckButton(
-            key: ValueKey('toggle-${med.id}'),
+            key: ValueKey('toggle-${med.id}-${doseTime.id}'),
             taken: taken,
             onTap: onToggle,
           ),

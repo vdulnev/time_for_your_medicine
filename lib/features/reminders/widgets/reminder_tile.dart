@@ -54,7 +54,10 @@ class ReminderTile extends StatelessWidget {
                   style: AppText.jakarta(size: 13.5, weight: FontWeight.w700),
                 ),
                 Text(
-                  context.l10n.remindersTimeAndDetail(med.time, med.dose),
+                  context.l10n.remindersTimeAndDetail(
+                    med.times.map((t) => t.time).join(', '),
+                    med.dose,
+                  ),
                   style: AppText.jakarta(size: 11, color: AppColors.muted2),
                 ),
               ],

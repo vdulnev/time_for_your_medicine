@@ -1,12 +1,13 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'period.dart';
+import 'dose_time.dart';
 import 'pill_kind.dart';
 
 part 'medicine.freezed.dart';
 part 'medicine.g.dart';
 
-/// A single medicine / reminder.
+/// A single medicine / reminder. May be taken several times a day, one
+/// [DoseTime] per scheduled slot.
 @freezed
 abstract class Medicine with _$Medicine {
   const Medicine._();
@@ -15,10 +16,10 @@ abstract class Medicine with _$Medicine {
     required String id,
     required String name,
     required String dose,
-    required Period period,
 
-    /// Display time, e.g. "8:00 AM".
-    required String time,
+    /// Scheduled dose slots for the day, in the order they were added.
+    /// Always non-empty.
+    required List<DoseTime> times,
     required bool withFood,
     required PillKind kind,
 

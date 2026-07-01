@@ -214,35 +214,55 @@ metadata), `PillKind {capsule,round}`.
 Freezed models (`@freezed`, with `json_serializable`):
 
 ```
-@freezed Medicine   { id, name, dose, time, period, withFood, kind,
+@freezed DoseTime   { id, time, period }               // one scheduled slot
+@freezed Medicine   { id, name, dose, List<DoseTime> times, withFood, kind,
                       c1, int? c2, soft, supply, cap }  // colors as ARGB ints
-@freezed AppSettings{ bool sound, vibrate, refill }
-@freezed AddDraft   { name, dose, time, period, withFood }
+@freezed AppSettings{ bool sound, vibrate, refill, String? localeOverride }
+@freezed DraftTime  { time, period }                    // one editable slot
+@freezed AddDraft   { name, dose, List<DraftTime> times, withFood }
 @freezed DataState  { List<Medicine> meds, Map<String,bool> taken,
                       AppSettings settings, Map<String,bool> notifOff }
 ```
 
-`taken` is keyed `"iso|medId"`. `DataState` is loaded asynchronously from
-the repository and exposed via `AsyncNotifier<DataState>` (`dataProvider`).
-UI-only state lives in dedicated small providers:
-`selectedDayProvider` (ISO string) and `calendarMonthProvider`
-(year/month). The detail target and add form are passed as **route args**
-(auto_route), not global state; the delete dialog is a route/dialog, not a
-state flag.
+A medicine can be scheduled **several times a day** — `Medicine.times` is a
+non-empty, ordered list of `DoseTime`, each with its own display time and
+`Period`. The Add form lets the user add/remove time slots freely (min 1);
+empty slots are dropped on save.
+
+`taken` is keyed `"iso|medId|doseTimeId"` — each dose slot is tracked and
+toggled independently, so a 3x/day medicine contributes 3 separate,
+independently-completable entries per day. `Selectors._occurrences`
+flattens `DataState` into `DoseOccurrence { med, doseTime }` pairs; every
+selector that used to count/group by medicine (progress, day agenda,
+history, streak, calendar reminder count) now counts/groups by occurrence
+instead. `DataState.allTaken(iso)` is true only when every slot of every
+medicine is taken. Widgets show a slot's time next to the medicine name
+whenever `med.times.length > 1`, to disambiguate multiple rows for the same
+medicine (Home tiles, Detail's "today's doses" list, Reminders subtitle).
+
+`DataState` is loaded asynchronously from the repository and exposed via
+`AsyncNotifier<DataState>` (`dataProvider`). UI-only state lives in
+dedicated small providers: `selectedDayProvider` (ISO string) and
+`calendarMonthProvider` (year/month). The detail target and add form are
+passed as **route args** (auto_route), not global state; the delete dialog
+is a route/dialog, not a state flag.
 
 The production database starts with no medicines and no dose history. Only
 the default settings row is created. Prototype medicines and historical logs
 exist exclusively as explicit fixtures under `test/support/`.
 
 ### Notifier actions (`dataProvider`)
-`toggleTaken(iso,id) → bool` (returns whether the day just completed, so
-the caller can route to Done), `addMed(draft)`, `deleteMed(id)`,
-`toggleSetting(key)`, `toggleNotif(id)`. Each writes through the
-repository, logs via Talker, and updates `DataState`.
+`toggleTaken(iso,medId,doseTimeId) → bool` (returns whether the day just
+completed, so the caller can route to Done), `addMed(draft)`,
+`deleteMed(id)`, `toggleSetting(key)`, `toggleNotif(id)`. Each writes
+through the repository, logs via Talker, and updates `DataState`.
 
 ### Derived (selectors, computed outside widgets)
-periods-for-day, week strip (Mon–Sun), progress %, calendar cells,
-day agenda by time, 7-day adherence + current streak, refills %.
+periods-for-day (as dose occurrences), week strip (Mon–Sun), progress %
+(occurrence-based), calendar cells, day agenda by time (occurrence-based),
+7-day adherence + current streak (occurrence-based), refills %,
+`medDosesForDay`/`nextDoseLabel` for the Detail screen's per-slot toggle
+rows.
 
 ---
 
@@ -267,14 +287,20 @@ day agenda by time, 7-day adherence + current streak, refills %.
 ## 6. Screens
 
 1. **Home** — day header + prev/next, notifications & calendar buttons,
-   week strip, progress ring card (→ history), med list grouped by period,
-   tap-to-toggle check, tap tile → detail.
-2. **Calendar** — month grid with today/selected/dots, day agenda, "Open
-   this day" CTA.
-3. **Add medicine** — photo placeholder, name/dose/time fields, period
-   segmented control, food choice, Save.
-4. **Detail** — indigo header, next/food/left stat cards, last-7-days row,
-   mark-taken toggle, delete.
+   week strip, progress ring card (→ history), dose-occurrence list grouped
+   by period (a medicine with several daily doses appears once per slot,
+   each independently toggleable), tap-to-toggle check, tap tile → detail.
+2. **Calendar** — month grid with today/selected/dots, day agenda (one row
+   per dose occurrence), "Open this day" CTA.
+3. **Add medicine** — photo placeholder, name/dose fields, a repeatable
+   list of time + time-of-day slots ("+ Add another time" / remove per
+   row, minimum 1) so a medicine can be scheduled several times a day,
+   food choice, Save.
+4. **Detail** — indigo header, next/food/left stat cards (NEXT shows the
+   earliest untaken slot today, "+N" suffixed when there's more than one),
+   last-7-days row (a day counts as done only once every slot is taken),
+   a "today's doses" list with one independent taken toggle per slot,
+   delete.
 5. **Done** — celebration (pop check + confetti dots), doses/streak stats,
    view-tomorrow / back-to-today.
 6. **History** — 7-day adherence card, bar chart, summary rows.
@@ -290,15 +316,34 @@ day agenda by time, 7-day adherence + current streak, refills %.
 
 | Table | Columns |
 |---|---|
-| `Medicines` | id (PK text), name, dose, time, period, withFood, kind, c1, c2 (nullable), soft, supply, cap |
-| `DoseLog` | iso (text), medId (text), taken (bool) — PK (iso, medId) |
-| `SettingsRow` | id (PK, single row = 0), sound, vibrate, refill |
-| `NotifOff` | medId (PK text) — presence means reminder disabled |
+| `Medicines` | id (PK text), name, dose, withFood, kind, c1, c2 (nullable), soft, supply, cap |
+| `DoseTimes` | medId (text), id (text), time, period, sortOrder — PK (medId, id) |
+| `DoseLog` | iso (text), medId (text), doseTimeId (text), taken (bool) — PK (iso, medId, doseTimeId) |
+| `SettingsRows` | id (PK, single row = 0), sound, vibrate, refill, localeOverride (nullable text) |
+| `NotifOffRows` | medId (PK text) — presence means reminder disabled |
+| `MedicineRegistryEntries` / `MedicineRegistryMeta` | imported medicine-name lookup data (search, CSV import) |
 
-`schemaVersion = 1`. Migrations are **append-only** — never edit a past
+`schemaVersion = 5`. Migrations are **append-only** — never edit a past
 migration; add a new one and bump the version. On first open the database
-seeds the prototype data (see §4). The `MedicineRepository` is the only
-thing that talks to drift and returns `Either<AppException, T>`.
+starts empty (see §4). The `MedicineRepository` is the only thing that
+talks to drift and returns `Either<AppException, T>`.
+
+- **v1 → v2**: added `SettingsRows.localeOverride` (nullable text).
+- **v2 → v3**: added `MedicineRegistryEntries` / `MedicineRegistryMeta`.
+- **v3 → v4**: deleted leftover legacy demo-medicine rows (`m1`–`m4`) from
+  `DoseLog` / `NotifOffRows` / `Medicines`.
+- **v4 → v5** (multi-dose-per-day): `Medicines.time`/`.period` moved to the
+  new `DoseTimes` table (one row per scheduled slot); `DoseLog` gained
+  `doseTimeId` and its primary key grew from `(iso, medId)` to
+  `(iso, medId, doseTimeId)`. Migration reads each medicine's old
+  `time`/`period` via raw SQL (`customSelect`) before the columns are
+  dropped, inserts one `DoseTimes` row per medicine (id `t1`), backfills
+  `DoseLog.doseTimeId` to match, then drops the two old columns
+  (`ALTER TABLE ... DROP COLUMN`, requires the SQLite bundled by
+  `sqlite3_flutter_libs`, which supports it). Verified against a **real**
+  v4 database — built by running the actual pre-migration code from a
+  `git worktree` checkout, not hand-rolled DDL — confirming data survives
+  the upgrade and the old columns are actually gone afterward.
 
 ---
 
@@ -547,3 +592,72 @@ Tracked as a future phase.
     and removes the exact legacy demo IDs (`m1`…`m4`) plus their dose and
     notification records from existing installations. User-created medicines
     are untouched. Prototype records now live only in test fixtures.
+- **Multi-dose-per-day medicines.** A medicine can now be scheduled several
+  times a day (e.g. morning + afternoon + evening), each slot tracked and
+  toggled independently.
+  - **Data model:** new `DoseTime { id, time, period }` model;
+    `Medicine.time`/`.period` replaced by `Medicine.times: List<DoseTime>`
+    (non-empty). `AddDraft.time`/`.period` replaced by
+    `AddDraft.times: List<DraftTime>`. `taken` keys grew from
+    `"iso|medId"` to `"iso|medId|doseTimeId"`; added `DataState.allTaken`.
+  - **Schema v4 → v5:** see §7 — new `DoseTimes` table, `DoseLog` gained
+    `doseTimeId` (now part of its primary key), `Medicines.time`/`.period`
+    dropped. Migration verified against a real v4 database (built from the
+    actual old code via a `git worktree` checkout of the pre-migration
+    commit), confirming data survives the upgrade.
+  - **Selectors reworked around occurrences, not medicines:** added
+    `DoseOccurrence { med, doseTime }` and a private `_occurrences(data)`
+    flattener; `periods`, `progress`, `dayAgenda`, `history`, `streak` now
+    count/group dose slots instead of medicines, so a 3x/day medicine
+    correctly contributes 3 to the day's total instead of 1. Added
+    `medDosesForDay` and `nextDoseLabel` for the Detail screen.
+  - **Add medicine form:** the single time/period row became a repeatable
+    list (`_TimeSlotCard`) with a "+ Add another time" action and a
+    per-row remove button (kept to a minimum of one slot); each row uses
+    an uncontrolled `TextFormField(initialValue:...)` keyed by index
+    rather than a persistent `TextEditingController`, since the row count
+    changes dynamically. Slots left blank are dropped on save rather than
+    silently defaulting to a time the user never chose.
+  - **Home / Detail / Reminders:** `MedicineTile` now renders one row per
+    `DoseOccurrence` (so a multi-dose medicine appears once per period
+    it's scheduled in) and shows the slot's time next to the name only
+    when the medicine has more than one slot, to disambiguate its rows.
+    Detail's single "mark as taken" button became a per-slot list, and its
+    NEXT stat shows the earliest untaken slot with a "+N" suffix when
+    there's more than one. Reminders' subtitle joins all of a medicine's
+    times (the mute toggle itself stays per-medicine, not per-slot — the
+    app has no real OS notification scheduling to make a finer-grained
+    toggle meaningful yet).
+  - **Bug caught only via live device testing:** `DonePage` and
+    `calendar_page`'s "N reminders scheduled" line still read
+    `data.meds.length` after the selector rework, so completing a 3-dose
+    day showed "2/2 doses" (medicine count) instead of "3/3" (dose-slot
+    count) on the celebration screen. Neither `flutter analyze` nor the
+    existing widget tests caught this, since none of them asserted the
+    Done screen's stat *values* for a multi-dose fixture — only that the
+    screen renders. Fixed both to use `Selectors.progress(data, iso).total`.
+  - Tests: `data_layer_test.dart` gained a repository-level round-trip for
+    a 3x/day medicine (persists three `DoseTimes`, toggles one slot
+    without affecting the others). `done_screen_test.dart` and
+    `test/support/seed_test_data.dart` updated for the new schema.
+  - Verified live on-device: added a medicine with two slots (morning +
+    evening), confirmed it renders as two independent rows on Home in
+    their respective period sections, toggling one leaves the other
+    untouched, Detail lists both with their own toggle, Reminders and
+    Calendar show both times, and completing every slot across every
+    medicine correctly triggers the Done celebration with the right
+    total. 24 tests green, `flutter analyze` clean, `dart format .` clean.
+  - **Follow-up bug, caught by the user (not by the automated tests
+    above):** picking a time-of-day for each slot (Morning, then Evening)
+    without ever typing into either TIME field saved only one slot,
+    always Morning. `DataNotifier.addMedicine` was filtering out any slot
+    whose `time` text was blank, and only fell back to a default when
+    *every* slot was blank — collapsing multiple period selections down
+    to a single hardcoded `8:00 AM` slot and silently discarding the rest.
+    Fixed by keeping every slot the user added (never dropping one just
+    because its time field is empty) and defaulting a blank slot's time
+    to a per-period value (`Period.morning → '8:00 AM'`, `.afternoon →
+    '1:00 PM'`, `.evening → '9:00 PM'`) instead. Added a regression test
+    reproducing the exact repro (two slots, no typed text, Morning +
+    Evening) asserting both are persisted with distinct times; re-verified
+    live on-device. 25 tests green.

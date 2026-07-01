@@ -30,7 +30,7 @@ class DonePage extends ConsumerWidget {
     }
 
     final cur = DayUtils.parse(iso);
-    final total = data.meds.length;
+    final total = Selectors.progress(data, iso).total;
     final streak = Selectors.streak(data, iso);
     final l10n = context.l10n;
 

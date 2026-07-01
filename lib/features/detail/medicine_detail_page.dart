@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/models/dose_time.dart';
 import '../../core/models/medicine.dart';
 import '../../core/models/pill_kind.dart';
 import '../../core/router/app_router.dart';
+import '../../core/state/data_state.dart';
 import '../../core/state/providers.dart';
 import '../../core/state/selectors.dart';
 import '../../core/state/ui_providers.dart';
@@ -23,10 +25,15 @@ class MedicineDetailPage extends ConsumerWidget {
 
   final String medId;
 
-  Future<void> _toggle(BuildContext context, WidgetRef ref, String iso) async {
+  Future<void> _toggle(
+    BuildContext context,
+    WidgetRef ref,
+    String iso,
+    String doseTimeId,
+  ) async {
     final completed = await ref
         .read(dataProvider.notifier)
-        .toggleTaken(iso, medId);
+        .toggleTaken(iso, medId, doseTimeId);
     if (completed && context.mounted) {
       context.router.push(const DoneRoute());
     }
@@ -52,8 +59,6 @@ class MedicineDetailPage extends ConsumerWidget {
       );
     }
 
-    final taken = data.isTaken(iso, med.id);
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
@@ -71,7 +76,7 @@ class MedicineDetailPage extends ConsumerWidget {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
                   children: [
-                    _StatsRow(med: med),
+                    _StatsRow(med: med, data: data, iso: iso),
                     const SizedBox(height: 16),
                     Text(
                       context.l10n.detailLast7Days,
@@ -92,10 +97,30 @@ class MedicineDetailPage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _ToggleButton(
-                      taken: taken,
-                      onTap: () => _toggle(context, ref, iso),
+                    Text(
+                      context.l10n.detailTodaysDoses,
+                      style: AppText.jakarta(
+                        size: 11,
+                        weight: FontWeight.w700,
+                        color: AppColors.muted,
+                        letterSpacing: 0.5,
+                      ),
                     ),
+                    const SizedBox(height: 9),
+                    for (final dose in Selectors.medDosesForDay(
+                      data,
+                      med,
+                      iso,
+                    )) ...[
+                      _ToggleButton(
+                        doseTime: dose.doseTime,
+                        showTime: med.times.length > 1,
+                        taken: dose.taken,
+                        onTap: () =>
+                            _toggle(context, ref, iso, dose.doseTime.id),
+                      ),
+                      const SizedBox(height: 9),
+                    ],
                   ],
                 ),
               ),
@@ -215,18 +240,20 @@ class _GlassButton extends StatelessWidget {
 }
 
 class _StatsRow extends StatelessWidget {
-  const _StatsRow({required this.med});
+  const _StatsRow({required this.med, required this.data, required this.iso});
 
   final Medicine med;
+  final DataState data;
+  final String iso;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final time = med.time.replaceAll(' AM', '').replaceAll(' PM', '');
+    final next = Selectors.nextDoseLabel(data, med, iso);
     return Row(
       children: [
         Expanded(
-          child: _StatCard(label: l10n.detailNext, value: time),
+          child: _StatCard(label: l10n.detailNext, value: next),
         ),
         const SizedBox(width: 9),
         Expanded(
@@ -291,13 +318,23 @@ class _StatCard extends StatelessWidget {
 }
 
 class _ToggleButton extends StatelessWidget {
-  const _ToggleButton({required this.taken, required this.onTap});
+  const _ToggleButton({
+    required this.doseTime,
+    required this.showTime,
+    required this.taken,
+    required this.onTap,
+  });
 
+  final DoseTime doseTime;
+  final bool showTime;
   final bool taken;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final label = taken
+        ? context.l10n.detailTakenToday
+        : context.l10n.detailMarkAsTaken;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -308,9 +345,7 @@ class _ToggleButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(15),
         ),
         child: Text(
-          taken
-              ? context.l10n.detailTakenToday
-              : context.l10n.detailMarkAsTaken,
+          showTime ? '${doseTime.time} · $label' : label,
           style: AppText.bricolage(
             size: 14,
             color: taken ? AppColors.success : Colors.white,

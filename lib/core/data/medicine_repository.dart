@@ -8,6 +8,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../db/app_database.dart';
 import '../error/app_exception.dart';
 import '../models/app_settings.dart';
+import '../models/dose_time.dart';
 import '../models/medicine.dart';
 import '../models/medicine_registry.dart';
 import '../models/period.dart';
@@ -44,15 +45,22 @@ class MedicineRepository {
   Future<Either<AppException, DataState>> loadAll() {
     return _guard('loadAll', () async {
       final medRows = await _db.select(_db.medicines).get();
+      final doseTimeRows = await (_db.select(
+        _db.doseTimes,
+      )..orderBy([(t) => OrderingTerm.asc(t.sortOrder)])).get();
       final doseRows = await _db.select(_db.doseLog).get();
       final settingsRow = await (_db.select(
         _db.settingsRows,
       )..limit(1)).getSingleOrNull();
       final notifRows = await _db.select(_db.notifOffRows).get();
 
+      final timesByMed = <String, List<DoseTimeRow>>{};
+      for (final t in doseTimeRows) {
+        timesByMed.putIfAbsent(t.medId, () => []).add(t);
+      }
       final taken = <String, bool>{
         for (final d in doseRows)
-          if (d.taken) '${d.iso}|${d.medId}': true,
+          if (d.taken) '${d.iso}|${d.medId}|${d.doseTimeId}': true,
       };
       final notifOff = <String, bool>{for (final n in notifRows) n.medId: true};
       final settings = settingsRow == null
@@ -65,7 +73,9 @@ class MedicineRepository {
             );
 
       return DataState(
-        meds: [for (final r in medRows) _toMedicine(r)],
+        meds: [
+          for (final r in medRows) _toMedicine(r, timesByMed[r.id] ?? const []),
+        ],
         taken: taken,
         settings: settings,
         notifOff: notifOff,
@@ -76,6 +86,7 @@ class MedicineRepository {
   Future<Either<AppException, Unit>> setTaken(
     String iso,
     String medId,
+    String doseTimeId,
     bool taken,
   ) {
     return _guard('setTaken', () async {
@@ -85,6 +96,7 @@ class MedicineRepository {
             DoseLogCompanion(
               iso: Value(iso),
               medId: Value(medId),
+              doseTimeId: Value(doseTimeId),
               taken: Value(taken),
             ),
           );
@@ -95,6 +107,18 @@ class MedicineRepository {
   Future<Either<AppException, Unit>> addMedicine(Medicine med) {
     return _guard('addMedicine', () async {
       await _db.into(_db.medicines).insert(_toCompanion(med));
+      await _db.batch((batch) {
+        batch.insertAll(_db.doseTimes, [
+          for (var i = 0; i < med.times.length; i++)
+            DoseTimesCompanion.insert(
+              medId: med.id,
+              id: med.times[i].id,
+              time: med.times[i].time,
+              period: med.times[i].period.name,
+              sortOrder: Value(i),
+            ),
+        ]);
+      });
       return unit;
     });
   }
@@ -102,6 +126,7 @@ class MedicineRepository {
   Future<Either<AppException, Unit>> deleteMedicine(String id) {
     return _guard('deleteMedicine', () async {
       await (_db.delete(_db.medicines)..where((t) => t.id.equals(id))).go();
+      await (_db.delete(_db.doseTimes)..where((t) => t.medId.equals(id))).go();
       await (_db.delete(_db.doseLog)..where((t) => t.medId.equals(id))).go();
       await (_db.delete(
         _db.notifOffRows,
@@ -250,12 +275,14 @@ class MedicineRepository {
     return '${item.name} ${item.genericName} ${item.form}'.toLowerCase();
   }
 
-  Medicine _toMedicine(MedicineRow r) => Medicine(
+  Medicine _toMedicine(MedicineRow r, List<DoseTimeRow> times) => Medicine(
     id: r.id,
     name: r.name,
     dose: r.dose,
-    time: r.time,
-    period: Period.fromName(r.period),
+    times: [
+      for (final t in times)
+        DoseTime(id: t.id, time: t.time, period: Period.fromName(t.period)),
+    ],
     withFood: r.withFood,
     kind: PillKind.fromName(r.kind),
     c1: r.c1,
@@ -269,8 +296,6 @@ class MedicineRepository {
     id: Value(m.id),
     name: Value(m.name),
     dose: Value(m.dose),
-    time: Value(m.time),
-    period: Value(m.period.name),
     withFood: Value(m.withFood),
     kind: Value(m.kind.name),
     c1: Value(m.c1),

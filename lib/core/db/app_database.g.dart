@@ -36,24 +36,6 @@ class $MedicinesTable extends Medicines
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _timeMeta = const VerificationMeta('time');
-  @override
-  late final GeneratedColumn<String> time = GeneratedColumn<String>(
-    'time',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _periodMeta = const VerificationMeta('period');
-  @override
-  late final GeneratedColumn<String> period = GeneratedColumn<String>(
-    'period',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
   static const VerificationMeta _withFoodMeta = const VerificationMeta(
     'withFood',
   );
@@ -127,8 +109,6 @@ class $MedicinesTable extends Medicines
     id,
     name,
     dose,
-    time,
-    period,
     withFood,
     kind,
     c1,
@@ -169,22 +149,6 @@ class $MedicinesTable extends Medicines
       );
     } else if (isInserting) {
       context.missing(_doseMeta);
-    }
-    if (data.containsKey('time')) {
-      context.handle(
-        _timeMeta,
-        time.isAcceptableOrUnknown(data['time']!, _timeMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_timeMeta);
-    }
-    if (data.containsKey('period')) {
-      context.handle(
-        _periodMeta,
-        period.isAcceptableOrUnknown(data['period']!, _periodMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_periodMeta);
     }
     if (data.containsKey('with_food')) {
       context.handle(
@@ -255,14 +219,6 @@ class $MedicinesTable extends Medicines
         DriftSqlType.string,
         data['${effectivePrefix}dose'],
       )!,
-      time: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}time'],
-      )!,
-      period: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}period'],
-      )!,
       withFood: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}with_food'],
@@ -304,8 +260,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
   final String id;
   final String name;
   final String dose;
-  final String time;
-  final String period;
   final bool withFood;
   final String kind;
   final int c1;
@@ -317,8 +271,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
     required this.id,
     required this.name,
     required this.dose,
-    required this.time,
-    required this.period,
     required this.withFood,
     required this.kind,
     required this.c1,
@@ -333,8 +285,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
     map['dose'] = Variable<String>(dose);
-    map['time'] = Variable<String>(time);
-    map['period'] = Variable<String>(period);
     map['with_food'] = Variable<bool>(withFood);
     map['kind'] = Variable<String>(kind);
     map['c1'] = Variable<int>(c1);
@@ -352,8 +302,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       id: Value(id),
       name: Value(name),
       dose: Value(dose),
-      time: Value(time),
-      period: Value(period),
       withFood: Value(withFood),
       kind: Value(kind),
       c1: Value(c1),
@@ -373,8 +321,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       dose: serializer.fromJson<String>(json['dose']),
-      time: serializer.fromJson<String>(json['time']),
-      period: serializer.fromJson<String>(json['period']),
       withFood: serializer.fromJson<bool>(json['withFood']),
       kind: serializer.fromJson<String>(json['kind']),
       c1: serializer.fromJson<int>(json['c1']),
@@ -391,8 +337,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'dose': serializer.toJson<String>(dose),
-      'time': serializer.toJson<String>(time),
-      'period': serializer.toJson<String>(period),
       'withFood': serializer.toJson<bool>(withFood),
       'kind': serializer.toJson<String>(kind),
       'c1': serializer.toJson<int>(c1),
@@ -407,8 +351,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
     String? id,
     String? name,
     String? dose,
-    String? time,
-    String? period,
     bool? withFood,
     String? kind,
     int? c1,
@@ -420,8 +362,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
     id: id ?? this.id,
     name: name ?? this.name,
     dose: dose ?? this.dose,
-    time: time ?? this.time,
-    period: period ?? this.period,
     withFood: withFood ?? this.withFood,
     kind: kind ?? this.kind,
     c1: c1 ?? this.c1,
@@ -435,8 +375,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       dose: data.dose.present ? data.dose.value : this.dose,
-      time: data.time.present ? data.time.value : this.time,
-      period: data.period.present ? data.period.value : this.period,
       withFood: data.withFood.present ? data.withFood.value : this.withFood,
       kind: data.kind.present ? data.kind.value : this.kind,
       c1: data.c1.present ? data.c1.value : this.c1,
@@ -453,8 +391,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('dose: $dose, ')
-          ..write('time: $time, ')
-          ..write('period: $period, ')
           ..write('withFood: $withFood, ')
           ..write('kind: $kind, ')
           ..write('c1: $c1, ')
@@ -467,20 +403,8 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
   }
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    name,
-    dose,
-    time,
-    period,
-    withFood,
-    kind,
-    c1,
-    c2,
-    soft,
-    supply,
-    cap,
-  );
+  int get hashCode =>
+      Object.hash(id, name, dose, withFood, kind, c1, c2, soft, supply, cap);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -488,8 +412,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
           other.id == this.id &&
           other.name == this.name &&
           other.dose == this.dose &&
-          other.time == this.time &&
-          other.period == this.period &&
           other.withFood == this.withFood &&
           other.kind == this.kind &&
           other.c1 == this.c1 &&
@@ -503,8 +425,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
   final Value<String> id;
   final Value<String> name;
   final Value<String> dose;
-  final Value<String> time;
-  final Value<String> period;
   final Value<bool> withFood;
   final Value<String> kind;
   final Value<int> c1;
@@ -517,8 +437,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.dose = const Value.absent(),
-    this.time = const Value.absent(),
-    this.period = const Value.absent(),
     this.withFood = const Value.absent(),
     this.kind = const Value.absent(),
     this.c1 = const Value.absent(),
@@ -532,8 +450,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     required String id,
     required String name,
     required String dose,
-    required String time,
-    required String period,
     required bool withFood,
     required String kind,
     required int c1,
@@ -545,8 +461,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
   }) : id = Value(id),
        name = Value(name),
        dose = Value(dose),
-       time = Value(time),
-       period = Value(period),
        withFood = Value(withFood),
        kind = Value(kind),
        c1 = Value(c1),
@@ -557,8 +471,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? dose,
-    Expression<String>? time,
-    Expression<String>? period,
     Expression<bool>? withFood,
     Expression<String>? kind,
     Expression<int>? c1,
@@ -572,8 +484,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (dose != null) 'dose': dose,
-      if (time != null) 'time': time,
-      if (period != null) 'period': period,
       if (withFood != null) 'with_food': withFood,
       if (kind != null) 'kind': kind,
       if (c1 != null) 'c1': c1,
@@ -589,8 +499,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     Value<String>? id,
     Value<String>? name,
     Value<String>? dose,
-    Value<String>? time,
-    Value<String>? period,
     Value<bool>? withFood,
     Value<String>? kind,
     Value<int>? c1,
@@ -604,8 +512,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
       id: id ?? this.id,
       name: name ?? this.name,
       dose: dose ?? this.dose,
-      time: time ?? this.time,
-      period: period ?? this.period,
       withFood: withFood ?? this.withFood,
       kind: kind ?? this.kind,
       c1: c1 ?? this.c1,
@@ -628,12 +534,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     }
     if (dose.present) {
       map['dose'] = Variable<String>(dose.value);
-    }
-    if (time.present) {
-      map['time'] = Variable<String>(time.value);
-    }
-    if (period.present) {
-      map['period'] = Variable<String>(period.value);
     }
     if (withFood.present) {
       map['with_food'] = Variable<bool>(withFood.value);
@@ -668,8 +568,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('dose: $dose, ')
-          ..write('time: $time, ')
-          ..write('period: $period, ')
           ..write('withFood: $withFood, ')
           ..write('kind: $kind, ')
           ..write('c1: $c1, ')
@@ -677,6 +575,354 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
           ..write('soft: $soft, ')
           ..write('supply: $supply, ')
           ..write('cap: $cap, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DoseTimesTable extends DoseTimes
+    with TableInfo<$DoseTimesTable, DoseTimeRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DoseTimesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _medIdMeta = const VerificationMeta('medId');
+  @override
+  late final GeneratedColumn<String> medId = GeneratedColumn<String>(
+    'med_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeMeta = const VerificationMeta('time');
+  @override
+  late final GeneratedColumn<String> time = GeneratedColumn<String>(
+    'time',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _periodMeta = const VerificationMeta('period');
+  @override
+  late final GeneratedColumn<String> period = GeneratedColumn<String>(
+    'period',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [medId, id, time, period, sortOrder];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'dose_times';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DoseTimeRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('med_id')) {
+      context.handle(
+        _medIdMeta,
+        medId.isAcceptableOrUnknown(data['med_id']!, _medIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_medIdMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('time')) {
+      context.handle(
+        _timeMeta,
+        time.isAcceptableOrUnknown(data['time']!, _timeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_timeMeta);
+    }
+    if (data.containsKey('period')) {
+      context.handle(
+        _periodMeta,
+        period.isAcceptableOrUnknown(data['period']!, _periodMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_periodMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {medId, id};
+  @override
+  DoseTimeRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DoseTimeRow(
+      medId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}med_id'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      time: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}time'],
+      )!,
+      period: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}period'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+    );
+  }
+
+  @override
+  $DoseTimesTable createAlias(String alias) {
+    return $DoseTimesTable(attachedDatabase, alias);
+  }
+}
+
+class DoseTimeRow extends DataClass implements Insertable<DoseTimeRow> {
+  final String medId;
+  final String id;
+  final String time;
+  final String period;
+  final int sortOrder;
+  const DoseTimeRow({
+    required this.medId,
+    required this.id,
+    required this.time,
+    required this.period,
+    required this.sortOrder,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['med_id'] = Variable<String>(medId);
+    map['id'] = Variable<String>(id);
+    map['time'] = Variable<String>(time);
+    map['period'] = Variable<String>(period);
+    map['sort_order'] = Variable<int>(sortOrder);
+    return map;
+  }
+
+  DoseTimesCompanion toCompanion(bool nullToAbsent) {
+    return DoseTimesCompanion(
+      medId: Value(medId),
+      id: Value(id),
+      time: Value(time),
+      period: Value(period),
+      sortOrder: Value(sortOrder),
+    );
+  }
+
+  factory DoseTimeRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DoseTimeRow(
+      medId: serializer.fromJson<String>(json['medId']),
+      id: serializer.fromJson<String>(json['id']),
+      time: serializer.fromJson<String>(json['time']),
+      period: serializer.fromJson<String>(json['period']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'medId': serializer.toJson<String>(medId),
+      'id': serializer.toJson<String>(id),
+      'time': serializer.toJson<String>(time),
+      'period': serializer.toJson<String>(period),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+    };
+  }
+
+  DoseTimeRow copyWith({
+    String? medId,
+    String? id,
+    String? time,
+    String? period,
+    int? sortOrder,
+  }) => DoseTimeRow(
+    medId: medId ?? this.medId,
+    id: id ?? this.id,
+    time: time ?? this.time,
+    period: period ?? this.period,
+    sortOrder: sortOrder ?? this.sortOrder,
+  );
+  DoseTimeRow copyWithCompanion(DoseTimesCompanion data) {
+    return DoseTimeRow(
+      medId: data.medId.present ? data.medId.value : this.medId,
+      id: data.id.present ? data.id.value : this.id,
+      time: data.time.present ? data.time.value : this.time,
+      period: data.period.present ? data.period.value : this.period,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DoseTimeRow(')
+          ..write('medId: $medId, ')
+          ..write('id: $id, ')
+          ..write('time: $time, ')
+          ..write('period: $period, ')
+          ..write('sortOrder: $sortOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(medId, id, time, period, sortOrder);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DoseTimeRow &&
+          other.medId == this.medId &&
+          other.id == this.id &&
+          other.time == this.time &&
+          other.period == this.period &&
+          other.sortOrder == this.sortOrder);
+}
+
+class DoseTimesCompanion extends UpdateCompanion<DoseTimeRow> {
+  final Value<String> medId;
+  final Value<String> id;
+  final Value<String> time;
+  final Value<String> period;
+  final Value<int> sortOrder;
+  final Value<int> rowid;
+  const DoseTimesCompanion({
+    this.medId = const Value.absent(),
+    this.id = const Value.absent(),
+    this.time = const Value.absent(),
+    this.period = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DoseTimesCompanion.insert({
+    required String medId,
+    required String id,
+    required String time,
+    required String period,
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : medId = Value(medId),
+       id = Value(id),
+       time = Value(time),
+       period = Value(period);
+  static Insertable<DoseTimeRow> custom({
+    Expression<String>? medId,
+    Expression<String>? id,
+    Expression<String>? time,
+    Expression<String>? period,
+    Expression<int>? sortOrder,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (medId != null) 'med_id': medId,
+      if (id != null) 'id': id,
+      if (time != null) 'time': time,
+      if (period != null) 'period': period,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DoseTimesCompanion copyWith({
+    Value<String>? medId,
+    Value<String>? id,
+    Value<String>? time,
+    Value<String>? period,
+    Value<int>? sortOrder,
+    Value<int>? rowid,
+  }) {
+    return DoseTimesCompanion(
+      medId: medId ?? this.medId,
+      id: id ?? this.id,
+      time: time ?? this.time,
+      period: period ?? this.period,
+      sortOrder: sortOrder ?? this.sortOrder,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (medId.present) {
+      map['med_id'] = Variable<String>(medId.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (time.present) {
+      map['time'] = Variable<String>(time.value);
+    }
+    if (period.present) {
+      map['period'] = Variable<String>(period.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DoseTimesCompanion(')
+          ..write('medId: $medId, ')
+          ..write('id: $id, ')
+          ..write('time: $time, ')
+          ..write('period: $period, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -706,6 +952,18 @@ class $DoseLogTable extends DoseLog with TableInfo<$DoseLogTable, DoseRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _doseTimeIdMeta = const VerificationMeta(
+    'doseTimeId',
+  );
+  @override
+  late final GeneratedColumn<String> doseTimeId = GeneratedColumn<String>(
+    'dose_time_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _takenMeta = const VerificationMeta('taken');
   @override
   late final GeneratedColumn<bool> taken = GeneratedColumn<bool>(
@@ -720,7 +978,7 @@ class $DoseLogTable extends DoseLog with TableInfo<$DoseLogTable, DoseRow> {
     defaultValue: const Constant(false),
   );
   @override
-  List<GeneratedColumn> get $columns => [iso, medId, taken];
+  List<GeneratedColumn> get $columns => [iso, medId, doseTimeId, taken];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -749,6 +1007,15 @@ class $DoseLogTable extends DoseLog with TableInfo<$DoseLogTable, DoseRow> {
     } else if (isInserting) {
       context.missing(_medIdMeta);
     }
+    if (data.containsKey('dose_time_id')) {
+      context.handle(
+        _doseTimeIdMeta,
+        doseTimeId.isAcceptableOrUnknown(
+          data['dose_time_id']!,
+          _doseTimeIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('taken')) {
       context.handle(
         _takenMeta,
@@ -759,7 +1026,7 @@ class $DoseLogTable extends DoseLog with TableInfo<$DoseLogTable, DoseRow> {
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {iso, medId};
+  Set<GeneratedColumn> get $primaryKey => {iso, medId, doseTimeId};
   @override
   DoseRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -771,6 +1038,10 @@ class $DoseLogTable extends DoseLog with TableInfo<$DoseLogTable, DoseRow> {
       medId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}med_id'],
+      )!,
+      doseTimeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dose_time_id'],
       )!,
       taken: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
@@ -788,13 +1059,20 @@ class $DoseLogTable extends DoseLog with TableInfo<$DoseLogTable, DoseRow> {
 class DoseRow extends DataClass implements Insertable<DoseRow> {
   final String iso;
   final String medId;
+  final String doseTimeId;
   final bool taken;
-  const DoseRow({required this.iso, required this.medId, required this.taken});
+  const DoseRow({
+    required this.iso,
+    required this.medId,
+    required this.doseTimeId,
+    required this.taken,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['iso'] = Variable<String>(iso);
     map['med_id'] = Variable<String>(medId);
+    map['dose_time_id'] = Variable<String>(doseTimeId);
     map['taken'] = Variable<bool>(taken);
     return map;
   }
@@ -803,6 +1081,7 @@ class DoseRow extends DataClass implements Insertable<DoseRow> {
     return DoseLogCompanion(
       iso: Value(iso),
       medId: Value(medId),
+      doseTimeId: Value(doseTimeId),
       taken: Value(taken),
     );
   }
@@ -815,6 +1094,7 @@ class DoseRow extends DataClass implements Insertable<DoseRow> {
     return DoseRow(
       iso: serializer.fromJson<String>(json['iso']),
       medId: serializer.fromJson<String>(json['medId']),
+      doseTimeId: serializer.fromJson<String>(json['doseTimeId']),
       taken: serializer.fromJson<bool>(json['taken']),
     );
   }
@@ -824,19 +1104,29 @@ class DoseRow extends DataClass implements Insertable<DoseRow> {
     return <String, dynamic>{
       'iso': serializer.toJson<String>(iso),
       'medId': serializer.toJson<String>(medId),
+      'doseTimeId': serializer.toJson<String>(doseTimeId),
       'taken': serializer.toJson<bool>(taken),
     };
   }
 
-  DoseRow copyWith({String? iso, String? medId, bool? taken}) => DoseRow(
+  DoseRow copyWith({
+    String? iso,
+    String? medId,
+    String? doseTimeId,
+    bool? taken,
+  }) => DoseRow(
     iso: iso ?? this.iso,
     medId: medId ?? this.medId,
+    doseTimeId: doseTimeId ?? this.doseTimeId,
     taken: taken ?? this.taken,
   );
   DoseRow copyWithCompanion(DoseLogCompanion data) {
     return DoseRow(
       iso: data.iso.present ? data.iso.value : this.iso,
       medId: data.medId.present ? data.medId.value : this.medId,
+      doseTimeId: data.doseTimeId.present
+          ? data.doseTimeId.value
+          : this.doseTimeId,
       taken: data.taken.present ? data.taken.value : this.taken,
     );
   }
@@ -846,36 +1136,41 @@ class DoseRow extends DataClass implements Insertable<DoseRow> {
     return (StringBuffer('DoseRow(')
           ..write('iso: $iso, ')
           ..write('medId: $medId, ')
+          ..write('doseTimeId: $doseTimeId, ')
           ..write('taken: $taken')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(iso, medId, taken);
+  int get hashCode => Object.hash(iso, medId, doseTimeId, taken);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is DoseRow &&
           other.iso == this.iso &&
           other.medId == this.medId &&
+          other.doseTimeId == this.doseTimeId &&
           other.taken == this.taken);
 }
 
 class DoseLogCompanion extends UpdateCompanion<DoseRow> {
   final Value<String> iso;
   final Value<String> medId;
+  final Value<String> doseTimeId;
   final Value<bool> taken;
   final Value<int> rowid;
   const DoseLogCompanion({
     this.iso = const Value.absent(),
     this.medId = const Value.absent(),
+    this.doseTimeId = const Value.absent(),
     this.taken = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DoseLogCompanion.insert({
     required String iso,
     required String medId,
+    this.doseTimeId = const Value.absent(),
     this.taken = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : iso = Value(iso),
@@ -883,12 +1178,14 @@ class DoseLogCompanion extends UpdateCompanion<DoseRow> {
   static Insertable<DoseRow> custom({
     Expression<String>? iso,
     Expression<String>? medId,
+    Expression<String>? doseTimeId,
     Expression<bool>? taken,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (iso != null) 'iso': iso,
       if (medId != null) 'med_id': medId,
+      if (doseTimeId != null) 'dose_time_id': doseTimeId,
       if (taken != null) 'taken': taken,
       if (rowid != null) 'rowid': rowid,
     });
@@ -897,12 +1194,14 @@ class DoseLogCompanion extends UpdateCompanion<DoseRow> {
   DoseLogCompanion copyWith({
     Value<String>? iso,
     Value<String>? medId,
+    Value<String>? doseTimeId,
     Value<bool>? taken,
     Value<int>? rowid,
   }) {
     return DoseLogCompanion(
       iso: iso ?? this.iso,
       medId: medId ?? this.medId,
+      doseTimeId: doseTimeId ?? this.doseTimeId,
       taken: taken ?? this.taken,
       rowid: rowid ?? this.rowid,
     );
@@ -916,6 +1215,9 @@ class DoseLogCompanion extends UpdateCompanion<DoseRow> {
     }
     if (medId.present) {
       map['med_id'] = Variable<String>(medId.value);
+    }
+    if (doseTimeId.present) {
+      map['dose_time_id'] = Variable<String>(doseTimeId.value);
     }
     if (taken.present) {
       map['taken'] = Variable<bool>(taken.value);
@@ -931,6 +1233,7 @@ class DoseLogCompanion extends UpdateCompanion<DoseRow> {
     return (StringBuffer('DoseLogCompanion(')
           ..write('iso: $iso, ')
           ..write('medId: $medId, ')
+          ..write('doseTimeId: $doseTimeId, ')
           ..write('taken: $taken, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -2134,6 +2437,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $MedicinesTable medicines = $MedicinesTable(this);
+  late final $DoseTimesTable doseTimes = $DoseTimesTable(this);
   late final $DoseLogTable doseLog = $DoseLogTable(this);
   late final $SettingsRowsTable settingsRows = $SettingsRowsTable(this);
   late final $NotifOffRowsTable notifOffRows = $NotifOffRowsTable(this);
@@ -2147,6 +2451,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     medicines,
+    doseTimes,
     doseLog,
     settingsRows,
     notifOffRows,
@@ -2160,8 +2465,6 @@ typedef $$MedicinesTableCreateCompanionBuilder =
       required String id,
       required String name,
       required String dose,
-      required String time,
-      required String period,
       required bool withFood,
       required String kind,
       required int c1,
@@ -2176,8 +2479,6 @@ typedef $$MedicinesTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> name,
       Value<String> dose,
-      Value<String> time,
-      Value<String> period,
       Value<bool> withFood,
       Value<String> kind,
       Value<int> c1,
@@ -2209,16 +2510,6 @@ class $$MedicinesTableFilterComposer
 
   ColumnFilters<String> get dose => $composableBuilder(
     column: $table.dose,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get time => $composableBuilder(
-    column: $table.time,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get period => $composableBuilder(
-    column: $table.period,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2282,16 +2573,6 @@ class $$MedicinesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get time => $composableBuilder(
-    column: $table.time,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get period => $composableBuilder(
-    column: $table.period,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<bool> get withFood => $composableBuilder(
     column: $table.withFood,
     builder: (column) => ColumnOrderings(column),
@@ -2345,12 +2626,6 @@ class $$MedicinesTableAnnotationComposer
 
   GeneratedColumn<String> get dose =>
       $composableBuilder(column: $table.dose, builder: (column) => column);
-
-  GeneratedColumn<String> get time =>
-      $composableBuilder(column: $table.time, builder: (column) => column);
-
-  GeneratedColumn<String> get period =>
-      $composableBuilder(column: $table.period, builder: (column) => column);
 
   GeneratedColumn<bool> get withFood =>
       $composableBuilder(column: $table.withFood, builder: (column) => column);
@@ -2408,8 +2683,6 @@ class $$MedicinesTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String> dose = const Value.absent(),
-                Value<String> time = const Value.absent(),
-                Value<String> period = const Value.absent(),
                 Value<bool> withFood = const Value.absent(),
                 Value<String> kind = const Value.absent(),
                 Value<int> c1 = const Value.absent(),
@@ -2422,8 +2695,6 @@ class $$MedicinesTableTableManager
                 id: id,
                 name: name,
                 dose: dose,
-                time: time,
-                period: period,
                 withFood: withFood,
                 kind: kind,
                 c1: c1,
@@ -2438,8 +2709,6 @@ class $$MedicinesTableTableManager
                 required String id,
                 required String name,
                 required String dose,
-                required String time,
-                required String period,
                 required bool withFood,
                 required String kind,
                 required int c1,
@@ -2452,8 +2721,6 @@ class $$MedicinesTableTableManager
                 id: id,
                 name: name,
                 dose: dose,
-                time: time,
-                period: period,
                 withFood: withFood,
                 kind: kind,
                 c1: c1,
@@ -2488,10 +2755,211 @@ typedef $$MedicinesTableProcessedTableManager =
       MedicineRow,
       PrefetchHooks Function()
     >;
+typedef $$DoseTimesTableCreateCompanionBuilder =
+    DoseTimesCompanion Function({
+      required String medId,
+      required String id,
+      required String time,
+      required String period,
+      Value<int> sortOrder,
+      Value<int> rowid,
+    });
+typedef $$DoseTimesTableUpdateCompanionBuilder =
+    DoseTimesCompanion Function({
+      Value<String> medId,
+      Value<String> id,
+      Value<String> time,
+      Value<String> period,
+      Value<int> sortOrder,
+      Value<int> rowid,
+    });
+
+class $$DoseTimesTableFilterComposer
+    extends Composer<_$AppDatabase, $DoseTimesTable> {
+  $$DoseTimesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get medId => $composableBuilder(
+    column: $table.medId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get time => $composableBuilder(
+    column: $table.time,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get period => $composableBuilder(
+    column: $table.period,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DoseTimesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DoseTimesTable> {
+  $$DoseTimesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get medId => $composableBuilder(
+    column: $table.medId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get time => $composableBuilder(
+    column: $table.time,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get period => $composableBuilder(
+    column: $table.period,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DoseTimesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DoseTimesTable> {
+  $$DoseTimesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get medId =>
+      $composableBuilder(column: $table.medId, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get time =>
+      $composableBuilder(column: $table.time, builder: (column) => column);
+
+  GeneratedColumn<String> get period =>
+      $composableBuilder(column: $table.period, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+}
+
+class $$DoseTimesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DoseTimesTable,
+          DoseTimeRow,
+          $$DoseTimesTableFilterComposer,
+          $$DoseTimesTableOrderingComposer,
+          $$DoseTimesTableAnnotationComposer,
+          $$DoseTimesTableCreateCompanionBuilder,
+          $$DoseTimesTableUpdateCompanionBuilder,
+          (
+            DoseTimeRow,
+            BaseReferences<_$AppDatabase, $DoseTimesTable, DoseTimeRow>,
+          ),
+          DoseTimeRow,
+          PrefetchHooks Function()
+        > {
+  $$DoseTimesTableTableManager(_$AppDatabase db, $DoseTimesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DoseTimesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DoseTimesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DoseTimesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> medId = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> time = const Value.absent(),
+                Value<String> period = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DoseTimesCompanion(
+                medId: medId,
+                id: id,
+                time: time,
+                period: period,
+                sortOrder: sortOrder,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String medId,
+                required String id,
+                required String time,
+                required String period,
+                Value<int> sortOrder = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DoseTimesCompanion.insert(
+                medId: medId,
+                id: id,
+                time: time,
+                period: period,
+                sortOrder: sortOrder,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DoseTimesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DoseTimesTable,
+      DoseTimeRow,
+      $$DoseTimesTableFilterComposer,
+      $$DoseTimesTableOrderingComposer,
+      $$DoseTimesTableAnnotationComposer,
+      $$DoseTimesTableCreateCompanionBuilder,
+      $$DoseTimesTableUpdateCompanionBuilder,
+      (
+        DoseTimeRow,
+        BaseReferences<_$AppDatabase, $DoseTimesTable, DoseTimeRow>,
+      ),
+      DoseTimeRow,
+      PrefetchHooks Function()
+    >;
 typedef $$DoseLogTableCreateCompanionBuilder =
     DoseLogCompanion Function({
       required String iso,
       required String medId,
+      Value<String> doseTimeId,
       Value<bool> taken,
       Value<int> rowid,
     });
@@ -2499,6 +2967,7 @@ typedef $$DoseLogTableUpdateCompanionBuilder =
     DoseLogCompanion Function({
       Value<String> iso,
       Value<String> medId,
+      Value<String> doseTimeId,
       Value<bool> taken,
       Value<int> rowid,
     });
@@ -2519,6 +2988,11 @@ class $$DoseLogTableFilterComposer
 
   ColumnFilters<String> get medId => $composableBuilder(
     column: $table.medId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get doseTimeId => $composableBuilder(
+    column: $table.doseTimeId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2547,6 +3021,11 @@ class $$DoseLogTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get doseTimeId => $composableBuilder(
+    column: $table.doseTimeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get taken => $composableBuilder(
     column: $table.taken,
     builder: (column) => ColumnOrderings(column),
@@ -2567,6 +3046,11 @@ class $$DoseLogTableAnnotationComposer
 
   GeneratedColumn<String> get medId =>
       $composableBuilder(column: $table.medId, builder: (column) => column);
+
+  GeneratedColumn<String> get doseTimeId => $composableBuilder(
+    column: $table.doseTimeId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get taken =>
       $composableBuilder(column: $table.taken, builder: (column) => column);
@@ -2602,11 +3086,13 @@ class $$DoseLogTableTableManager
               ({
                 Value<String> iso = const Value.absent(),
                 Value<String> medId = const Value.absent(),
+                Value<String> doseTimeId = const Value.absent(),
                 Value<bool> taken = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DoseLogCompanion(
                 iso: iso,
                 medId: medId,
+                doseTimeId: doseTimeId,
                 taken: taken,
                 rowid: rowid,
               ),
@@ -2614,11 +3100,13 @@ class $$DoseLogTableTableManager
               ({
                 required String iso,
                 required String medId,
+                Value<String> doseTimeId = const Value.absent(),
                 Value<bool> taken = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DoseLogCompanion.insert(
                 iso: iso,
                 medId: medId,
+                doseTimeId: doseTimeId,
                 taken: taken,
                 rowid: rowid,
               ),
@@ -3372,6 +3860,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$MedicinesTableTableManager get medicines =>
       $$MedicinesTableTableManager(_db, _db.medicines);
+  $$DoseTimesTableTableManager get doseTimes =>
+      $$DoseTimesTableTableManager(_db, _db.doseTimes);
   $$DoseLogTableTableManager get doseLog =>
       $$DoseLogTableTableManager(_db, _db.doseLog);
   $$SettingsRowsTableTableManager get settingsRows =>

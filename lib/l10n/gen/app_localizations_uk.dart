@@ -164,6 +164,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get addTimeOfDayLabel => 'ЧАС ДОБИ';
 
   @override
+  String get addAnotherTime => 'Додати ще один час';
+
+  @override
   String get addFoodLabel => 'ЇЖА';
 
   @override
@@ -180,6 +183,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get detailLast7Days => 'ОСТАННІ 7 ДНІВ';
+
+  @override
+  String get detailTodaysDoses => 'ПРИЙОМИ СЬОГОДНІ';
 
   @override
   String get detailMarkAsTaken => 'Позначити як прийнято';

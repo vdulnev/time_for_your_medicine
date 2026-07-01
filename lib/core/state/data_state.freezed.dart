@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DataState {
 
- List<Medicine> get meds;/// Taken flags keyed by `"iso|medId"`.
+ List<Medicine> get meds;/// Taken flags keyed by `"iso|medId|doseTimeId"`.
  Map<String, bool> get taken; AppSettings get settings;/// Per-medicine reminder-off flags (true == reminder disabled).
  Map<String, bool> get notifOff;
 /// Create a copy of DataState
@@ -230,9 +230,9 @@ class _DataState extends DataState {
   return EqualUnmodifiableListView(_meds);
 }
 
-/// Taken flags keyed by `"iso|medId"`.
+/// Taken flags keyed by `"iso|medId|doseTimeId"`.
  final  Map<String, bool> _taken;
-/// Taken flags keyed by `"iso|medId"`.
+/// Taken flags keyed by `"iso|medId|doseTimeId"`.
 @override Map<String, bool> get taken {
   if (_taken is EqualUnmodifiableMapView) return _taken;
   // ignore: implicit_dynamic_type

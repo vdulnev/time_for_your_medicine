@@ -356,6 +356,12 @@ abstract class AppLocalizations {
   /// **'TIME OF DAY'**
   String get addTimeOfDayLabel;
 
+  /// No description provided for @addAnotherTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Add another time'**
+  String get addAnotherTime;
+
   /// No description provided for @addFoodLabel.
   ///
   /// In en, this message translates to:
@@ -391,6 +397,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'LAST 7 DAYS'**
   String get detailLast7Days;
+
+  /// No description provided for @detailTodaysDoses.
+  ///
+  /// In en, this message translates to:
+  /// **'TODAY\'S DOSES'**
+  String get detailTodaysDoses;
 
   /// No description provided for @detailMarkAsTaken.
   ///

@@ -24,10 +24,15 @@ class PeriodSectionView extends ConsumerWidget {
   final DataState data;
   final String iso;
 
-  Future<void> _toggle(BuildContext context, WidgetRef ref, String id) async {
+  Future<void> _toggle(
+    BuildContext context,
+    WidgetRef ref,
+    String medId,
+    String doseTimeId,
+  ) async {
     final completed = await ref
         .read(dataProvider.notifier)
-        .toggleTaken(iso, id);
+        .toggleTaken(iso, medId, doseTimeId);
     if (completed && context.mounted) {
       context.router.push(const DoneRoute());
     }
@@ -78,13 +83,15 @@ class PeriodSectionView extends ConsumerWidget {
             ],
           ),
         ),
-        for (final med in section.meds) ...[
+        for (final occ in section.occurrences) ...[
           MedicineTile(
-            med: med,
-            taken: data.isTaken(iso, med.id),
+            med: occ.med,
+            doseTime: occ.doseTime,
+            showTime: occ.med.times.length > 1,
+            taken: data.isTaken(iso, occ.med.id, occ.doseTime.id),
             onOpen: () =>
-                context.router.push(MedicineDetailRoute(medId: med.id)),
-            onToggle: () => _toggle(context, ref, med.id),
+                context.router.push(MedicineDetailRoute(medId: occ.med.id)),
+            onToggle: () => _toggle(context, ref, occ.med.id, occ.doseTime.id),
           ),
           const SizedBox(height: 9),
         ],

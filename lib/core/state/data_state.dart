@@ -13,7 +13,7 @@ abstract class DataState with _$DataState {
   const factory DataState({
     required List<Medicine> meds,
 
-    /// Taken flags keyed by `"iso|medId"`.
+    /// Taken flags keyed by `"iso|medId|doseTimeId"`.
     required Map<String, bool> taken,
     required AppSettings settings,
 
@@ -21,7 +21,12 @@ abstract class DataState with _$DataState {
     required Map<String, bool> notifOff,
   }) = _DataState;
 
-  bool isTaken(String iso, String id) => taken['$iso|$id'] ?? false;
+  bool isTaken(String iso, String medId, String doseTimeId) =>
+      taken['$iso|$medId|$doseTimeId'] ?? false;
+
+  /// True when every scheduled dose of every medicine is taken for [iso].
+  bool allTaken(String iso) =>
+      meds.every((m) => m.times.every((t) => isTaken(iso, m.id, t.id)));
 
   bool reminderOn(String id) => !(notifOff[id] ?? false);
 }

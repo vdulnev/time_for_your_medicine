@@ -12,8 +12,6 @@ class Medicines extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
   TextColumn get dose => text()();
-  TextColumn get time => text()();
-  TextColumn get period => text()();
   BoolColumn get withFood => boolean()();
   TextColumn get kind => text()();
   IntColumn get c1 => integer()();
@@ -26,14 +24,29 @@ class Medicines extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// A scheduled dose slot for a medicine — one row per time it's taken each
+/// day (e.g. a 3x/day medicine has three rows).
+@DataClassName('DoseTimeRow')
+class DoseTimes extends Table {
+  TextColumn get medId => text()();
+  TextColumn get id => text()();
+  TextColumn get time => text()();
+  TextColumn get period => text()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {medId, id};
+}
+
 @DataClassName('DoseRow')
 class DoseLog extends Table {
   TextColumn get iso => text()();
   TextColumn get medId => text()();
+  TextColumn get doseTimeId => text().withDefault(const Constant(''))();
   BoolColumn get taken => boolean().withDefault(const Constant(false))();
 
   @override
-  Set<Column<Object>> get primaryKey => {iso, medId};
+  Set<Column<Object>> get primaryKey => {iso, medId, doseTimeId};
 }
 
 @DataClassName('SettingsData')
@@ -82,6 +95,7 @@ class MedicineRegistryMeta extends Table {
 @DriftDatabase(
   tables: [
     Medicines,
+    DoseTimes,
     DoseLog,
     SettingsRows,
     NotifOffRows,
@@ -94,7 +108,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'pillpal'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -122,6 +136,34 @@ class AppDatabase extends _$AppDatabase {
         await (delete(
           medicines,
         )..where((row) => row.id.isIn(_legacyDemoMedicineIds))).go();
+      }
+      if (from < 5) {
+        // "Medicines" previously carried a single `time`/`period`. Fold
+        // each medicine's one slot into the new `DoseTimes` table before
+        // dropping those columns, so multi-dose-per-day can be added.
+        final legacy = await customSelect(
+          'SELECT id, time, period FROM medicines',
+        ).get();
+        await m.createTable(doseTimes);
+        await m.addColumn(doseLog, doseLog.doseTimeId);
+        for (final row in legacy) {
+          final medId = row.read<String>('id');
+          const slotId = 't1';
+          await into(doseTimes).insert(
+            DoseTimesCompanion.insert(
+              medId: medId,
+              id: slotId,
+              time: row.read<String>('time'),
+              period: row.read<String>('period'),
+            ),
+          );
+          await customStatement(
+            'UPDATE dose_log SET dose_time_id = ? WHERE med_id = ?',
+            [slotId, medId],
+          );
+        }
+        await customStatement('ALTER TABLE medicines DROP COLUMN time');
+        await customStatement('ALTER TABLE medicines DROP COLUMN period');
       }
     },
   );

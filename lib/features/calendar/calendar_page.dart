@@ -100,7 +100,7 @@ class _CalendarContent extends ConsumerWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                l10n.calendarReminderCount(data.meds.length),
+                l10n.calendarReminderCount(Selectors.progress(data, iso).total),
                 style: AppText.jakarta(size: 11.5, color: AppColors.muted2),
               ),
               const SizedBox(height: 12),

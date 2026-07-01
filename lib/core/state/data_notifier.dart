@@ -1,10 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/add_draft.dart';
+import '../models/dose_time.dart';
 import '../models/medicine.dart';
+import '../models/period.dart';
 import '../models/pill_kind.dart';
 import 'data_state.dart';
 import 'providers.dart';
+
+/// Fallback display time for a dose slot the user picked a time-of-day for
+/// but never typed an explicit time into.
+String _defaultTimeFor(Period period) => switch (period) {
+  Period.morning => '8:00 AM',
+  Period.afternoon => '1:00 PM',
+  Period.evening => '9:00 PM',
+};
 
 /// Loads [DataState] from the repository and applies mutations, writing each
 /// change through to the database.
@@ -17,33 +27,47 @@ class DataNotifier extends AsyncNotifier<DataState> {
 
   DataState? get _current => state.valueOrNull;
 
-  /// Toggles a dose; returns whether the day *just* became fully taken.
-  Future<bool> toggleTaken(String iso, String id) async {
+  /// Toggles a single dose slot; returns whether the day *just* became
+  /// fully taken (every scheduled dose of every medicine).
+  Future<bool> toggleTaken(String iso, String medId, String doseTimeId) async {
     final current = _current;
     if (current == null) return false;
 
-    final wasAll = current.meds.every((m) => current.isTaken(iso, m.id));
-    final next = !current.isTaken(iso, id);
-    final taken = {...current.taken, '$iso|$id': next};
+    final wasAll = current.allTaken(iso);
+    final next = !current.isTaken(iso, medId, doseTimeId);
+    final taken = {...current.taken, '$iso|$medId|$doseTimeId': next};
     final updated = current.copyWith(taken: taken);
     state = AsyncData(updated);
 
-    await ref.read(medicineRepositoryProvider).setTaken(iso, id, next);
+    await ref
+        .read(medicineRepositoryProvider)
+        .setTaken(iso, medId, doseTimeId, next);
 
-    final nowAll = updated.meds.every((m) => updated.isTaken(iso, m.id));
-    return nowAll && !wasAll;
+    return updated.allTaken(iso) && !wasAll;
   }
 
   Future<void> addMedicine(AddDraft draft) async {
     final current = _current;
     if (current == null || draft.name.trim().isEmpty) return;
 
+    final slots = draft.times.isEmpty
+        ? const [DraftTime(time: '8:00 AM')]
+        : draft.times;
+
     final med = Medicine(
       id: 'm${DateTime.now().millisecondsSinceEpoch}',
       name: draft.name.trim(),
       dose: draft.dose.trim().isEmpty ? '1 dose' : draft.dose.trim(),
-      period: draft.period,
-      time: draft.time.trim().isEmpty ? '8:00 AM' : draft.time.trim(),
+      times: [
+        for (var i = 0; i < slots.length; i++)
+          DoseTime(
+            id: 't$i',
+            time: slots[i].time.trim().isEmpty
+                ? _defaultTimeFor(slots[i].period)
+                : slots[i].time.trim(),
+            period: slots[i].period,
+          ),
+      ],
       withFood: draft.withFood,
       kind: PillKind.round,
       c1: 0xFF5566D6,
@@ -60,7 +84,8 @@ class DataNotifier extends AsyncNotifier<DataState> {
     if (current == null) return;
 
     final meds = current.meds.where((m) => m.id != id).toList();
-    final taken = {...current.taken}..removeWhere((k, _) => k.endsWith('|$id'));
+    final taken = {...current.taken}
+      ..removeWhere((k, _) => k.split('|')[1] == id);
     final notifOff = {...current.notifOff}..remove(id);
     state = AsyncData(
       current.copyWith(meds: meds, taken: taken, notifOff: notifOff),

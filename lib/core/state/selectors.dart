@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../db/app_database.dart' show kToday;
+import '../models/dose_time.dart';
 import '../models/medicine.dart';
 import '../models/period.dart';
 import '../util/day_utils.dart';
@@ -16,15 +17,27 @@ import 'data_state.dart';
 /// `String` language code rather than a `BuildContext`, so this file has
 /// no UI/l10n dependency.
 
+/// A single scheduled dose of a medicine — the pairing of a [Medicine] with
+/// one of its [DoseTime] slots. Medicines taken several times a day appear
+/// as multiple occurrences, one per slot.
+class DoseOccurrence {
+  const DoseOccurrence({required this.med, required this.doseTime});
+  final Medicine med;
+  final DoseTime doseTime;
+
+  String get time => doseTime.time;
+  Period get period => doseTime.period;
+}
+
 class PeriodSection {
   const PeriodSection({
     required this.period,
     required this.time,
-    required this.meds,
+    required this.occurrences,
   });
   final Period period;
   final String time;
-  final List<Medicine> meds;
+  final List<DoseOccurrence> occurrences;
 }
 
 class DoseProgress {
@@ -135,25 +148,44 @@ class RefillItem {
   final int pct;
 }
 
+/// One of a medicine's dose slots, with its taken status for a given day.
+class MedDoseStatus {
+  const MedDoseStatus({required this.doseTime, required this.taken});
+  final DoseTime doseTime;
+  final bool taken;
+}
+
 abstract final class Selectors {
   const Selectors._();
 
   static String _stripMeridiem(String t) =>
       t.replaceAll(' AM', '').replaceAll(' PM', '');
 
+  /// Every (medicine, doseTime) occurrence, flattened across all medicines.
+  static List<DoseOccurrence> _occurrences(DataState data) => [
+    for (final m in data.meds)
+      for (final t in m.times) DoseOccurrence(med: m, doseTime: t),
+  ];
+
   static List<PeriodSection> periods(DataState data) {
+    final all = _occurrences(data);
     final out = <PeriodSection>[];
     for (final k in kPeriodOrder) {
-      final list = data.meds.where((m) => m.period == k).toList();
+      final list = all.where((o) => o.period == k).toList();
       if (list.isEmpty) continue;
-      out.add(PeriodSection(period: k, time: list.first.time, meds: list));
+      out.add(
+        PeriodSection(period: k, time: list.first.time, occurrences: list),
+      );
     }
     return out;
   }
 
   static DoseProgress progress(DataState data, String iso) {
-    final total = data.meds.length;
-    final taken = data.meds.where((m) => data.isTaken(iso, m.id)).length;
+    final occurrences = _occurrences(data);
+    final total = occurrences.length;
+    final taken = occurrences
+        .where((o) => data.isTaken(iso, o.med.id, o.doseTime.id))
+        .length;
     final pct = total == 0 ? 0 : (taken / total * 100).round();
     return DoseProgress(
       taken: taken,
@@ -203,9 +235,9 @@ abstract final class Selectors {
   }
 
   static List<AgendaEntry> dayAgenda(DataState data) {
-    final byTime = <String, List<Medicine>>{};
-    for (final m in data.meds) {
-      byTime.putIfAbsent(m.time, () => []).add(m);
+    final byTime = <String, List<DoseOccurrence>>{};
+    for (final o in _occurrences(data)) {
+      byTime.putIfAbsent(o.time, () => []).add(o);
     }
     const order = ['8:00 AM', '1:00 PM', '9:00 PM'];
     int rank(String t) {
@@ -218,7 +250,7 @@ abstract final class Selectors {
       for (final t in times)
         AgendaEntry(
           time: _stripMeridiem(t),
-          names: byTime[t]?.map((m) => m.name).join(', ') ?? '',
+          names: byTime[t]?.map((o) => o.med.name).join(', ') ?? '',
           accent: (byTime[t]?.first.period ?? Period.morning).accent,
         ),
     ];
@@ -233,6 +265,20 @@ abstract final class Selectors {
     return data.meds.first;
   }
 
+  /// A medicine's own dose count and taken count for [iso] (all its slots
+  /// count, so a 3x/day medicine contributes up to 3).
+  static (int taken, int total) _medDoseCount(
+    DataState data,
+    Medicine med,
+    String iso,
+  ) {
+    final total = med.times.length;
+    final taken = med.times
+        .where((t) => data.isTaken(iso, med.id, t.id))
+        .length;
+    return (taken, total);
+  }
+
   static List<DetailDay> detailWeek(
     DataState data,
     Medicine med,
@@ -244,13 +290,36 @@ abstract final class Selectors {
       for (final off in const [6, 5, 4, 3, 2, 1, 0])
         () {
           final d = DayUtils.addDays(cur, -off);
+          final (taken, total) = _medDoseCount(data, med, DayUtils.iso(d));
           return DetailDay(
             initial: DayUtils.dowNarrow(d, locale),
-            done: data.isTaken(DayUtils.iso(d), med.id),
+            done: total > 0 && taken == total,
             isSelectedDay: off == 0,
           );
         }(),
     ];
+  }
+
+  /// Today's scheduled dose slots for [med], each with its taken status.
+  static List<MedDoseStatus> medDosesForDay(
+    DataState data,
+    Medicine med,
+    String iso,
+  ) => [
+    for (final t in med.times)
+      MedDoseStatus(doseTime: t, taken: data.isTaken(iso, med.id, t.id)),
+  ];
+
+  /// The earliest not-yet-taken dose time today, falling back to the first
+  /// slot once all are taken. Suffixed with a "+N" count when there's more
+  /// than one dose slot, so multi-dose-per-day medicines stay disambiguated.
+  static String nextDoseLabel(DataState data, Medicine med, String iso) {
+    final untaken = med.times.where((t) => !data.isTaken(iso, med.id, t.id));
+    final target = untaken.isNotEmpty ? untaken.first : med.times.first;
+    final stripped = _stripMeridiem(target.time);
+    return med.times.length > 1
+        ? '$stripped +${med.times.length - 1}'
+        : stripped;
   }
 
   static HistorySummary history(
@@ -258,13 +327,15 @@ abstract final class Selectors {
     String selectedIso,
     String locale,
   ) {
-    final total = data.meds.length;
+    final total = _occurrences(data).length;
     final bars = <HistoryBar>[
       for (final off in const [6, 5, 4, 3, 2, 1, 0])
         () {
           final d = DayUtils.addDays(kToday, -off);
           final iso = DayUtils.iso(d);
-          final count = data.meds.where((m) => data.isTaken(iso, m.id)).length;
+          final count = _occurrences(
+            data,
+          ).where((o) => data.isTaken(iso, o.med.id, o.doseTime.id)).length;
           final frac = total == 0 ? 0.0 : count / total;
           final h = math.max(8, (frac * 100).round());
           return HistoryBar(
@@ -290,15 +361,11 @@ abstract final class Selectors {
 
   /// Consecutive fully-taken days, counting back from today.
   static int streak(DataState data, String selectedIso) {
-    final total = data.meds.length;
-    final takenToday = data.meds
-        .where((m) => data.isTaken(selectedIso, m.id))
-        .length;
+    final takenToday = data.allTaken(selectedIso);
     var count = 0;
-    for (var off = (takenToday == total) ? 0 : 1; off < 30; off++) {
+    for (var off = takenToday ? 0 : 1; off < 30; off++) {
       final iso = DayUtils.iso(DayUtils.addDays(kToday, -off));
-      final all = total > 0 && data.meds.every((m) => data.isTaken(iso, m.id));
-      if (all) {
+      if (data.meds.isNotEmpty && data.allTaken(iso)) {
         count++;
       } else {
         break;
