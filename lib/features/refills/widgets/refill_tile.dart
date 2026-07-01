@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/models/pill_kind.dart';
 import '../../../core/state/selectors.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/pill_shape.dart';
+import '../../../l10n/l10n_extensions.dart';
 
 /// A single medicine's supply row with a progress bar and order button.
 class RefillTile extends StatelessWidget {
@@ -14,6 +16,10 @@ class RefillTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final med = item.med;
+    final l10n = context.l10n;
+    final countLabel = med.kind == PillKind.capsule
+        ? l10n.refillsCapsulesLeft(med.supply)
+        : l10n.refillsTabletsLeft(med.supply);
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
@@ -55,7 +61,7 @@ class RefillTile extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      item.countLabel,
+                      countLabel,
                       style: AppText.jakarta(
                         size: 11.5,
                         weight: FontWeight.w600,
@@ -108,7 +114,7 @@ class _OrderButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(11),
       ),
       child: Text(
-        low ? 'Order' : 'OK',
+        low ? context.l10n.refillsOrder : context.l10n.ok,
         style: AppText.jakarta(
           size: 12,
           weight: FontWeight.w700,

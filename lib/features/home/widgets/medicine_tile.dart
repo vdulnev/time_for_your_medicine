@@ -4,6 +4,7 @@ import '../../../core/models/medicine.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/pill_shape.dart';
+import '../../../l10n/l10n_extensions.dart';
 
 /// A single medicine row on the Home list, with a tap-to-toggle check.
 class MedicineTile extends StatelessWidget {
@@ -64,7 +65,12 @@ class MedicineTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${med.dose} · ${med.withFood ? 'with food' : 'empty stomach'}',
+                    context.l10n.medicineDoseAndFood(
+                      med.dose,
+                      med.withFood
+                          ? context.l10n.foodWithFood
+                          : context.l10n.foodEmptyStomach,
+                    ),
                     style: AppText.jakarta(size: 11.5, color: AppColors.muted2),
                   ),
                 ],

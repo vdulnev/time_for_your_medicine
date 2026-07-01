@@ -6,6 +6,7 @@ import '../../core/models/period.dart';
 import '../../core/state/providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../l10n/l10n_extensions.dart';
 import 'add_form_provider.dart';
 import 'widgets/photo_placeholder.dart';
 
@@ -41,6 +42,7 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
   Widget build(BuildContext context) {
     final form = ref.read(addFormProvider.notifier);
     final draft = ref.watch(addFormProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
       backgroundColor: AppColors.screenBg,
@@ -70,7 +72,7 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text('Add medicine', style: AppText.bricolage(size: 19)),
+                  Text(l10n.addTitle, style: AppText.bricolage(size: 19)),
                 ],
               ),
             ),
@@ -80,10 +82,10 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
                 children: [
                   const Center(child: PhotoPlaceholder()),
                   const SizedBox(height: 16),
-                  const _FieldLabel('MEDICINE NAME'),
+                  _FieldLabel(l10n.addMedicineNameLabel),
                   _Field(
                     controller: _name,
-                    hint: 'e.g. Amoxicillin',
+                    hint: l10n.addMedicineNameHint,
                     onChanged: form.setName,
                   ),
                   const SizedBox(height: 14),
@@ -94,10 +96,10 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const _FieldLabel('DOSE'),
+                            _FieldLabel(l10n.addDoseLabel),
                             _Field(
                               controller: _dose,
-                              hint: '500 mg',
+                              hint: l10n.addDoseHint,
                               onChanged: form.setDose,
                             ),
                           ],
@@ -108,10 +110,10 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const _FieldLabel('TIME'),
+                            _FieldLabel(l10n.addTimeLabel),
                             _Field(
                               controller: _time,
-                              hint: '8:00 AM',
+                              hint: l10n.addTimeHint,
                               onChanged: form.setTime,
                             ),
                           ],
@@ -120,13 +122,13 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
                     ],
                   ),
                   const SizedBox(height: 14),
-                  const _FieldLabel('TIME OF DAY'),
+                  _FieldLabel(l10n.addTimeOfDayLabel),
                   Row(
                     children: [
                       for (final period in Period.values) ...[
                         Expanded(
                           child: _SegmentButton(
-                            label: period.label,
+                            label: period.label(l10n),
                             selected: draft.period == period,
                             font: AppText.bricolage(
                               size: 12,
@@ -143,12 +145,12 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
                     ],
                   ),
                   const SizedBox(height: 14),
-                  const _FieldLabel('FOOD'),
+                  _FieldLabel(l10n.addFoodLabel),
                   Row(
                     children: [
                       Expanded(
                         child: _SegmentButton(
-                          label: 'With food',
+                          label: l10n.foodWithFoodButton,
                           selected: draft.withFood,
                           font: AppText.jakarta(
                             size: 12.5,
@@ -163,7 +165,7 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
                       const SizedBox(width: 9),
                       Expanded(
                         child: _SegmentButton(
-                          label: 'Empty stomach',
+                          label: l10n.foodEmptyStomachButton,
                           selected: !draft.withFood,
                           font: AppText.jakarta(
                             size: 12.5,
@@ -205,7 +207,7 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
                     ],
                   ),
                   child: Text(
-                    'Save medicine',
+                    l10n.addSaveButton,
                     style: AppText.bricolage(size: 15, color: Colors.white),
                   ),
                 ),

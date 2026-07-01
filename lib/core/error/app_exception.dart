@@ -13,11 +13,4 @@ sealed class AppException with _$AppException implements Exception {
   const factory AppException.notFound({required String id}) = NotFoundFailure;
 
   const factory AppException.unknown({required Object error}) = UnknownFailure;
-
-  /// A short, user-facing message.
-  String get message => switch (this) {
-    DatabaseFailure(:final message) => message,
-    NotFoundFailure(:final id) => 'Not found: $id',
-    UnknownFailure(:final error) => 'Something went wrong: $error',
-  };
 }

@@ -8,6 +8,7 @@ import '../../core/state/ui_providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/error_view.dart';
+import '../../l10n/l10n_extensions.dart';
 import 'widgets/adherence_bars.dart';
 import 'widgets/adherence_card.dart';
 
@@ -30,7 +31,8 @@ class HistoryPage extends ConsumerWidget {
           ),
           data: (data) {
             final iso = ref.watch(selectedDayProvider);
-            final summary = Selectors.history(data, iso);
+            final summary = Selectors.history(data, iso, context.localeName);
+            final l10n = context.l10n;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -56,7 +58,10 @@ class HistoryPage extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text('History', style: AppText.bricolage(size: 19)),
+                      Text(
+                        l10n.historyTitle,
+                        style: AppText.bricolage(size: 19),
+                      ),
                     ],
                   ),
                 ),
@@ -69,17 +74,20 @@ class HistoryPage extends ConsumerWidget {
                       AdherenceBars(bars: summary.bars),
                       const SizedBox(height: 8),
                       _SummaryRow(
-                        label: 'Doses taken',
-                        value: '${summary.fullDays} / 7 days',
+                        label: l10n.historyDosesTaken,
+                        value: l10n.historyDaysOfSeven(summary.fullDays),
                       ),
                       const SizedBox(height: 9),
                       _SummaryRow(
-                        label: 'Current streak',
-                        value: '${summary.streak} days',
+                        label: l10n.historyCurrentStreak,
+                        value: l10n.historyStreakDays(summary.streak),
                         valueColor: AppColors.primary,
                       ),
                       const SizedBox(height: 9),
-                      const _SummaryRow(label: 'Best time', value: 'Morning'),
+                      _SummaryRow(
+                        label: l10n.historyBestTime,
+                        value: l10n.periodMorning,
+                      ),
                     ],
                   ),
                 ),

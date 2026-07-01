@@ -6,6 +6,7 @@ import '../../core/state/providers.dart';
 import '../../core/state/selectors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/error_view.dart';
+import '../../l10n/l10n_extensions.dart';
 import 'widgets/refill_alert_banner.dart';
 import 'widgets/refill_tile.dart';
 
@@ -32,7 +33,10 @@ class RefillsPage extends ConsumerWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 6, 18, 8),
-                child: Text('Refills', style: AppText.bricolage(size: 22)),
+                child: Text(
+                  context.l10n.refillsTitle,
+                  style: AppText.bricolage(size: 22),
+                ),
               ),
               Expanded(
                 child: ListView(

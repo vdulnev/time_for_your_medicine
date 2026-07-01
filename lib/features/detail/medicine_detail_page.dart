@@ -12,6 +12,7 @@ import '../../core/state/ui_providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/pill_shape.dart';
+import '../../l10n/l10n_extensions.dart';
 import '../shell/delete_sheet.dart';
 import 'widgets/detail_week_row.dart';
 
@@ -73,7 +74,7 @@ class MedicineDetailPage extends ConsumerWidget {
                     _StatsRow(med: med),
                     const SizedBox(height: 16),
                     Text(
-                      'LAST 7 DAYS',
+                      context.l10n.detailLast7Days,
                       style: AppText.jakarta(
                         size: 11,
                         weight: FontWeight.w700,
@@ -82,7 +83,14 @@ class MedicineDetailPage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 9),
-                    DetailWeekRow(days: Selectors.detailWeek(data, med, iso)),
+                    DetailWeekRow(
+                      days: Selectors.detailWeek(
+                        data,
+                        med,
+                        iso,
+                        context.localeName,
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     _ToggleButton(
                       taken: taken,
@@ -112,7 +120,10 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final kindLabel = med.kind == PillKind.capsule ? 'capsule' : 'tablet';
+    final l10n = context.l10n;
+    final kindLabel = med.kind == PillKind.capsule
+        ? l10n.kindCapsule
+        : l10n.kindTablet;
     return Container(
       width: double.infinity,
       color: AppColors.primary,
@@ -163,7 +174,7 @@ class _Header extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${med.dose} $kindLabel',
+                    l10n.detailDoseAndKind(med.dose, kindLabel),
                     style: AppText.jakarta(
                       size: 13,
                       color: const Color(0xFFD7DAF7),
@@ -210,23 +221,26 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final time = med.time.replaceAll(' AM', '').replaceAll(' PM', '');
     return Row(
       children: [
         Expanded(
-          child: _StatCard(label: 'NEXT', value: time),
+          child: _StatCard(label: l10n.detailNext, value: time),
         ),
         const SizedBox(width: 9),
         Expanded(
           child: _StatCard(
-            label: 'FOOD',
-            value: med.withFood ? 'With' : 'Empty',
+            label: l10n.detailFood,
+            value: med.withFood
+                ? l10n.foodWithFoodShort
+                : l10n.foodEmptyStomachShort,
           ),
         ),
         const SizedBox(width: 9),
         Expanded(
           child: _StatCard(
-            label: 'LEFT',
+            label: l10n.detailLeft,
             value: '${med.supply}',
             danger: med.isLowSupply,
           ),
@@ -294,7 +308,9 @@ class _ToggleButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(15),
         ),
         child: Text(
-          taken ? 'Taken today ✓' : 'Mark as taken',
+          taken
+              ? context.l10n.detailTakenToday
+              : context.l10n.detailMarkAsTaken,
           style: AppText.bricolage(
             size: 14,
             color: taken ? AppColors.success : Colors.white,

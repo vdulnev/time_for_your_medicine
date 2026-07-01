@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 
 /// A time-of-day grouping for medicines.
 enum Period {
-  morning('Morning', Color(0xFFD69A5A), Color(0xFFFBF0DF)),
-  afternoon('Afternoon', Color(0xFF5AA0D6), Color(0xFFE2F0F8)),
-  evening('Evening', Color(0xFFA77FD0), Color(0xFFF1ECF9));
+  morning(Color(0xFFD69A5A), Color(0xFFFBF0DF)),
+  afternoon(Color(0xFF5AA0D6), Color(0xFFE2F0F8)),
+  evening(Color(0xFFA77FD0), Color(0xFFF1ECF9));
 
-  const Period(this.label, this.accent, this.bg);
-
-  /// Human-readable label, e.g. "Morning".
-  final String label;
+  const Period(this.accent, this.bg);
 
   /// Accent color for dots / times.
   final Color accent;

@@ -9,6 +9,7 @@ import '../../core/state/ui_providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/util/day_utils.dart';
+import '../../l10n/l10n_extensions.dart';
 import 'widgets/confetti_dot.dart';
 import 'widgets/pop_check.dart';
 
@@ -31,6 +32,7 @@ class DonePage extends ConsumerWidget {
     final cur = DayUtils.parse(iso);
     final total = data.meds.length;
     final streak = Selectors.streak(data, iso);
+    final l10n = context.l10n;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
@@ -78,13 +80,14 @@ class DonePage extends ConsumerWidget {
                       const PopCheck(),
                       const SizedBox(height: 28),
                       Text(
-                        'All done!',
+                        l10n.doneAllDone,
                         style: AppText.bricolage(size: 27, color: Colors.white),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Every medicine taken for ${DayUtils.dateLabel(cur)}.\n'
-                        'Keep that streak going.',
+                        l10n.doneBody(
+                          DayUtils.dateLabel(cur, context.localeName),
+                        ),
                         textAlign: TextAlign.center,
                         style: AppText.jakarta(
                           size: 14,
@@ -96,9 +99,15 @@ class DonePage extends ConsumerWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _StatChip(value: '$total/$total', label: 'doses'),
+                          _StatChip(
+                            value: '$total/$total',
+                            label: l10n.doneDosesLabel,
+                          ),
                           const SizedBox(width: 10),
-                          _StatChip(value: '$streak', label: 'day streak'),
+                          _StatChip(
+                            value: '$streak',
+                            label: l10n.doneStreakLabel,
+                          ),
                         ],
                       ),
                     ],
@@ -125,7 +134,7 @@ class DonePage extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
-                          'View tomorrow',
+                          l10n.doneViewTomorrow,
                           style: AppText.bricolage(
                             size: 15,
                             color: AppColors.primary,
@@ -141,7 +150,7 @@ class DonePage extends ConsumerWidget {
                         height: 44,
                         child: Center(
                           child: Text(
-                            'Back to today',
+                            l10n.doneBackToToday,
                             style: AppText.jakarta(
                               size: 13,
                               weight: FontWeight.w700,

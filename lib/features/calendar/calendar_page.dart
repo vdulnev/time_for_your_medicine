@@ -10,6 +10,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/util/day_utils.dart';
 import '../../core/widgets/error_view.dart';
+import '../../l10n/l10n_extensions.dart';
 import 'widgets/day_agenda.dart';
 import 'widgets/month_grid.dart';
 
@@ -45,6 +46,8 @@ class _CalendarContent extends ConsumerWidget {
     final month = ref.watch(calendarMonthProvider);
     final iso = ref.watch(selectedDayProvider);
     final cur = DayUtils.parse(iso);
+    final locale = context.localeName;
+    final l10n = context.l10n;
     final monthCtrl = ref.read(calendarMonthProvider.notifier);
     final agenda = Selectors.dayAgenda(data);
 
@@ -57,7 +60,7 @@ class _CalendarContent extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                DayUtils.monthLabel(month.year, month.month),
+                DayUtils.monthLabel(month.year, month.month, locale),
                 style: AppText.bricolage(size: 20),
               ),
               Row(
@@ -89,12 +92,15 @@ class _CalendarContent extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
             children: [
               Text(
-                '${DayUtils.weekdayFull(cur)}, ${DayUtils.dateLabel(cur)}',
+                l10n.calendarDateHeading(
+                  DayUtils.weekdayFull(cur, locale),
+                  DayUtils.dateLabel(cur, locale),
+                ),
                 style: AppText.bricolage(size: 14),
               ),
               const SizedBox(height: 2),
               Text(
-                '${data.meds.length} reminders scheduled',
+                l10n.calendarReminderCount(data.meds.length),
                 style: AppText.jakarta(size: 11.5, color: AppColors.muted2),
               ),
               const SizedBox(height: 12),
@@ -150,7 +156,7 @@ class _OpenDayButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(15),
         ),
         child: Text(
-          'Open this day',
+          context.l10n.calendarOpenThisDay,
           style: AppText.bricolage(size: 14, color: Colors.white),
         ),
       ),

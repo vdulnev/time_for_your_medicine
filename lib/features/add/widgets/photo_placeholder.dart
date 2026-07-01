@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/l10n_extensions.dart';
 
 /// The dashed "add photo" placeholder tile at the top of the Add form.
 class PhotoPlaceholder extends StatelessWidget {
@@ -24,7 +25,8 @@ class PhotoPlaceholder extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              'add photo',
+              context.l10n.addPhoto,
+              textAlign: TextAlign.center,
               style: AppText.jakarta(size: 8, color: AppColors.muted2),
             ),
           ],

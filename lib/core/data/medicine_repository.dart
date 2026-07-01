@@ -55,6 +55,7 @@ class MedicineRepository {
               sound: settingsRow.sound,
               vibrate: settingsRow.vibrate,
               refill: settingsRow.refill,
+              localeOverride: settingsRow.localeOverride,
             );
 
       return DataState(
@@ -113,6 +114,7 @@ class MedicineRepository {
               sound: Value(settings.sound),
               vibrate: Value(settings.vibrate),
               refill: Value(settings.refill),
+              localeOverride: Value(settings.localeOverride),
             ),
           );
       return unit;

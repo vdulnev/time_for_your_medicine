@@ -43,6 +43,28 @@ void main() {
     expect(data.taken.keys.any((k) => k.endsWith('|m1')), isFalse);
   });
 
+  test('localeOverride persists across save/load', () async {
+    final loaded = (await repo.loadAll()).getOrElse(
+      (_) => throw StateError('x'),
+    );
+    expect(loaded.settings.localeOverride, isNull);
+
+    await repo.saveSettings(loaded.settings.copyWith(localeOverride: 'uk'));
+    final withOverride = (await repo.loadAll()).getOrElse(
+      (_) => throw StateError('x'),
+    );
+    expect(withOverride.settings.localeOverride, 'uk');
+
+    // Explicitly clearing back to "System" must persist null, not skip it.
+    await repo.saveSettings(
+      withOverride.settings.copyWith(localeOverride: null),
+    );
+    final cleared = (await repo.loadAll()).getOrElse(
+      (_) => throw StateError('x'),
+    );
+    expect(cleared.settings.localeOverride, isNull);
+  });
+
   test('toggleTaken completing the day returns true', () async {
     final container = ProviderContainer(
       overrides: [

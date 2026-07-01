@@ -8,6 +8,7 @@ import '../../core/state/providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/error_view.dart';
+import '../../l10n/l10n_extensions.dart';
 import '../shell/widgets/toggle_switch.dart';
 
 /// Profile, preference toggles, and navigation rows.
@@ -40,13 +41,14 @@ class _SettingsContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = data.settings;
     final controller = ref.read(dataProvider.notifier);
+    final l10n = context.l10n;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(18, 6, 18, 8),
-          child: Text('Settings', style: AppText.bricolage(size: 22)),
+          child: Text(l10n.settingsTitle, style: AppText.bricolage(size: 22)),
         ),
         Expanded(
           child: ListView(
@@ -89,7 +91,7 @@ class _SettingsContent extends ConsumerWidget {
                           ),
                         ),
                         Text(
-                          '${data.meds.length} active medicines',
+                          l10n.settingsActiveMedicines(data.meds.length),
                           style: AppText.jakarta(
                             size: 11.5,
                             color: AppColors.muted2,
@@ -101,7 +103,7 @@ class _SettingsContent extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              _SectionLabel('PREFERENCES'),
+              _SectionLabel(l10n.settingsPreferences),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
@@ -112,19 +114,19 @@ class _SettingsContent extends ConsumerWidget {
                 child: Column(
                   children: [
                     _PreferenceRow(
-                      label: 'Reminder sound',
+                      label: l10n.settingsReminderSound,
                       on: settings.sound,
                       onToggle: () => controller.toggleSetting('sound'),
                       showDivider: true,
                     ),
                     _PreferenceRow(
-                      label: 'Vibration',
+                      label: l10n.settingsVibration,
                       on: settings.vibrate,
                       onToggle: () => controller.toggleSetting('vibrate'),
                       showDivider: true,
                     ),
                     _PreferenceRow(
-                      label: 'Refill alerts',
+                      label: l10n.settingsRefillAlerts,
                       on: settings.refill,
                       onToggle: () => controller.toggleSetting('refill'),
                       showDivider: false,
@@ -133,7 +135,13 @@ class _SettingsContent extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              _SectionLabel('MORE'),
+              _SectionLabel(l10n.settingsLanguage),
+              _LanguageSelector(
+                current: settings.localeOverride,
+                onSelect: controller.setLocaleOverride,
+              ),
+              const SizedBox(height: 14),
+              _SectionLabel(l10n.settingsMore),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
@@ -144,17 +152,17 @@ class _SettingsContent extends ConsumerWidget {
                 child: Column(
                   children: [
                     _NavRow(
-                      label: 'History & adherence',
+                      label: l10n.settingsHistoryAndAdherence,
                       onTap: () => context.router.push(const HistoryRoute()),
                       showDivider: true,
                     ),
                     _NavRow(
-                      label: 'Refills',
+                      label: l10n.navRefills,
                       onTap: () => context.tabsRouter.setActiveIndex(2),
                       showDivider: true,
                     ),
                     _NavRow(
-                      label: 'Reminders',
+                      label: l10n.navReminders,
                       onTap: () =>
                           context.router.push(const NotificationsRoute()),
                       showDivider: false,
@@ -223,6 +231,81 @@ class _PreferenceRow extends StatelessWidget {
           ),
           ToggleSwitch(on: on, onTap: onToggle),
         ],
+      ),
+    );
+  }
+}
+
+class _LanguageSelector extends StatelessWidget {
+  const _LanguageSelector({required this.current, required this.onSelect});
+
+  /// The persisted override ("en" / "uk"), or null for "System".
+  final String? current;
+  final ValueChanged<String?> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final options = <(String?, String)>[
+      (null, l10n.settingsLanguageSystem),
+      ('en', l10n.settingsLanguageEnglish),
+      ('uk', l10n.settingsLanguageUkrainian),
+    ];
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Row(
+        children: [
+          for (final (code, label) in options) ...[
+            Expanded(
+              child: _LanguageOption(
+                label: label,
+                selected: current == code,
+                onTap: () => onSelect(code),
+              ),
+            ),
+            if (code != options.last.$1) const SizedBox(width: 4),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LanguageOption extends StatelessWidget {
+  const _LanguageOption({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(13),
+        ),
+        child: Text(
+          label,
+          style: AppText.jakarta(
+            size: 12.5,
+            weight: FontWeight.w700,
+            color: selected ? Colors.white : AppColors.muted,
+          ),
+        ),
       ),
     );
   }

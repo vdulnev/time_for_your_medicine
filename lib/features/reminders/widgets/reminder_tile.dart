@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/models/medicine.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/l10n_extensions.dart';
 import '../../shell/widgets/toggle_switch.dart';
 
 /// A single medicine's reminder row with an on/off switch.
@@ -53,7 +54,7 @@ class ReminderTile extends StatelessWidget {
                   style: AppText.jakarta(size: 13.5, weight: FontWeight.w700),
                 ),
                 Text(
-                  '${med.time} · ${med.dose}',
+                  context.l10n.remindersTimeAndDetail(med.time, med.dose),
                   style: AppText.jakarta(size: 11, color: AppColors.muted2),
                 ),
               ],

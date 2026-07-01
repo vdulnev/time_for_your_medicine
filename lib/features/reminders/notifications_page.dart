@@ -9,6 +9,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/util/day_utils.dart';
 import '../../core/widgets/error_view.dart';
+import '../../l10n/l10n_extensions.dart';
 import 'widgets/reminder_tile.dart';
 
 /// Per-medicine reminder toggles.
@@ -44,6 +45,8 @@ class _NotificationsContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final iso = ref.watch(selectedDayProvider);
     final cur = DayUtils.parse(iso);
+    final locale = context.localeName;
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -69,7 +72,7 @@ class _NotificationsContent extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Text('Reminders', style: AppText.bricolage(size: 19)),
+              Text(l10n.remindersTitle, style: AppText.bricolage(size: 19)),
             ],
           ),
         ),
@@ -78,7 +81,7 @@ class _NotificationsContent extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(18, 6, 18, 14),
             children: [
               Text(
-                'Today · ${DayUtils.dateLabel(cur)}',
+                l10n.remindersToday(DayUtils.dateLabel(cur, locale)),
                 style: AppText.jakarta(
                   size: 11,
                   weight: FontWeight.w600,

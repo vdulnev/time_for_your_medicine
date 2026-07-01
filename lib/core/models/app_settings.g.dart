@@ -10,6 +10,7 @@ _AppSettings _$AppSettingsFromJson(Map<String, dynamic> json) => _AppSettings(
   sound: json['sound'] as bool? ?? true,
   vibrate: json['vibrate'] as bool? ?? false,
   refill: json['refill'] as bool? ?? true,
+  localeOverride: json['localeOverride'] as String?,
 );
 
 Map<String, dynamic> _$AppSettingsToJson(_AppSettings instance) =>
@@ -17,4 +18,5 @@ Map<String, dynamic> _$AppSettingsToJson(_AppSettings instance) =>
       'sound': instance.sound,
       'vibrate': instance.vibrate,
       'refill': instance.refill,
+      'localeOverride': instance.localeOverride,
     };

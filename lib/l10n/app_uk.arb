@@ -1,0 +1,113 @@
+{
+  "@@locale": "uk",
+
+  "appTitle": "Pillpal",
+
+  "retry": "Повторити",
+  "cancel": "Скасувати",
+  "delete": "Видалити",
+  "ok": "Гаразд",
+
+  "periodMorning": "Ранок",
+  "periodAfternoon": "День",
+  "periodEvening": "Вечір",
+
+  "foodWithFood": "з їжею",
+  "foodEmptyStomach": "натщесерце",
+  "foodWithFoodShort": "З їжею",
+  "foodEmptyStomachShort": "Натщесерце",
+  "foodWithFoodButton": "З їжею",
+  "foodEmptyStomachButton": "Натщесерце",
+
+  "kindCapsule": "капсула",
+  "kindTablet": "таблетка",
+  "kindCapsulesPlural": "капсули",
+  "kindTabletsPlural": "таблетки",
+
+  "medicineDoseAndFood": "{dose} · {food}",
+
+  "homeAllDosesTaken": "Усі ліки прийнято",
+  "homeDosesLeftToday": "{count, plural, one{Залишився {count} прийом сьогодні} few{Залишилось {count} прийоми сьогодні} many{Залишилось {count} прийомів сьогодні} other{Залишилось {count} прийому сьогодні}}",
+  "homeTapToSeeHistory": "Натисніть, щоб переглянути історію",
+  "homePercentComplete": "Виконано {pct}%",
+  "homeEmptyTitle": "Ще немає ліків.\nНатисніть +, щоб додати.",
+
+  "navHistory": "Історія",
+  "navRefills": "Поповнення",
+  "navReminders": "Нагадування",
+  "navSettings": "Налаштування",
+  "navCalendar": "Календар",
+
+  "calendarReminderCount": "{count, plural, one{Заплановано {count} нагадування} few{Заплановано {count} нагадування} many{Заплановано {count} нагадувань} other{Заплановано {count} нагадування}}",
+  "calendarOpenThisDay": "Відкрити цей день",
+  "calendarDateHeading": "{weekday}, {date}",
+
+  "addTitle": "Додати ліки",
+  "addPhoto": "додати фото",
+  "addMedicineNameLabel": "НАЗВА ЛІКІВ",
+  "addMedicineNameHint": "напр. Амоксицилін",
+  "addDoseLabel": "ДОЗА",
+  "addDoseHint": "500 мг",
+  "addTimeLabel": "ЧАС",
+  "addTimeHint": "08:00",
+  "addTimeOfDayLabel": "ЧАС ДОБИ",
+  "addFoodLabel": "ЇЖА",
+  "addSaveButton": "Зберегти ліки",
+
+  "detailNext": "НАСТУПНИЙ",
+  "detailFood": "ЇЖА",
+  "detailLeft": "ЗАЛИШИЛОСЬ",
+  "detailLast7Days": "ОСТАННІ 7 ДНІВ",
+  "detailMarkAsTaken": "Позначити як прийнято",
+  "detailTakenToday": "Прийнято сьогодні ✓",
+  "detailDoseAndKind": "{dose}, {kind}",
+
+  "deleteSheetTitle": "Видалити нагадування?",
+  "deleteSheetBody": "«{name}» та його розклад буде видалено. Цю дію не можна скасувати.",
+
+  "doneAllDone": "Усе зроблено!",
+  "doneBody": "Усі ліки прийнято за {date}.\nПродовжуйте серію!",
+  "doneDosesLabel": "прийомів",
+  "doneStreakLabel": "днів поспіль",
+  "doneViewTomorrow": "Переглянути завтра",
+  "doneBackToToday": "Повернутись до сьогодні",
+
+  "historyTitle": "Історія",
+  "historyAdherence7Day": "Дотримання за 7 днів",
+  "historyAdherencePct": "{pct}%",
+  "historyExcellent": "Чудово — так тримати",
+  "historyRoomToImprove": "Є куди рости",
+  "historyDosesTaken": "Прийнято ліків",
+  "historyDaysOfSeven": "{count} / 7 днів",
+  "historyCurrentStreak": "Поточна серія",
+  "historyStreakDays": "{count, plural, one{{count} день} few{{count} дні} many{{count} днів} other{{count} дня}}",
+  "historyBestTime": "Найкращий час",
+
+  "refillsTitle": "Поповнення",
+  "refillsMedicineIsLow": "{name} закінчується",
+  "refillsAllHealthy": "Усіх ліків достатньо",
+  "refillsRunningLow": "Запас закінчується — замовте незабаром",
+  "refillsCapsulesLeft": "{count, plural, one{Залишилась {count} капсула} few{Залишилось {count} капсули} many{Залишилось {count} капсул} other{Залишилось {count} капсули}}",
+  "refillsTabletsLeft": "{count, plural, one{Залишилась {count} таблетка} few{Залишилось {count} таблетки} many{Залишилось {count} таблеток} other{Залишилось {count} таблетки}}",
+  "refillsOrder": "Замовити",
+
+  "remindersTitle": "Нагадування",
+  "remindersToday": "Сьогодні · {date}",
+  "remindersTimeAndDetail": "{time} · {detail}",
+
+  "settingsTitle": "Налаштування",
+  "settingsActiveMedicines": "{count, plural, one{{count} активний препарат} few{{count} активні препарати} many{{count} активних препаратів} other{{count} активного препарату}}",
+  "settingsPreferences": "ПЕРЕВАГИ",
+  "settingsReminderSound": "Звук нагадування",
+  "settingsVibration": "Вібрація",
+  "settingsRefillAlerts": "Сповіщення про поповнення",
+  "settingsMore": "ІНШЕ",
+  "settingsHistoryAndAdherence": "Історія та дотримання",
+  "settingsLanguage": "МОВА",
+  "settingsLanguageSystem": "Системна",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageUkrainian": "Українська",
+
+  "errorNotFound": "Не знайдено: {id}",
+  "errorUnknown": "Щось пішло не так: {error}"
+}

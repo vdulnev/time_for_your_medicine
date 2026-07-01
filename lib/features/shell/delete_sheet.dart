@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../l10n/l10n_extensions.dart';
 
 /// Shows the "Delete reminder?" confirmation sheet. Resolves to `true` when
 /// the user confirms deletion.
@@ -22,6 +23,7 @@ class _DeleteSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -49,11 +51,10 @@ class _DeleteSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              Text('Delete reminder?', style: AppText.bricolage(size: 18)),
+              Text(l10n.deleteSheetTitle, style: AppText.bricolage(size: 18)),
               const SizedBox(height: 6),
               Text(
-                '$medName and its schedule will be removed. '
-                'This can’t be undone.',
+                l10n.deleteSheetBody(medName),
                 textAlign: TextAlign.center,
                 style: AppText.jakarta(
                   size: 13,
@@ -66,7 +67,7 @@ class _DeleteSheet extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _SheetButton(
-                      label: 'Cancel',
+                      label: l10n.cancel,
                       background: AppColors.surface2,
                       foreground: AppColors.ink2,
                       onTap: () => Navigator.of(context).pop(false),
@@ -75,7 +76,7 @@ class _DeleteSheet extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _SheetButton(
-                      label: 'Delete',
+                      label: l10n.delete,
                       background: AppColors.danger,
                       foreground: Colors.white,
                       onTap: () => Navigator.of(context).pop(true),

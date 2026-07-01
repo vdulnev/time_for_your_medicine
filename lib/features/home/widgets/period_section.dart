@@ -8,6 +8,7 @@ import '../../../core/state/providers.dart';
 import '../../../core/state/selectors.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/l10n_extensions.dart';
 import 'medicine_tile.dart';
 
 /// A time-of-day group (Morning / Afternoon / Evening) with its medicines.
@@ -61,7 +62,10 @@ class PeriodSectionView extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(period.label, style: AppText.bricolage(size: 13)),
+              Text(
+                period.label(context.l10n),
+                style: AppText.bricolage(size: 13),
+              ),
               const SizedBox(width: 8),
               Text(
                 section.time,

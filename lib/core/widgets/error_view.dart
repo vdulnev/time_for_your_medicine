@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n_extensions.dart';
 import '../error/app_exception.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
@@ -13,8 +14,9 @@ class ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final message = error is AppException
-        ? (error as AppException).message
+        ? (error as AppException).message(l10n)
         : '$error';
     return Center(
       child: Padding(
@@ -39,7 +41,7 @@ class ErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              TextButton(onPressed: onRetry, child: const Text('Retry')),
+              TextButton(onPressed: onRetry, child: Text(l10n.retry)),
             ],
           ],
         ),

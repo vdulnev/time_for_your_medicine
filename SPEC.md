@@ -32,8 +32,13 @@ pixel-faithfully from the Claude Design handoff
   handles are `overrideWith` in `main()`.
 - **Log through the single Talker instance** — DB writes, errors, and
   provider transitions (`TalkerRiverpodObserver`).
+- **No hardcoded user-facing strings.** All chrome text goes through
+  `AppLocalizations` (see §1a); `Selectors`/`DayUtils` stay
+  locale-agnostic pure functions — pass a `String locale` in, never a
+  `BuildContext`, and never bake in an English string to return.
 - Run `dart run build_runner build --delete-conflicting-outputs` after
-  changing any Freezed / drift / auto_route / json annotation.
+  changing any Freezed / drift / auto_route / json annotation. Run
+  `flutter gen-l10n` after changing an ARB file.
 - Run `dart format .`, then `flutter analyze` (zero warnings), then
   `flutter test` before considering a task done.
 
@@ -57,6 +62,58 @@ pixel-faithfully from the Claude Design handoff
 Code generation (`build_runner`) drives Freezed models, drift tables,
 auto_route routes, and json_serializable. Generated files
 (`*.g.dart`, `*.freezed.dart`, `*.gr.dart`) are committed.
+
+## 1a. Localization (English + Ukrainian)
+
+Standard Flutter `flutter_localizations` + ARB pipeline (`flutter
+gen-l10n`, config in `l10n.yaml`), **not** a hand-rolled solution —
+picked because it composes with `intl`'s CLDR plural/date data instead
+of reimplementing it.
+
+- Source of truth: `lib/l10n/app_en.arb` (English) and
+  `lib/l10n/app_uk.arb` (Ukrainian). Generated output
+  (`lib/l10n/gen/app_localizations*.dart`) is committed like the other
+  codegen.
+- **Locale resolves from the device, with a Ukrainian fallback.** No
+  in-app language switcher. `MaterialApp.router` sets
+  `localeListResolutionCallback: resolveLocale`
+  (`lib/l10n/locale_resolution.dart`) instead of Flutter's default
+  resolution: a device set to English or Ukrainian shows as-is: any
+  other device language falls back to **Ukrainian**, not Flutter's
+  built-in default (the first entry in `supportedLocales`, which would
+  otherwise be English). Pure function, unit-tested directly in
+  `test/locale_resolution_test.dart` — no widget pump needed.
+- Access pattern: `context.l10n.someKey` (extension in
+  `lib/l10n/l10n_extensions.dart`), not
+  `AppLocalizations.of(context)` directly.
+- **Plurals use ICU `{count, plural, ...}` syntax with all four
+  Ukrainian categories** (`one`/`few`/`many`/`other` — Ukrainian's
+  count-based noun/verb agreement doesn't collapse to English's
+  one/other). Getting a category wrong reads as broken grammar, not a
+  crash, so it won't show up in `flutter analyze`; verify plural
+  strings against real CLDR rules, not by translating the English
+  singular/plural pair.
+- **Dates/weekdays/months** go through `DayUtils`, which wraps
+  `package:intl`'s `DateFormat` with a `String locale` parameter — no
+  hardcoded month/weekday name tables. Exception: the compact
+  Mon…Sun weekday glyph (`DayUtils.dowNarrow`) uses CLDR's narrow
+  (`EEEEE`) format for English, but a **hardcoded 2-letter table for
+  Ukrainian** — CLDR's narrow Cyrillic form collapses to a single
+  ambiguous letter (Пн/Пт both → "П", Ср/Сб both → "С"), which is a
+  real UX defect only visible by rendering it, not by reading the code.
+- **`Period` enum and `AppException` carry no display strings.**
+  `Period.label(l10n)` and `AppException.message(l10n)` are extensions
+  in `l10n_extensions.dart` that take the localizations object — the
+  enum/exception classes themselves stay locale-agnostic.
+- `Selectors` (`lib/core/state/selectors.dart`) returns raw data
+  (counts, percentages, booleans) — it does **not** format English
+  sentences. Widgets format text via `context.l10n` at the point of
+  display. This was a refactor partway through adding Ukrainian: the
+  original `DoseProgress.title`/`.subtitle`,
+  `HistorySummary.subtitle`, and `RefillItem.countLabel` getters baked
+  in hardcoded English and had no way to accept a `BuildContext`.
+- User-entered free text (medicine `name`, `dose`, `time` fields) is
+  **not** translated — it's user data, not app chrome.
 
 There is **no network layer** (no Dio/Retrofit) — Pillpal is local-only.
 
@@ -301,6 +358,7 @@ dart format .
 4. Calendar, Add, Detail, Delete dialog. ✅
 5. History, Refills, Reminders, Settings. ✅
 6. Polish — animations, analyze/test clean, smoke tests. ✅
+7. Localization — English + Ukrainian via `flutter_localizations`/ARB. ✅
 
 **Out of scope (v1):** real OS notifications
 (`flutter_local_notifications`) — Reminders screen toggles state only.
@@ -388,3 +446,85 @@ Tracked as a future phase.
       History, and Done — all match the design closely. No overflow
       or layout errors in the `flutter run` log.
     - 8 tests green, `flutter analyze` clean, `dart format .` clean.
+  - **Phase 7 — Localization (English + Ukrainian):**
+    - Added `flutter_localizations`/`intl`, `l10n.yaml`, and
+      `lib/l10n/app_en.arb` / `app_uk.arb` covering every screen's
+      chrome text with ICU plurals (all four Ukrainian categories —
+      `one`/`few`/`many`/`other`).
+    - Locale auto-resolves from the device; no manual switcher.
+    - Refactored `Selectors` to stop returning pre-formatted English
+      sentences (`DoseProgress.title/.subtitle`,
+      `HistorySummary.subtitle`, `RefillItem.countLabel` removed) —
+      it now returns raw counts/booleans and widgets format via
+      `context.l10n`. `Period` and `AppException` display text moved
+      to `l10n_extensions.dart` (`.label(l10n)` / `.message(l10n)`),
+      keeping the model/exception classes locale-agnostic.
+    - `DayUtils` rewritten on top of `intl`'s `DateFormat(locale)` —
+      no more hardcoded English month/weekday tables. `Selectors`
+      functions that surface weekday glyphs now take a `String
+      locale` parameter (never a `BuildContext`).
+    - Removed the now-dead `PlaceholderBody` widget (all 9 screens
+      were implemented by Phase 6, so it had no remaining callers).
+    - Found and fixed a real defect during live-device QA (not caught
+      by `flutter analyze` or widget tests): CLDR's narrow
+      single-letter weekday format collapses in Ukrainian (Пн and Пт
+      both render "П"; Ср and Сб both render "С"). `dowNarrow` now
+      uses a hardcoded 2-letter Ukrainian table
+      (Пн/Вт/Ср/Чт/Пт/Сб/Нд) instead of `DateFormat('EEEEE', 'uk')`
+      for that locale.
+    - Added `test/localization_test.dart` — pumps the app under a
+      forced `Locale('uk')` and asserts real Cyrillic text renders
+      (not just that the ARB compiled), plus a plural-category
+      regression check (3 doses → "few" → "прийоми").
+    - Visually verified on-device (temporary `locale:` override,
+      reverted before commit) across Home, Add, Calendar, Refills,
+      Settings, and Detail — no text overflow despite Ukrainian
+      strings running longer than English.
+    - 10 tests green, `flutter analyze` clean, `dart format .` clean.
+  - **Ukrainian fallback default:** device set to English/Ukrainian
+    still shows that language; any other device language now falls
+    back to Ukrainian instead of Flutter's default English fallback.
+    Extracted `resolveLocale` as a standalone pure function
+    (`lib/l10n/locale_resolution.dart`) wired via
+    `localeListResolutionCallback`, with 6 unit tests covering the
+    match/fallback/null/empty-list/multi-preference cases directly
+    (no widget pump required). 16 tests green.
+  - **In-app language override:** Settings → LANGUAGE (System /
+    English / Українська segmented control) lets the user force a
+    language regardless of device locale, overriding
+    `resolveLocale`.
+    - Persisted as `AppSettings.localeOverride` (nullable — null =
+      "System"). Drift schema bumped to **v2**
+      (`SettingsRows.localeOverride`, nullable text column) with an
+      append-only `onUpgrade` migration (`m.addColumn`), per the
+      project's "never edit a past migration" rule.
+    - `PillpalApp` converted to `ConsumerStatefulWidget`; watches
+      `dataProvider`'s settings and passes `locale:
+      Locale(override)` to `MaterialApp.router` when set (which
+      takes priority over `localeListResolutionCallback`), or `null`
+      to fall through to automatic device resolution.
+    - Language option labels show each language's own native name
+      (`English`, `Українська`) untranslated — standard picker UX so
+      users can find their language even if they can't read the
+      current UI language; only "System" is translated.
+    - Tests: repository round-trip for save/load/explicit-null
+      (`data_layer_test.dart`), and an end-to-end widget test
+      (`settings_language_test.dart`) that pumps the real
+      `PillpalApp`, taps "Українська" in Settings, asserts the
+      **entire app** re-localizes live with no restart and no
+      manual `locale:` override in the test, confirms the choice is
+      persisted to the DB, then taps "System" and confirms it
+      reverts. This is the test that actually proves the feature
+      works end-to-end, not just that the code compiles.
+    - Skipped a hand-rolled v1→v2 raw-SQL migration test — no v1
+      database exists in the wild yet (app never shipped), and
+      hand-crafting DDL to match drift's internal column-generation
+      conventions risks being a worse test than no test. The
+      persistence test above exercises the resulting v2 schema
+      fully; if this app ships a real v1 release before this
+      migration lands, add a `drift_dev` pinned-schema migration
+      test at that point.
+    - Verified live on-device: language switch is instant and
+      app-wide (Home, not just Settings), persists across
+      navigation, and cleanly reverts via "System". 18 tests green,
+      `flutter analyze` clean, `dart format .` clean.

@@ -10,6 +10,10 @@ abstract class AppSettings with _$AppSettings {
     @Default(true) bool sound,
     @Default(false) bool vibrate,
     @Default(true) bool refill,
+
+    /// User-chosen language override ("en" / "uk"), or null to follow the
+    /// device locale.
+    String? localeOverride,
   }) = _AppSettings;
 
   factory AppSettings.fromJson(Map<String, dynamic> json) =>

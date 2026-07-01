@@ -44,6 +44,10 @@ class SettingsRows extends Table {
   BoolColumn get vibrate => boolean().withDefault(const Constant(false))();
   BoolColumn get refill => boolean().withDefault(const Constant(true))();
 
+  /// User-chosen language override ("en" / "uk"), or null to follow the
+  /// device locale (see `resolveLocale`).
+  TextColumn get localeOverride => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -62,13 +66,18 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'pillpal'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await _seed();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(settingsRows, settingsRows.localeOverride);
+      }
     },
   );
 

@@ -1,0 +1,213 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Pillpal",
+  "@appTitle": {"description": "Application title"},
+
+  "retry": "Retry",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "ok": "OK",
+
+  "periodMorning": "Morning",
+  "periodAfternoon": "Afternoon",
+  "periodEvening": "Evening",
+
+  "foodWithFood": "with food",
+  "foodEmptyStomach": "empty stomach",
+  "foodWithFoodShort": "With",
+  "foodEmptyStomachShort": "Empty",
+  "foodWithFoodButton": "With food",
+  "foodEmptyStomachButton": "Empty stomach",
+
+  "kindCapsule": "capsule",
+  "kindTablet": "tablet",
+  "kindCapsulesPlural": "capsules",
+  "kindTabletsPlural": "tablets",
+
+  "medicineDoseAndFood": "{dose} · {food}",
+  "@medicineDoseAndFood": {
+    "placeholders": {
+      "dose": {"type": "String"},
+      "food": {"type": "String"}
+    }
+  },
+
+  "homeAllDosesTaken": "All doses taken",
+  "homeDosesLeftToday": "{count, plural, one{{count} dose left today} other{{count} doses left today}}",
+  "@homeDosesLeftToday": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "homeTapToSeeHistory": "Tap to see your history",
+  "homePercentComplete": "{pct}% complete",
+  "@homePercentComplete": {
+    "placeholders": {
+      "pct": {"type": "int"}
+    }
+  },
+  "homeEmptyTitle": "No medicines yet.\nTap + to add one.",
+
+  "navHistory": "History",
+  "navRefills": "Refills",
+  "navReminders": "Reminders",
+  "navSettings": "Settings",
+  "navCalendar": "Calendar",
+
+  "calendarReminderCount": "{count, plural, one{{count} reminder scheduled} other{{count} reminders scheduled}}",
+  "@calendarReminderCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "calendarOpenThisDay": "Open this day",
+  "calendarDateHeading": "{weekday}, {date}",
+  "@calendarDateHeading": {
+    "placeholders": {
+      "weekday": {"type": "String"},
+      "date": {"type": "String"}
+    }
+  },
+
+  "addTitle": "Add medicine",
+  "addPhoto": "add photo",
+  "addMedicineNameLabel": "MEDICINE NAME",
+  "addMedicineNameHint": "e.g. Amoxicillin",
+  "addDoseLabel": "DOSE",
+  "addDoseHint": "500 mg",
+  "addTimeLabel": "TIME",
+  "addTimeHint": "8:00 AM",
+  "addTimeOfDayLabel": "TIME OF DAY",
+  "addFoodLabel": "FOOD",
+  "addSaveButton": "Save medicine",
+
+  "detailNext": "NEXT",
+  "detailFood": "FOOD",
+  "detailLeft": "LEFT",
+  "detailLast7Days": "LAST 7 DAYS",
+  "detailMarkAsTaken": "Mark as taken",
+  "detailTakenToday": "Taken today ✓",
+  "detailDoseAndKind": "{dose} {kind}",
+  "@detailDoseAndKind": {
+    "placeholders": {
+      "dose": {"type": "String"},
+      "kind": {"type": "String"}
+    }
+  },
+
+  "deleteSheetTitle": "Delete reminder?",
+  "deleteSheetBody": "{name} and its schedule will be removed. This can’t be undone.",
+  "@deleteSheetBody": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+
+  "doneAllDone": "All done!",
+  "doneBody": "Every medicine taken for {date}.\nKeep that streak going.",
+  "@doneBody": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "doneDosesLabel": "doses",
+  "doneStreakLabel": "day streak",
+  "doneViewTomorrow": "View tomorrow",
+  "doneBackToToday": "Back to today",
+
+  "historyTitle": "History",
+  "historyAdherence7Day": "7-day adherence",
+  "historyAdherencePct": "{pct}%",
+  "@historyAdherencePct": {
+    "placeholders": {
+      "pct": {"type": "int"}
+    }
+  },
+  "historyExcellent": "Excellent — keep it up",
+  "historyRoomToImprove": "Room to improve",
+  "historyDosesTaken": "Doses taken",
+  "historyDaysOfSeven": "{count} / 7 days",
+  "@historyDaysOfSeven": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "historyCurrentStreak": "Current streak",
+  "historyStreakDays": "{count, plural, one{{count} day} other{{count} days}}",
+  "@historyStreakDays": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "historyBestTime": "Best time",
+
+  "refillsTitle": "Refills",
+  "refillsMedicineIsLow": "{name} is low",
+  "@refillsMedicineIsLow": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "refillsAllHealthy": "All supplies healthy",
+  "refillsRunningLow": "Running low — order soon",
+  "refillsCapsulesLeft": "{count, plural, one{{count} capsule left} other{{count} capsules left}}",
+  "@refillsCapsulesLeft": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "refillsTabletsLeft": "{count, plural, one{{count} tablet left} other{{count} tablets left}}",
+  "@refillsTabletsLeft": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "refillsOrder": "Order",
+
+  "remindersTitle": "Reminders",
+  "remindersToday": "Today · {date}",
+  "@remindersToday": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "remindersTimeAndDetail": "{time} · {detail}",
+  "@remindersTimeAndDetail": {
+    "placeholders": {
+      "time": {"type": "String"},
+      "detail": {"type": "String"}
+    }
+  },
+
+  "settingsTitle": "Settings",
+  "settingsActiveMedicines": "{count, plural, one{{count} active medicine} other{{count} active medicines}}",
+  "@settingsActiveMedicines": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "settingsPreferences": "PREFERENCES",
+  "settingsReminderSound": "Reminder sound",
+  "settingsVibration": "Vibration",
+  "settingsRefillAlerts": "Refill alerts",
+  "settingsMore": "MORE",
+  "settingsHistoryAndAdherence": "History & adherence",
+  "settingsLanguage": "LANGUAGE",
+  "settingsLanguageSystem": "System",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageUkrainian": "Українська",
+
+  "errorNotFound": "Not found: {id}",
+  "@errorNotFound": {
+    "placeholders": {
+      "id": {"type": "String"}
+    }
+  },
+  "errorUnknown": "Something went wrong: {error}",
+  "@errorUnknown": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  }
+}

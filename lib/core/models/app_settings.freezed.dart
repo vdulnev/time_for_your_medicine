@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppSettings {
 
- bool get sound; bool get vibrate; bool get refill;
+ bool get sound; bool get vibrate; bool get refill;/// User-chosen language override ("en" / "uk"), or null to follow the
+/// device locale.
+ String? get localeOverride;
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +30,16 @@ $AppSettingsCopyWith<AppSettings> get copyWith => _$AppSettingsCopyWithImpl<AppS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.sound, sound) || other.sound == sound)&&(identical(other.vibrate, vibrate) || other.vibrate == vibrate)&&(identical(other.refill, refill) || other.refill == refill));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.sound, sound) || other.sound == sound)&&(identical(other.vibrate, vibrate) || other.vibrate == vibrate)&&(identical(other.refill, refill) || other.refill == refill)&&(identical(other.localeOverride, localeOverride) || other.localeOverride == localeOverride));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,sound,vibrate,refill);
+int get hashCode => Object.hash(runtimeType,sound,vibrate,refill,localeOverride);
 
 @override
 String toString() {
-  return 'AppSettings(sound: $sound, vibrate: $vibrate, refill: $refill)';
+  return 'AppSettings(sound: $sound, vibrate: $vibrate, refill: $refill, localeOverride: $localeOverride)';
 }
 
 
@@ -48,7 +50,7 @@ abstract mixin class $AppSettingsCopyWith<$Res>  {
   factory $AppSettingsCopyWith(AppSettings value, $Res Function(AppSettings) _then) = _$AppSettingsCopyWithImpl;
 @useResult
 $Res call({
- bool sound, bool vibrate, bool refill
+ bool sound, bool vibrate, bool refill, String? localeOverride
 });
 
 
@@ -65,12 +67,13 @@ class _$AppSettingsCopyWithImpl<$Res>
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? sound = null,Object? vibrate = null,Object? refill = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? sound = null,Object? vibrate = null,Object? refill = null,Object? localeOverride = freezed,}) {
   return _then(_self.copyWith(
 sound: null == sound ? _self.sound : sound // ignore: cast_nullable_to_non_nullable
 as bool,vibrate: null == vibrate ? _self.vibrate : vibrate // ignore: cast_nullable_to_non_nullable
 as bool,refill: null == refill ? _self.refill : refill // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,localeOverride: freezed == localeOverride ? _self.localeOverride : localeOverride // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -155,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool sound,  bool vibrate,  bool refill)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool sound,  bool vibrate,  bool refill,  String? localeOverride)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppSettings() when $default != null:
-return $default(_that.sound,_that.vibrate,_that.refill);case _:
+return $default(_that.sound,_that.vibrate,_that.refill,_that.localeOverride);case _:
   return orElse();
 
 }
@@ -176,10 +179,10 @@ return $default(_that.sound,_that.vibrate,_that.refill);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool sound,  bool vibrate,  bool refill)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool sound,  bool vibrate,  bool refill,  String? localeOverride)  $default,) {final _that = this;
 switch (_that) {
 case _AppSettings():
-return $default(_that.sound,_that.vibrate,_that.refill);case _:
+return $default(_that.sound,_that.vibrate,_that.refill,_that.localeOverride);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +199,10 @@ return $default(_that.sound,_that.vibrate,_that.refill);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool sound,  bool vibrate,  bool refill)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool sound,  bool vibrate,  bool refill,  String? localeOverride)?  $default,) {final _that = this;
 switch (_that) {
 case _AppSettings() when $default != null:
-return $default(_that.sound,_that.vibrate,_that.refill);case _:
+return $default(_that.sound,_that.vibrate,_that.refill,_that.localeOverride);case _:
   return null;
 
 }
@@ -211,12 +214,15 @@ return $default(_that.sound,_that.vibrate,_that.refill);case _:
 @JsonSerializable()
 
 class _AppSettings implements AppSettings {
-  const _AppSettings({this.sound = true, this.vibrate = false, this.refill = true});
+  const _AppSettings({this.sound = true, this.vibrate = false, this.refill = true, this.localeOverride});
   factory _AppSettings.fromJson(Map<String, dynamic> json) => _$AppSettingsFromJson(json);
 
 @override@JsonKey() final  bool sound;
 @override@JsonKey() final  bool vibrate;
 @override@JsonKey() final  bool refill;
+/// User-chosen language override ("en" / "uk"), or null to follow the
+/// device locale.
+@override final  String? localeOverride;
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
@@ -231,16 +237,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppSettings&&(identical(other.sound, sound) || other.sound == sound)&&(identical(other.vibrate, vibrate) || other.vibrate == vibrate)&&(identical(other.refill, refill) || other.refill == refill));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppSettings&&(identical(other.sound, sound) || other.sound == sound)&&(identical(other.vibrate, vibrate) || other.vibrate == vibrate)&&(identical(other.refill, refill) || other.refill == refill)&&(identical(other.localeOverride, localeOverride) || other.localeOverride == localeOverride));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,sound,vibrate,refill);
+int get hashCode => Object.hash(runtimeType,sound,vibrate,refill,localeOverride);
 
 @override
 String toString() {
-  return 'AppSettings(sound: $sound, vibrate: $vibrate, refill: $refill)';
+  return 'AppSettings(sound: $sound, vibrate: $vibrate, refill: $refill, localeOverride: $localeOverride)';
 }
 
 
@@ -251,7 +257,7 @@ abstract mixin class _$AppSettingsCopyWith<$Res> implements $AppSettingsCopyWith
   factory _$AppSettingsCopyWith(_AppSettings value, $Res Function(_AppSettings) _then) = __$AppSettingsCopyWithImpl;
 @override @useResult
 $Res call({
- bool sound, bool vibrate, bool refill
+ bool sound, bool vibrate, bool refill, String? localeOverride
 });
 
 
@@ -268,12 +274,13 @@ class __$AppSettingsCopyWithImpl<$Res>
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? sound = null,Object? vibrate = null,Object? refill = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? sound = null,Object? vibrate = null,Object? refill = null,Object? localeOverride = freezed,}) {
   return _then(_AppSettings(
 sound: null == sound ? _self.sound : sound // ignore: cast_nullable_to_non_nullable
 as bool,vibrate: null == vibrate ? _self.vibrate : vibrate // ignore: cast_nullable_to_non_nullable
 as bool,refill: null == refill ? _self.refill : refill // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,localeOverride: freezed == localeOverride ? _self.localeOverride : localeOverride // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

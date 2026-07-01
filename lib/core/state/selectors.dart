@@ -5,12 +5,16 @@ import 'package:flutter/material.dart';
 import '../db/app_database.dart' show kToday;
 import '../models/medicine.dart';
 import '../models/period.dart';
-import '../models/pill_kind.dart';
 import '../util/day_utils.dart';
 import 'data_state.dart';
 
 /// Pure, testable derivations of view data from [DataState]. Widgets call
 /// these rather than computing anything themselves.
+///
+/// These stay locale-agnostic where possible; where a locale-dependent
+/// label is unavoidable (weekday glyphs), it's threaded in as a plain
+/// `String` language code rather than a `BuildContext`, so this file has
+/// no UI/l10n dependency.
 
 class PeriodSection {
   const PeriodSection({
@@ -36,11 +40,6 @@ class DoseProgress {
   final int left;
 
   String get fraction => '$taken/$total';
-  String get title => left == 0
-      ? 'All doses taken'
-      : '$left dose${left > 1 ? 's' : ''} left today';
-  String get subtitle =>
-      left == 0 ? 'Tap to see your history' : '$pct% complete';
 }
 
 class WeekDay {
@@ -126,8 +125,7 @@ class HistorySummary {
   final int streak;
   final int fullDays;
 
-  String get subtitle =>
-      adherence >= 90 ? 'Excellent — keep it up' : 'Room to improve';
+  bool get isExcellent => adherence >= 90;
 }
 
 class RefillItem {
@@ -135,9 +133,6 @@ class RefillItem {
   final Medicine med;
   final bool low;
   final int pct;
-
-  String get countLabel =>
-      '${med.supply} ${med.kind == PillKind.capsule ? 'capsules' : 'tablets'} left';
 }
 
 abstract final class Selectors {
@@ -168,7 +163,7 @@ abstract final class Selectors {
     );
   }
 
-  static List<WeekDay> weekStrip(String iso) {
+  static List<WeekDay> weekStrip(String iso, String locale) {
     final cur = DayUtils.parse(iso);
     final monday = DayUtils.addDays(cur, -DayUtils.mondayIndex(cur));
     return [
@@ -177,7 +172,7 @@ abstract final class Selectors {
           final d = DayUtils.addDays(monday, i);
           final dIso = DayUtils.iso(d);
           return WeekDay(
-            initial: DayUtils.dow(d).substring(0, 1),
+            initial: DayUtils.dowNarrow(d, locale),
             day: d.day,
             iso: dIso,
             active: dIso == iso,
@@ -238,14 +233,19 @@ abstract final class Selectors {
     return data.meds.first;
   }
 
-  static List<DetailDay> detailWeek(DataState data, Medicine med, String iso) {
+  static List<DetailDay> detailWeek(
+    DataState data,
+    Medicine med,
+    String iso,
+    String locale,
+  ) {
     final cur = DayUtils.parse(iso);
     return [
       for (final off in const [6, 5, 4, 3, 2, 1, 0])
         () {
           final d = DayUtils.addDays(cur, -off);
           return DetailDay(
-            initial: DayUtils.dow(d).substring(0, 1),
+            initial: DayUtils.dowNarrow(d, locale),
             done: data.isTaken(DayUtils.iso(d), med.id),
             isSelectedDay: off == 0,
           );
@@ -253,7 +253,11 @@ abstract final class Selectors {
     ];
   }
 
-  static HistorySummary history(DataState data, String selectedIso) {
+  static HistorySummary history(
+    DataState data,
+    String selectedIso,
+    String locale,
+  ) {
     final total = data.meds.length;
     final bars = <HistoryBar>[
       for (final off in const [6, 5, 4, 3, 2, 1, 0])
@@ -264,7 +268,7 @@ abstract final class Selectors {
           final frac = total == 0 ? 0.0 : count / total;
           final h = math.max(8, (frac * 100).round());
           return HistoryBar(
-            initial: DayUtils.dow(d).substring(0, 1),
+            initial: DayUtils.dowNarrow(d, locale),
             heightPct: h,
             full: frac >= 1,
             partial: frac > 0 && frac < 1,

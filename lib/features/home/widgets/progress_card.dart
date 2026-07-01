@@ -8,6 +8,7 @@ import '../../../core/state/selectors.dart';
 import '../../../core/state/ui_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/l10n_extensions.dart';
 import 'progress_ring.dart';
 
 /// The tappable "doses left today" progress card that opens History.
@@ -20,6 +21,13 @@ class ProgressCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final iso = ref.watch(selectedDayProvider);
     final progress = Selectors.progress(data, iso);
+    final l10n = context.l10n;
+    final title = progress.left == 0
+        ? l10n.homeAllDosesTaken
+        : l10n.homeDosesLeftToday(progress.left);
+    final subtitle = progress.left == 0
+        ? l10n.homeTapToSeeHistory
+        : l10n.homePercentComplete(progress.pct);
 
     return GestureDetector(
       onTap: () => context.router.push(const HistoryRoute()),
@@ -44,12 +52,12 @@ class ProgressCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    progress.title,
+                    title,
                     style: AppText.bricolage(size: 13.5, height: 1.2),
                   ),
                   const SizedBox(height: 1),
                   Text(
-                    progress.subtitle,
+                    subtitle,
                     style: AppText.jakarta(size: 11, color: AppColors.muted2),
                   ),
                 ],

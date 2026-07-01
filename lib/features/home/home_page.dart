@@ -11,6 +11,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/util/day_utils.dart';
 import '../../core/widgets/error_view.dart';
+import '../../l10n/l10n_extensions.dart';
 import 'widgets/period_section.dart';
 import 'widgets/progress_card.dart';
 import 'widgets/week_strip.dart';
@@ -46,6 +47,7 @@ class _HomeContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final iso = ref.watch(selectedDayProvider);
     final cur = DayUtils.parse(iso);
+    final locale = context.localeName;
     final periods = Selectors.periods(data);
     final dayCtrl = ref.read(selectedDayProvider.notifier);
 
@@ -66,7 +68,7 @@ class _HomeContent extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        DayUtils.weekdayFull(cur),
+                        DayUtils.weekdayFull(cur, locale),
                         style: AppText.jakarta(
                           size: 11.5,
                           weight: FontWeight.w500,
@@ -74,7 +76,7 @@ class _HomeContent extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        DayUtils.dateLabel(cur),
+                        DayUtils.dateLabel(cur, locale),
                         style: AppText.bricolage(size: 22, height: 1.05),
                       ),
                     ],
@@ -131,7 +133,7 @@ class _EmptyDay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'No medicines yet.\nTap + to add one.',
+        context.l10n.homeEmptyTitle,
         textAlign: TextAlign.center,
         style: AppText.jakarta(size: 13, color: AppColors.muted2, height: 1.5),
       ),

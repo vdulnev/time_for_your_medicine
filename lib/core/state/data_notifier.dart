@@ -83,6 +83,17 @@ class DataNotifier extends AsyncNotifier<DataState> {
     await ref.read(medicineRepositoryProvider).saveSettings(next);
   }
 
+  /// Sets the user's language override ("en" / "uk"), or `null` to follow
+  /// the device locale (see `resolveLocale`).
+  Future<void> setLocaleOverride(String? code) async {
+    final current = _current;
+    if (current == null) return;
+
+    final next = current.settings.copyWith(localeOverride: code);
+    state = AsyncData(current.copyWith(settings: next));
+    await ref.read(medicineRepositoryProvider).saveSettings(next);
+  }
+
   Future<void> toggleNotif(String id) async {
     final current = _current;
     if (current == null) return;

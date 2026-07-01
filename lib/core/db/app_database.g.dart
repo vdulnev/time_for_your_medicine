@@ -995,8 +995,25 @@ class $SettingsRowsTable extends SettingsRows
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _localeOverrideMeta = const VerificationMeta(
+    'localeOverride',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, sound, vibrate, refill];
+  late final GeneratedColumn<String> localeOverride = GeneratedColumn<String>(
+    'locale_override',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sound,
+    vibrate,
+    refill,
+    localeOverride,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1030,6 +1047,15 @@ class $SettingsRowsTable extends SettingsRows
         refill.isAcceptableOrUnknown(data['refill']!, _refillMeta),
       );
     }
+    if (data.containsKey('locale_override')) {
+      context.handle(
+        _localeOverrideMeta,
+        localeOverride.isAcceptableOrUnknown(
+          data['locale_override']!,
+          _localeOverrideMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1055,6 +1081,10 @@ class $SettingsRowsTable extends SettingsRows
         DriftSqlType.bool,
         data['${effectivePrefix}refill'],
       )!,
+      localeOverride: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}locale_override'],
+      ),
     );
   }
 
@@ -1069,11 +1099,16 @@ class SettingsData extends DataClass implements Insertable<SettingsData> {
   final bool sound;
   final bool vibrate;
   final bool refill;
+
+  /// User-chosen language override ("en" / "uk"), or null to follow the
+  /// device locale (see `resolveLocale`).
+  final String? localeOverride;
   const SettingsData({
     required this.id,
     required this.sound,
     required this.vibrate,
     required this.refill,
+    this.localeOverride,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1082,6 +1117,9 @@ class SettingsData extends DataClass implements Insertable<SettingsData> {
     map['sound'] = Variable<bool>(sound);
     map['vibrate'] = Variable<bool>(vibrate);
     map['refill'] = Variable<bool>(refill);
+    if (!nullToAbsent || localeOverride != null) {
+      map['locale_override'] = Variable<String>(localeOverride);
+    }
     return map;
   }
 
@@ -1091,6 +1129,9 @@ class SettingsData extends DataClass implements Insertable<SettingsData> {
       sound: Value(sound),
       vibrate: Value(vibrate),
       refill: Value(refill),
+      localeOverride: localeOverride == null && nullToAbsent
+          ? const Value.absent()
+          : Value(localeOverride),
     );
   }
 
@@ -1104,6 +1145,7 @@ class SettingsData extends DataClass implements Insertable<SettingsData> {
       sound: serializer.fromJson<bool>(json['sound']),
       vibrate: serializer.fromJson<bool>(json['vibrate']),
       refill: serializer.fromJson<bool>(json['refill']),
+      localeOverride: serializer.fromJson<String?>(json['localeOverride']),
     );
   }
   @override
@@ -1114,22 +1156,34 @@ class SettingsData extends DataClass implements Insertable<SettingsData> {
       'sound': serializer.toJson<bool>(sound),
       'vibrate': serializer.toJson<bool>(vibrate),
       'refill': serializer.toJson<bool>(refill),
+      'localeOverride': serializer.toJson<String?>(localeOverride),
     };
   }
 
-  SettingsData copyWith({int? id, bool? sound, bool? vibrate, bool? refill}) =>
-      SettingsData(
-        id: id ?? this.id,
-        sound: sound ?? this.sound,
-        vibrate: vibrate ?? this.vibrate,
-        refill: refill ?? this.refill,
-      );
+  SettingsData copyWith({
+    int? id,
+    bool? sound,
+    bool? vibrate,
+    bool? refill,
+    Value<String?> localeOverride = const Value.absent(),
+  }) => SettingsData(
+    id: id ?? this.id,
+    sound: sound ?? this.sound,
+    vibrate: vibrate ?? this.vibrate,
+    refill: refill ?? this.refill,
+    localeOverride: localeOverride.present
+        ? localeOverride.value
+        : this.localeOverride,
+  );
   SettingsData copyWithCompanion(SettingsRowsCompanion data) {
     return SettingsData(
       id: data.id.present ? data.id.value : this.id,
       sound: data.sound.present ? data.sound.value : this.sound,
       vibrate: data.vibrate.present ? data.vibrate.value : this.vibrate,
       refill: data.refill.present ? data.refill.value : this.refill,
+      localeOverride: data.localeOverride.present
+          ? data.localeOverride.value
+          : this.localeOverride,
     );
   }
 
@@ -1139,13 +1193,14 @@ class SettingsData extends DataClass implements Insertable<SettingsData> {
           ..write('id: $id, ')
           ..write('sound: $sound, ')
           ..write('vibrate: $vibrate, ')
-          ..write('refill: $refill')
+          ..write('refill: $refill, ')
+          ..write('localeOverride: $localeOverride')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, sound, vibrate, refill);
+  int get hashCode => Object.hash(id, sound, vibrate, refill, localeOverride);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1153,7 +1208,8 @@ class SettingsData extends DataClass implements Insertable<SettingsData> {
           other.id == this.id &&
           other.sound == this.sound &&
           other.vibrate == this.vibrate &&
-          other.refill == this.refill);
+          other.refill == this.refill &&
+          other.localeOverride == this.localeOverride);
 }
 
 class SettingsRowsCompanion extends UpdateCompanion<SettingsData> {
@@ -1161,29 +1217,34 @@ class SettingsRowsCompanion extends UpdateCompanion<SettingsData> {
   final Value<bool> sound;
   final Value<bool> vibrate;
   final Value<bool> refill;
+  final Value<String?> localeOverride;
   const SettingsRowsCompanion({
     this.id = const Value.absent(),
     this.sound = const Value.absent(),
     this.vibrate = const Value.absent(),
     this.refill = const Value.absent(),
+    this.localeOverride = const Value.absent(),
   });
   SettingsRowsCompanion.insert({
     this.id = const Value.absent(),
     this.sound = const Value.absent(),
     this.vibrate = const Value.absent(),
     this.refill = const Value.absent(),
+    this.localeOverride = const Value.absent(),
   });
   static Insertable<SettingsData> custom({
     Expression<int>? id,
     Expression<bool>? sound,
     Expression<bool>? vibrate,
     Expression<bool>? refill,
+    Expression<String>? localeOverride,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (sound != null) 'sound': sound,
       if (vibrate != null) 'vibrate': vibrate,
       if (refill != null) 'refill': refill,
+      if (localeOverride != null) 'locale_override': localeOverride,
     });
   }
 
@@ -1192,12 +1253,14 @@ class SettingsRowsCompanion extends UpdateCompanion<SettingsData> {
     Value<bool>? sound,
     Value<bool>? vibrate,
     Value<bool>? refill,
+    Value<String?>? localeOverride,
   }) {
     return SettingsRowsCompanion(
       id: id ?? this.id,
       sound: sound ?? this.sound,
       vibrate: vibrate ?? this.vibrate,
       refill: refill ?? this.refill,
+      localeOverride: localeOverride ?? this.localeOverride,
     );
   }
 
@@ -1216,6 +1279,9 @@ class SettingsRowsCompanion extends UpdateCompanion<SettingsData> {
     if (refill.present) {
       map['refill'] = Variable<bool>(refill.value);
     }
+    if (localeOverride.present) {
+      map['locale_override'] = Variable<String>(localeOverride.value);
+    }
     return map;
   }
 
@@ -1225,7 +1291,8 @@ class SettingsRowsCompanion extends UpdateCompanion<SettingsData> {
           ..write('id: $id, ')
           ..write('sound: $sound, ')
           ..write('vibrate: $vibrate, ')
-          ..write('refill: $refill')
+          ..write('refill: $refill, ')
+          ..write('localeOverride: $localeOverride')
           ..write(')'))
         .toString();
   }
@@ -1905,6 +1972,7 @@ typedef $$SettingsRowsTableCreateCompanionBuilder =
       Value<bool> sound,
       Value<bool> vibrate,
       Value<bool> refill,
+      Value<String?> localeOverride,
     });
 typedef $$SettingsRowsTableUpdateCompanionBuilder =
     SettingsRowsCompanion Function({
@@ -1912,6 +1980,7 @@ typedef $$SettingsRowsTableUpdateCompanionBuilder =
       Value<bool> sound,
       Value<bool> vibrate,
       Value<bool> refill,
+      Value<String?> localeOverride,
     });
 
 class $$SettingsRowsTableFilterComposer
@@ -1940,6 +2009,11 @@ class $$SettingsRowsTableFilterComposer
 
   ColumnFilters<bool> get refill => $composableBuilder(
     column: $table.refill,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localeOverride => $composableBuilder(
+    column: $table.localeOverride,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1972,6 +2046,11 @@ class $$SettingsRowsTableOrderingComposer
     column: $table.refill,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get localeOverride => $composableBuilder(
+    column: $table.localeOverride,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SettingsRowsTableAnnotationComposer
@@ -1994,6 +2073,11 @@ class $$SettingsRowsTableAnnotationComposer
 
   GeneratedColumn<bool> get refill =>
       $composableBuilder(column: $table.refill, builder: (column) => column);
+
+  GeneratedColumn<String> get localeOverride => $composableBuilder(
+    column: $table.localeOverride,
+    builder: (column) => column,
+  );
 }
 
 class $$SettingsRowsTableTableManager
@@ -2031,11 +2115,13 @@ class $$SettingsRowsTableTableManager
                 Value<bool> sound = const Value.absent(),
                 Value<bool> vibrate = const Value.absent(),
                 Value<bool> refill = const Value.absent(),
+                Value<String?> localeOverride = const Value.absent(),
               }) => SettingsRowsCompanion(
                 id: id,
                 sound: sound,
                 vibrate: vibrate,
                 refill: refill,
+                localeOverride: localeOverride,
               ),
           createCompanionCallback:
               ({
@@ -2043,11 +2129,13 @@ class $$SettingsRowsTableTableManager
                 Value<bool> sound = const Value.absent(),
                 Value<bool> vibrate = const Value.absent(),
                 Value<bool> refill = const Value.absent(),
+                Value<String?> localeOverride = const Value.absent(),
               }) => SettingsRowsCompanion.insert(
                 id: id,
                 sound: sound,
                 vibrate: vibrate,
                 refill: refill,
+                localeOverride: localeOverride,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
