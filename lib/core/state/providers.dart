@@ -4,8 +4,10 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../data/medicine_repository.dart';
 import '../db/app_database.dart';
 import '../logging/talker.dart';
+import '../models/medicine_registry.dart';
 import 'data_notifier.dart';
 import 'data_state.dart';
+import 'medicine_registry_notifier.dart';
 
 /// The drift database. Overridden in `main()` and in tests (in-memory).
 final databaseProvider = Provider<AppDatabase>(
@@ -24,3 +26,8 @@ final medicineRepositoryProvider = Provider<MedicineRepository>((ref) {
 final dataProvider = AsyncNotifierProvider<DataNotifier, DataState>(
   DataNotifier.new,
 );
+
+final medicineRegistryProvider =
+    AsyncNotifierProvider<MedicineRegistryNotifier, MedicineRegistryStatus>(
+      MedicineRegistryNotifier.new,
+    );

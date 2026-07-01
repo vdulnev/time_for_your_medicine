@@ -28,6 +28,7 @@ extension AppExceptionL10n on AppException {
   String message(AppLocalizations l10n) => switch (this) {
     DatabaseFailure(:final message) => message,
     NotFoundFailure(:final id) => l10n.errorNotFound(id),
+    InvalidRegistryFile() => l10n.registryImportInvalidFile,
     UnknownFailure(:final error) => l10n.errorUnknown(error.toString()),
   };
 }

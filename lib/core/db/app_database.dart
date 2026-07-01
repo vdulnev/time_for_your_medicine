@@ -1,12 +1,11 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
-import '../util/day_utils.dart';
-
 part 'app_database.g.dart';
 
 /// The fixed "today" the design is anchored to (June 30, 2026).
 final DateTime kToday = DateTime(2026, 6, 30);
+const _legacyDemoMedicineIds = <String>['m1', 'm2', 'm3', 'm4'];
 
 @DataClassName('MedicineRow')
 class Medicines extends Table {
@@ -60,110 +59,70 @@ class NotifOffRows extends Table {
   Set<Column<Object>> get primaryKey => {medId};
 }
 
-@DriftDatabase(tables: [Medicines, DoseLog, SettingsRows, NotifOffRows])
+@DataClassName('MedicineRegistryRow')
+class MedicineRegistryEntries extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get genericName => text()();
+  TextColumn get form => text()();
+  TextColumn get searchText => text()();
+}
+
+@DataClassName('MedicineRegistryMetaRow')
+class MedicineRegistryMeta extends Table {
+  IntColumn get id => integer().withDefault(const Constant(0))();
+  TextColumn get sourceName => text()();
+  DateTimeColumn get importedAt => dateTime()();
+  IntColumn get entryCount => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+@DriftDatabase(
+  tables: [
+    Medicines,
+    DoseLog,
+    SettingsRows,
+    NotifOffRows,
+    MedicineRegistryEntries,
+    MedicineRegistryMeta,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'pillpal'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
-      await _seed();
+      await into(
+        settingsRows,
+      ).insert(const SettingsRowsCompanion(id: Value(0)));
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
         await m.addColumn(settingsRows, settingsRows.localeOverride);
       }
+      if (from < 3) {
+        await m.createTable(medicineRegistryEntries);
+        await m.createTable(medicineRegistryMeta);
+      }
+      if (from < 4) {
+        await (delete(
+          doseLog,
+        )..where((row) => row.medId.isIn(_legacyDemoMedicineIds))).go();
+        await (delete(
+          notifOffRows,
+        )..where((row) => row.medId.isIn(_legacyDemoMedicineIds))).go();
+        await (delete(
+          medicines,
+        )..where((row) => row.id.isIn(_legacyDemoMedicineIds))).go();
+      }
     },
   );
-
-  Future<void> _seed() async {
-    await batch((b) {
-      b.insertAll(medicines, _seedMedicines);
-      b.insert(settingsRows, const SettingsRowsCompanion(id: Value(0)));
-      final logs = <DoseLogCompanion>[];
-      for (var off = -6; off <= -1; off++) {
-        final iso = DayUtils.iso(DayUtils.addDays(kToday, off));
-        for (final med in _seedMedicines) {
-          logs.add(
-            DoseLogCompanion(
-              iso: Value(iso),
-              medId: Value(med.id.value),
-              taken: const Value(true),
-            ),
-          );
-        }
-      }
-      logs.add(
-        DoseLogCompanion(
-          iso: Value(DayUtils.iso(kToday)),
-          medId: const Value('m1'),
-          taken: const Value(true),
-        ),
-      );
-      b.insertAll(doseLog, logs);
-    });
-  }
 }
-
-/// Seed medicines matching the design prototype.
-final List<MedicinesCompanion> _seedMedicines = [
-  const MedicinesCompanion(
-    id: Value('m1'),
-    name: Value('Metformin'),
-    dose: Value('500 mg'),
-    time: Value('8:00 AM'),
-    period: Value('morning'),
-    withFood: Value(true),
-    kind: Value('capsule'),
-    c1: Value(0xFF5566D6),
-    c2: Value(0xFFA6B0EE),
-    soft: Value(0xFFE7E8FB),
-    supply: Value(12),
-    cap: Value(60),
-  ),
-  const MedicinesCompanion(
-    id: Value('m2'),
-    name: Value('Vitamin D'),
-    dose: Value('1000 IU'),
-    time: Value('8:00 AM'),
-    period: Value('morning'),
-    withFood: Value(true),
-    kind: Value('round'),
-    c1: Value(0xFFD69A5A),
-    soft: Value(0xFFFBF0DF),
-    supply: Value(30),
-    cap: Value(60),
-  ),
-  const MedicinesCompanion(
-    id: Value('m3'),
-    name: Value('Ibuprofen'),
-    dose: Value('200 mg'),
-    time: Value('1:00 PM'),
-    period: Value('afternoon'),
-    withFood: Value(true),
-    kind: Value('round'),
-    c1: Value(0xFF5AA0D6),
-    soft: Value(0xFFE2F0F8),
-    supply: Value(20),
-    cap: Value(30),
-  ),
-  const MedicinesCompanion(
-    id: Value('m4'),
-    name: Value('Atorvastatin'),
-    dose: Value('20 mg'),
-    time: Value('9:00 PM'),
-    period: Value('evening'),
-    withFood: Value(false),
-    kind: Value('capsule'),
-    c1: Value(0xFFA77FD0),
-    c2: Value(0xFFCDB6E6),
-    soft: Value(0xFFF1ECF9),
-    supply: Value(6),
-    cap: Value(30),
-  ),
-];

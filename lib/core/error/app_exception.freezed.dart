@@ -55,12 +55,13 @@ extension AppExceptionPatterns on AppException {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DatabaseFailure value)?  databaseFailure,TResult Function( NotFoundFailure value)?  notFound,TResult Function( UnknownFailure value)?  unknown,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DatabaseFailure value)?  databaseFailure,TResult Function( NotFoundFailure value)?  notFound,TResult Function( InvalidRegistryFile value)?  invalidRegistryFile,TResult Function( UnknownFailure value)?  unknown,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case DatabaseFailure() when databaseFailure != null:
 return databaseFailure(_that);case NotFoundFailure() when notFound != null:
-return notFound(_that);case UnknownFailure() when unknown != null:
+return notFound(_that);case InvalidRegistryFile() when invalidRegistryFile != null:
+return invalidRegistryFile(_that);case UnknownFailure() when unknown != null:
 return unknown(_that);case _:
   return orElse();
 
@@ -79,12 +80,13 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DatabaseFailure value)  databaseFailure,required TResult Function( NotFoundFailure value)  notFound,required TResult Function( UnknownFailure value)  unknown,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DatabaseFailure value)  databaseFailure,required TResult Function( NotFoundFailure value)  notFound,required TResult Function( InvalidRegistryFile value)  invalidRegistryFile,required TResult Function( UnknownFailure value)  unknown,}){
 final _that = this;
 switch (_that) {
 case DatabaseFailure():
 return databaseFailure(_that);case NotFoundFailure():
-return notFound(_that);case UnknownFailure():
+return notFound(_that);case InvalidRegistryFile():
+return invalidRegistryFile(_that);case UnknownFailure():
 return unknown(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -99,12 +101,13 @@ return unknown(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DatabaseFailure value)?  databaseFailure,TResult? Function( NotFoundFailure value)?  notFound,TResult? Function( UnknownFailure value)?  unknown,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DatabaseFailure value)?  databaseFailure,TResult? Function( NotFoundFailure value)?  notFound,TResult? Function( InvalidRegistryFile value)?  invalidRegistryFile,TResult? Function( UnknownFailure value)?  unknown,}){
 final _that = this;
 switch (_that) {
 case DatabaseFailure() when databaseFailure != null:
 return databaseFailure(_that);case NotFoundFailure() when notFound != null:
-return notFound(_that);case UnknownFailure() when unknown != null:
+return notFound(_that);case InvalidRegistryFile() when invalidRegistryFile != null:
+return invalidRegistryFile(_that);case UnknownFailure() when unknown != null:
 return unknown(_that);case _:
   return null;
 
@@ -122,11 +125,12 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String message)?  databaseFailure,TResult Function( String id)?  notFound,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String message)?  databaseFailure,TResult Function( String id)?  notFound,TResult Function( String message)?  invalidRegistryFile,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case DatabaseFailure() when databaseFailure != null:
 return databaseFailure(_that.message);case NotFoundFailure() when notFound != null:
-return notFound(_that.id);case UnknownFailure() when unknown != null:
+return notFound(_that.id);case InvalidRegistryFile() when invalidRegistryFile != null:
+return invalidRegistryFile(_that.message);case UnknownFailure() when unknown != null:
 return unknown(_that.error);case _:
   return orElse();
 
@@ -145,11 +149,12 @@ return unknown(_that.error);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String message)  databaseFailure,required TResult Function( String id)  notFound,required TResult Function( Object error)  unknown,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String message)  databaseFailure,required TResult Function( String id)  notFound,required TResult Function( String message)  invalidRegistryFile,required TResult Function( Object error)  unknown,}) {final _that = this;
 switch (_that) {
 case DatabaseFailure():
 return databaseFailure(_that.message);case NotFoundFailure():
-return notFound(_that.id);case UnknownFailure():
+return notFound(_that.id);case InvalidRegistryFile():
+return invalidRegistryFile(_that.message);case UnknownFailure():
 return unknown(_that.error);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -164,11 +169,12 @@ return unknown(_that.error);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String message)?  databaseFailure,TResult? Function( String id)?  notFound,TResult? Function( Object error)?  unknown,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String message)?  databaseFailure,TResult? Function( String id)?  notFound,TResult? Function( String message)?  invalidRegistryFile,TResult? Function( Object error)?  unknown,}) {final _that = this;
 switch (_that) {
 case DatabaseFailure() when databaseFailure != null:
 return databaseFailure(_that.message);case NotFoundFailure() when notFound != null:
-return notFound(_that.id);case UnknownFailure() when unknown != null:
+return notFound(_that.id);case InvalidRegistryFile() when invalidRegistryFile != null:
+return invalidRegistryFile(_that.message);case UnknownFailure() when unknown != null:
 return unknown(_that.error);case _:
   return null;
 
@@ -302,6 +308,72 @@ class _$NotFoundFailureCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? id = null,}) {
   return _then(NotFoundFailure(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class InvalidRegistryFile extends AppException {
+  const InvalidRegistryFile({required this.message}): super._();
+
+
+ final  String message;
+
+/// Create a copy of AppException
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$InvalidRegistryFileCopyWith<InvalidRegistryFile> get copyWith => _$InvalidRegistryFileCopyWithImpl<InvalidRegistryFile>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InvalidRegistryFile&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,message);
+
+@override
+String toString() {
+  return 'AppException.invalidRegistryFile(message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $InvalidRegistryFileCopyWith<$Res> implements $AppExceptionCopyWith<$Res> {
+  factory $InvalidRegistryFileCopyWith(InvalidRegistryFile value, $Res Function(InvalidRegistryFile) _then) = _$InvalidRegistryFileCopyWithImpl;
+@useResult
+$Res call({
+ String message
+});
+
+
+
+
+}
+/// @nodoc
+class _$InvalidRegistryFileCopyWithImpl<$Res>
+    implements $InvalidRegistryFileCopyWith<$Res> {
+  _$InvalidRegistryFileCopyWithImpl(this._self, this._then);
+
+  final InvalidRegistryFile _self;
+  final $Res Function(InvalidRegistryFile) _then;
+
+/// Create a copy of AppException
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+  return _then(InvalidRegistryFile(
+message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

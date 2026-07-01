@@ -9,18 +9,14 @@ import 'package:time_for_your_medicine/core/db/app_database.dart';
 import 'package:time_for_your_medicine/core/logging/talker.dart';
 import 'package:time_for_your_medicine/core/state/providers.dart';
 
-import 'support/seed_test_data.dart';
-
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
-  testWidgets('marking the last dose shows the Done celebration content', (
+  testWidgets('add medicine searches and selects a registry medicine', (
     tester,
   ) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
-    await seedTestMedicines(db);
-
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -32,18 +28,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // The test fixture has m1 already taken; tap the remaining three.
-    for (final id in ['m2', 'm3', 'm4']) {
-      final finder = find.byKey(ValueKey('toggle-$id'));
-      await tester.ensureVisible(finder);
-      await tester.pumpAndSettle();
-      await tester.tap(finder);
-      await tester.pumpAndSettle();
-    }
+    await tester.tap(find.byIcon(Icons.add_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('Add medicine'), findsOneWidget);
 
-    expect(find.text('All done!'), findsOneWidget);
-    expect(find.text('4/4'), findsOneWidget);
-    expect(find.text('View tomorrow'), findsOneWidget);
-    expect(find.text('Back to today'), findsOneWidget);
+    final nameField = find.byType(TextField).first;
+    await tester.enterText(nameField, 'amoxicillin');
+    await tester.pumpAndSettle();
+
+    expect(find.text('АМОКСИКЛАВ®'), findsWidgets);
+    await tester.tap(find.text('АМОКСИКЛАВ®').first);
+    await tester.pump();
+
+    final field = tester.widget<TextField>(nameField);
+    expect(field.controller?.text, 'АМОКСИКЛАВ®');
   });
 }

@@ -8,6 +8,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../l10n/l10n_extensions.dart';
 import 'add_form_provider.dart';
+import 'widgets/medicine_registry_field.dart';
 import 'widgets/photo_placeholder.dart';
 
 /// Form for adding a new medicine.
@@ -83,10 +84,10 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
                   const Center(child: PhotoPlaceholder()),
                   const SizedBox(height: 16),
                   _FieldLabel(l10n.addMedicineNameLabel),
-                  _Field(
+                  MedicineRegistryField(
                     controller: _name,
                     hint: l10n.addMedicineNameHint,
-                    onChanged: form.setName,
+                    onNameChanged: form.setName,
                   ),
                   const SizedBox(height: 14),
                   Row(

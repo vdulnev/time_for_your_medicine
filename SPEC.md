@@ -139,7 +139,7 @@ lib/
     models/              # @freezed: medicine, app_settings, add_draft
       period.dart, pill_kind.dart   # plain enums
     data/
-      medicine_repository.dart  # Either<AppException,T> over drift; seeds on first run
+      medicine_repository.dart  # Either<AppException,T> over drift
     state/
       data_state.dart    # @freezed DataState (meds, taken, settings, notifOff)
       data_notifier.dart # AsyncNotifier<DataState> — mutations via repo
@@ -230,11 +230,9 @@ UI-only state lives in dedicated small providers:
 (auto_route), not global state; the delete dialog is a route/dialog, not a
 state flag.
 
-Seed data (matches prototype, "today" = 2026-06-30): Metformin 500 mg
-(morning, capsule, supply 12/60), Vitamin D 1000 IU (morning, round,
-30/60), Ibuprofen 200 mg (afternoon, round, 20/30), Atorvastatin 20 mg
-(evening, capsule, 6/30 → low). Days −6..−1 pre-filled fully taken; today
-m1 taken. Seeding happens once on first DB open.
+The production database starts with no medicines and no dose history. Only
+the default settings row is created. Prototype medicines and historical logs
+exist exclusively as explicit fixtures under `test/support/`.
 
 ### Notifier actions (`dataProvider`)
 `toggleTaken(iso,id) → bool` (returns whether the day just completed, so
@@ -326,7 +324,7 @@ thing that talks to drift and returns `Either<AppException, T>`.
 
 ## 8. Testing
 
-- Widget smoke test: app boots to Home, shows a seeded medicine.
+- Widget smoke test: app boots to an empty Home with no demo medicines.
 - Toggle test: checking the last remaining dose routes to Done.
 - Add test: saving a named medicine appends a tile.
 
@@ -383,7 +381,7 @@ Tracked as a future phase.
       `AppSettings`, `AddDraft`, `DataState`); `AppException` sealed
       union.
     - Persistence → **drift** (`AppDatabase`: Medicines / DoseLog /
-      SettingsRows / NotifOffRows), seeded on first open. Replaced
+      SettingsRows / NotifOffRows), originally seeded on first open. Replaced
       `shared_preferences`.
     - `MedicineRepository` returns **`Either<AppException,T>`** (fpdart)
       and logs through **Talker**; folded inside `AsyncNotifier`.
@@ -528,3 +526,24 @@ Tracked as a future phase.
       app-wide (Home, not just Settings), persists across
       navigation, and cleanly reverts via "System". 18 tests green,
       `flutter analyze` clean, `dart format .` clean.
+  - **Medicine registry search and CSV updates:**
+    - Imported `reestr.csv` into a generated, compressed database seed
+      containing 14,931 unique trade-name/generic-name/form records. The
+      source CSV is not a Flutter asset; on first registry use the seed is
+      expanded once into SQLite (`MedicineRegistryEntries`).
+    - Add medicine now searches SQLite by trade name, international generic
+      name, and dosage form. Selecting a result fills the medicine name while
+      preserving manual entry and editing.
+    - Settings → Medicine registry can select a replacement `.csv` file on
+      iOS or Android. The parser supports the official semicolon-delimited,
+      quoted, escaped, and multiline format. Replacement is transactional:
+      invalid files leave the current database registry intact.
+    - `tool/generate_medicine_registry_seed.dart` rebuilds the initial seed
+      from a newer source file for future app releases; in-app imports update
+      the installed database without an app release.
+    - Added English/Ukrainian strings and parser/repository regression tests,
+      including real seed import/search and invalid-file rollback coverage.
+  - **Removed production demo data:** schema **v4** makes new databases empty
+    and removes the exact legacy demo IDs (`m1`…`m4`) plus their dose and
+    notification records from existing installations. User-created medicines
+    are untouched. Prototype records now live only in test fixtures.

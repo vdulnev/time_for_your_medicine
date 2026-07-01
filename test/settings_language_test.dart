@@ -9,6 +9,8 @@ import 'package:time_for_your_medicine/core/db/app_database.dart';
 import 'package:time_for_your_medicine/core/logging/talker.dart';
 import 'package:time_for_your_medicine/core/state/providers.dart';
 
+import 'support/seed_test_data.dart';
+
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
@@ -18,6 +20,7 @@ void main() {
   ) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
+    await seedTestMedicines(db);
 
     await tester.pumpWidget(
       ProviderScope(

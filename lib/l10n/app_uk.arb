@@ -46,6 +46,8 @@
   "addPhoto": "додати фото",
   "addMedicineNameLabel": "НАЗВА ЛІКІВ",
   "addMedicineNameHint": "напр. Амоксицилін",
+  "registryNoResults": "У реєстрі нічого не знайдено",
+  "registrySearchFailed": "Не вдалося виконати пошук у реєстрі",
   "addDoseLabel": "ДОЗА",
   "addDoseHint": "500 мг",
   "addTimeLabel": "ЧАС",
@@ -107,6 +109,14 @@
   "settingsLanguageSystem": "Системна",
   "settingsLanguageEnglish": "English",
   "settingsLanguageUkrainian": "Українська",
+  "settingsMedicineRegistry": "РЕЄСТР ЛІКІВ",
+  "registryTitle": "Зареєстровані ліки",
+  "registryPreparing": "Підготовка списку ліків…",
+  "registryEntryCount": "{count, plural, one{{count} препарат} few{{count} препарати} many{{count} препаратів} other{{count} препарату}}",
+  "registryImportButton": "Імпорт CSV",
+  "registryImportSuccess": "{count, plural, one{Імпортовано {count} препарат} few{Імпортовано {count} препарати} many{Імпортовано {count} препаратів} other{Імпортовано {count} препарату}}",
+  "registryImportFailed": "Не вдалося імпортувати цей файл",
+  "registryImportInvalidFile": "Цей CSV-файл не є підтримуваним реєстром ліків.",
 
   "errorNotFound": "Не знайдено: {id}",
   "errorUnknown": "Щось пішло не так: {error}"
