@@ -12,5 +12,8 @@ sealed class AppException with _$AppException implements Exception {
 
   const factory AppException.notFound({required String id}) = NotFoundFailure;
 
+  const factory AppException.invalidRegistryFile({required String message}) =
+      InvalidRegistryFile;
+
   const factory AppException.unknown({required Object error}) = UnknownFailure;
 }

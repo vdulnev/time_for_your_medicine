@@ -11,6 +11,8 @@ import 'package:time_for_your_medicine/core/models/pill_kind.dart';
 import 'package:time_for_your_medicine/core/state/providers.dart';
 import 'package:time_for_your_medicine/core/util/day_utils.dart';
 
+import 'support/seed_test_data.dart';
+
 void main() {
   late AppDatabase db;
   late MedicineRepository repo;
@@ -22,11 +24,11 @@ void main() {
 
   tearDown(() => db.close());
 
-  test('seeds four medicines on first load', () async {
+  test('starts with no medicines or dose history', () async {
     final result = await repo.loadAll();
     final data = result.getOrElse((_) => throw StateError('load failed'));
-    expect(data.meds.length, 4);
-    expect(data.meds.first.name, 'Metformin');
+    expect(data.meds, isEmpty);
+    expect(data.taken, isEmpty);
   });
 
   test('addMedicine persists a new row', () async {
@@ -37,10 +39,13 @@ void main() {
   });
 
   test('deleteMedicine removes the med and its dose log', () async {
-    await repo.deleteMedicine('m1');
+    final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
+    await repo.addMedicine(med);
+    await repo.setTaken(DayUtils.iso(kToday), med.id, true);
+    await repo.deleteMedicine(med.id);
     final data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
-    expect(data.meds.any((m) => m.id == 'm1'), isFalse);
-    expect(data.taken.keys.any((k) => k.endsWith('|m1')), isFalse);
+    expect(data.meds.any((m) => m.id == med.id), isFalse);
+    expect(data.taken.keys.any((k) => k.endsWith('|${med.id}')), isFalse);
   });
 
   test('localeOverride persists across save/load', () async {
@@ -66,6 +71,7 @@ void main() {
   });
 
   test('toggleTaken completing the day returns true', () async {
+    await seedTestMedicines(db);
     final container = ProviderContainer(
       overrides: [
         databaseProvider.overrideWithValue(db),

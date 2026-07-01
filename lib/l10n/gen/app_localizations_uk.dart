@@ -143,6 +143,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get addMedicineNameHint => 'напр. Амоксицилін';
 
   @override
+  String get registryNoResults => 'У реєстрі нічого не знайдено';
+
+  @override
+  String get registrySearchFailed => 'Не вдалося виконати пошук у реєстрі';
+
+  @override
   String get addDoseLabel => 'ДОЗА';
 
   @override
@@ -359,6 +365,51 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get settingsLanguageUkrainian => 'Українська';
+
+  @override
+  String get settingsMedicineRegistry => 'РЕЄСТР ЛІКІВ';
+
+  @override
+  String get registryTitle => 'Зареєстровані ліки';
+
+  @override
+  String get registryPreparing => 'Підготовка списку ліків…';
+
+  @override
+  String registryEntryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count препарату',
+      many: '$count препаратів',
+      few: '$count препарати',
+      one: '$count препарат',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get registryImportButton => 'Імпорт CSV';
+
+  @override
+  String registryImportSuccess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Імпортовано $count препарату',
+      many: 'Імпортовано $count препаратів',
+      few: 'Імпортовано $count препарати',
+      one: 'Імпортовано $count препарат',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get registryImportFailed => 'Не вдалося імпортувати цей файл';
+
+  @override
+  String get registryImportInvalidFile =>
+      'Цей CSV-файл не є підтримуваним реєстром ліків.';
 
   @override
   String errorNotFound(String id) {

@@ -33,6 +33,9 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Local registry import source; the app ships the generated SQLite seed.
+/reestr.csv
+
 # Symbolication related
 app.*.symbols
 

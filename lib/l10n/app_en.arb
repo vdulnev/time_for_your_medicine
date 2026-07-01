@@ -74,6 +74,8 @@
   "addPhoto": "add photo",
   "addMedicineNameLabel": "MEDICINE NAME",
   "addMedicineNameHint": "e.g. Amoxicillin",
+  "registryNoResults": "No registry matches",
+  "registrySearchFailed": "Couldn’t search the medicine registry",
   "addDoseLabel": "DOSE",
   "addDoseHint": "500 mg",
   "addTimeLabel": "TIME",
@@ -197,6 +199,24 @@
   "settingsLanguageSystem": "System",
   "settingsLanguageEnglish": "English",
   "settingsLanguageUkrainian": "Українська",
+  "settingsMedicineRegistry": "MEDICINE REGISTRY",
+  "registryTitle": "Registered medicines",
+  "registryPreparing": "Preparing medicine list…",
+  "registryEntryCount": "{count, plural, one{{count} medicine} other{{count} medicines}}",
+  "@registryEntryCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "registryImportButton": "Import CSV",
+  "registryImportSuccess": "{count, plural, one{{count} medicine imported} other{{count} medicines imported}}",
+  "@registryImportSuccess": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "registryImportFailed": "Couldn’t import this file",
+  "registryImportInvalidFile": "This isn’t a supported medicine registry CSV.",
 
   "errorNotFound": "Not found: {id}",
   "@errorNotFound": {

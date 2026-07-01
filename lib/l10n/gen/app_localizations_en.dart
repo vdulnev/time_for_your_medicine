@@ -139,6 +139,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addMedicineNameHint => 'e.g. Amoxicillin';
 
   @override
+  String get registryNoResults => 'No registry matches';
+
+  @override
+  String get registrySearchFailed => 'Couldn’t search the medicine registry';
+
+  @override
   String get addDoseLabel => 'DOSE';
 
   @override
@@ -347,6 +353,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLanguageUkrainian => 'Українська';
+
+  @override
+  String get settingsMedicineRegistry => 'MEDICINE REGISTRY';
+
+  @override
+  String get registryTitle => 'Registered medicines';
+
+  @override
+  String get registryPreparing => 'Preparing medicine list…';
+
+  @override
+  String registryEntryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count medicines',
+      one: '$count medicine',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get registryImportButton => 'Import CSV';
+
+  @override
+  String registryImportSuccess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count medicines imported',
+      one: '$count medicine imported',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get registryImportFailed => 'Couldn’t import this file';
+
+  @override
+  String get registryImportInvalidFile =>
+      'This isn’t a supported medicine registry CSV.';
 
   @override
   String errorNotFound(String id) {

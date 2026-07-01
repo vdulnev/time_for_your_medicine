@@ -314,6 +314,18 @@ abstract class AppLocalizations {
   /// **'e.g. Amoxicillin'**
   String get addMedicineNameHint;
 
+  /// No description provided for @registryNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No registry matches'**
+  String get registryNoResults;
+
+  /// No description provided for @registrySearchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t search the medicine registry'**
+  String get registrySearchFailed;
+
   /// No description provided for @addDoseLabel.
   ///
   /// In en, this message translates to:
@@ -637,6 +649,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Українська'**
   String get settingsLanguageUkrainian;
+
+  /// No description provided for @settingsMedicineRegistry.
+  ///
+  /// In en, this message translates to:
+  /// **'MEDICINE REGISTRY'**
+  String get settingsMedicineRegistry;
+
+  /// No description provided for @registryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Registered medicines'**
+  String get registryTitle;
+
+  /// No description provided for @registryPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing medicine list…'**
+  String get registryPreparing;
+
+  /// No description provided for @registryEntryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} medicine} other{{count} medicines}}'**
+  String registryEntryCount(int count);
+
+  /// No description provided for @registryImportButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Import CSV'**
+  String get registryImportButton;
+
+  /// No description provided for @registryImportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} medicine imported} other{{count} medicines imported}}'**
+  String registryImportSuccess(int count);
+
+  /// No description provided for @registryImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t import this file'**
+  String get registryImportFailed;
+
+  /// No description provided for @registryImportInvalidFile.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn’t a supported medicine registry CSV.'**
+  String get registryImportInvalidFile;
 
   /// No description provided for @errorNotFound.
   ///

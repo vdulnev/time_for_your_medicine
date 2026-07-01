@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -6,9 +9,12 @@ import '../db/app_database.dart';
 import '../error/app_exception.dart';
 import '../models/app_settings.dart';
 import '../models/medicine.dart';
+import '../models/medicine_registry.dart';
 import '../models/period.dart';
 import '../models/pill_kind.dart';
 import '../state/data_state.dart';
+import '../util/medicine_registry_csv.dart';
+import 'medicine_registry_seed.dart';
 
 /// The only gateway to the drift database. Returns `Either<AppException, T>`
 /// and logs all operations through [Talker].
@@ -134,6 +140,114 @@ class MedicineRepository {
       }
       return unit;
     });
+  }
+
+  Future<Either<AppException, MedicineRegistryStatus>>
+  ensureMedicineRegistry() {
+    return _guard('ensureMedicineRegistry', () async {
+      final existing = await (_db.select(
+        _db.medicineRegistryMeta,
+      )..limit(1)).getSingleOrNull();
+      if (existing != null) return _toRegistryStatus(existing);
+
+      final compressed = base64.decode(medicineRegistrySeedBase64);
+      final csvBytes = Uint8List.fromList(gzip.decode(compressed));
+      final items = await parseMedicineRegistryBytes(csvBytes);
+      return _replaceMedicineRegistry(
+        items,
+        medicineRegistrySeedSource,
+        DateTime.parse(medicineRegistrySeedGeneratedAt),
+      );
+    });
+  }
+
+  Future<Either<AppException, List<MedicineRegistryItem>>>
+  searchMedicineRegistry(String query, {int limit = 30}) {
+    return _guard('searchMedicineRegistry', () async {
+      final normalized = query.trim().toLowerCase();
+      if (normalized.length < 2) return const <MedicineRegistryItem>[];
+      final rows =
+          await (_db.select(_db.medicineRegistryEntries)
+                ..where((row) => row.searchText.contains(normalized))
+                ..orderBy([(row) => OrderingTerm.asc(row.name)])
+                ..limit(limit))
+              .get();
+      return [
+        for (final row in rows)
+          MedicineRegistryItem(
+            name: row.name,
+            genericName: row.genericName,
+            form: row.form,
+          ),
+      ];
+    });
+  }
+
+  Future<Either<AppException, MedicineRegistryStatus>>
+  replaceMedicineRegistryFromCsv(
+    Stream<List<int>> bytes,
+    String sourceName,
+  ) async {
+    try {
+      final items = await parseMedicineRegistryCsv(bytes);
+      return _guard('replaceMedicineRegistryFromCsv', () {
+        return _replaceMedicineRegistry(items, sourceName, DateTime.now());
+      });
+    } on FormatException catch (error, st) {
+      _talker.handle(error, st, 'registry: invalid CSV');
+      return Left(AppException.invalidRegistryFile(message: error.message));
+    } on Object catch (error, st) {
+      _talker.handle(error, st, 'registry: import failed');
+      return Left(AppException.unknown(error: error));
+    }
+  }
+
+  Future<MedicineRegistryStatus> _replaceMedicineRegistry(
+    List<MedicineRegistryItem> items,
+    String sourceName,
+    DateTime importedAt,
+  ) async {
+    await _db.transaction(() async {
+      await _db.delete(_db.medicineRegistryEntries).go();
+      await _db.batch((batch) {
+        batch.insertAll(_db.medicineRegistryEntries, [
+          for (final item in items)
+            MedicineRegistryEntriesCompanion.insert(
+              name: item.name,
+              genericName: item.genericName,
+              form: item.form,
+              searchText: _registrySearchText(item),
+            ),
+        ]);
+        batch.insert(
+          _db.medicineRegistryMeta,
+          MedicineRegistryMetaCompanion.insert(
+            id: const Value(0),
+            sourceName: sourceName,
+            importedAt: importedAt,
+            entryCount: items.length,
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      });
+    });
+    return MedicineRegistryStatus(
+      sourceName: sourceName,
+      importedAt: importedAt,
+      entryCount: items.length,
+    );
+  }
+
+  MedicineRegistryStatus _toRegistryStatus(MedicineRegistryMetaRow row) {
+    return MedicineRegistryStatus(
+      sourceName: row.sourceName,
+      importedAt: row.importedAt,
+      entryCount: row.entryCount,
+    );
+  }
+
+  String _registrySearchText(MedicineRegistryItem item) {
+    return '${item.name} ${item.genericName} ${item.form}'.toLowerCase();
   }
 
   Medicine _toMedicine(MedicineRow r) => Medicine(

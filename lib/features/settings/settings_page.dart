@@ -141,6 +141,9 @@ class _SettingsContent extends ConsumerWidget {
                 onSelect: controller.setLocaleOverride,
               ),
               const SizedBox(height: 14),
+              _SectionLabel(l10n.settingsMedicineRegistry),
+              const _MedicineRegistryCard(),
+              const SizedBox(height: 14),
               _SectionLabel(l10n.settingsMore),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -174,6 +177,83 @@ class _SettingsContent extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _MedicineRegistryCard extends ConsumerWidget {
+  const _MedicineRegistryCard();
+
+  Future<void> _import(BuildContext context, WidgetRef ref) async {
+    final imported = await ref
+        .read(medicineRegistryProvider.notifier)
+        .importCsv();
+    if (!context.mounted) return;
+    if (imported == null) return;
+    final l10n = context.l10n;
+    final status = ref.read(medicineRegistryProvider).valueOrNull;
+    final message = imported && status != null
+        ? l10n.registryImportSuccess(status.entryCount)
+        : l10n.registryImportFailed;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final registry = ref.watch(medicineRegistryProvider);
+    final l10n = context.l10n;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.medication_outlined,
+            color: AppColors.primary,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.registryTitle,
+                  style: AppText.jakarta(size: 13.5, weight: FontWeight.w700),
+                ),
+                registry.when(
+                  loading: () => Text(
+                    l10n.registryPreparing,
+                    style: AppText.jakarta(size: 10.5, color: AppColors.muted2),
+                  ),
+                  error: (_, _) => Text(
+                    l10n.registryImportFailed,
+                    style: AppText.jakarta(size: 10.5, color: AppColors.danger),
+                  ),
+                  data: (status) => Text(
+                    '${l10n.registryEntryCount(status.entryCount)} · '
+                    '${status.sourceName}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.jakarta(size: 10.5, color: AppColors.muted2),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: registry.isLoading ? null : () => _import(context, ref),
+            child: Text(l10n.registryImportButton),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -11,6 +11,8 @@ import 'package:time_for_your_medicine/core/state/providers.dart';
 import 'package:time_for_your_medicine/core/theme/app_theme.dart';
 import 'package:time_for_your_medicine/l10n/gen/app_localizations.dart';
 
+import 'support/seed_test_data.dart';
+
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
@@ -19,6 +21,7 @@ void main() {
   ) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
+    await seedTestMedicines(db);
     final router = AppRouter();
 
     await tester.pumpWidget(
@@ -51,6 +54,7 @@ void main() {
   ) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
+    await seedTestMedicines(db);
     final router = AppRouter();
 
     await tester.pumpWidget(
@@ -70,7 +74,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Seed: only Metformin taken today → 3 left (few → "прийоми").
+    // Fixture: only Metformin taken today → 3 left (few → "прийоми").
     expect(
       find.textContaining('Залишилось 3 прийоми сьогодні'),
       findsOneWidget,

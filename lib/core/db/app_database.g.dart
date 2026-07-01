@@ -1458,6 +1458,678 @@ class NotifOffRowsCompanion extends UpdateCompanion<NotifOffRow> {
   }
 }
 
+class $MedicineRegistryEntriesTable extends MedicineRegistryEntries
+    with TableInfo<$MedicineRegistryEntriesTable, MedicineRegistryRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MedicineRegistryEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _genericNameMeta = const VerificationMeta(
+    'genericName',
+  );
+  @override
+  late final GeneratedColumn<String> genericName = GeneratedColumn<String>(
+    'generic_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _formMeta = const VerificationMeta('form');
+  @override
+  late final GeneratedColumn<String> form = GeneratedColumn<String>(
+    'form',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _searchTextMeta = const VerificationMeta(
+    'searchText',
+  );
+  @override
+  late final GeneratedColumn<String> searchText = GeneratedColumn<String>(
+    'search_text',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    genericName,
+    form,
+    searchText,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'medicine_registry_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MedicineRegistryRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('generic_name')) {
+      context.handle(
+        _genericNameMeta,
+        genericName.isAcceptableOrUnknown(
+          data['generic_name']!,
+          _genericNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_genericNameMeta);
+    }
+    if (data.containsKey('form')) {
+      context.handle(
+        _formMeta,
+        form.isAcceptableOrUnknown(data['form']!, _formMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_formMeta);
+    }
+    if (data.containsKey('search_text')) {
+      context.handle(
+        _searchTextMeta,
+        searchText.isAcceptableOrUnknown(data['search_text']!, _searchTextMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_searchTextMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MedicineRegistryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MedicineRegistryRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      genericName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}generic_name'],
+      )!,
+      form: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}form'],
+      )!,
+      searchText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}search_text'],
+      )!,
+    );
+  }
+
+  @override
+  $MedicineRegistryEntriesTable createAlias(String alias) {
+    return $MedicineRegistryEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class MedicineRegistryRow extends DataClass
+    implements Insertable<MedicineRegistryRow> {
+  final int id;
+  final String name;
+  final String genericName;
+  final String form;
+  final String searchText;
+  const MedicineRegistryRow({
+    required this.id,
+    required this.name,
+    required this.genericName,
+    required this.form,
+    required this.searchText,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['generic_name'] = Variable<String>(genericName);
+    map['form'] = Variable<String>(form);
+    map['search_text'] = Variable<String>(searchText);
+    return map;
+  }
+
+  MedicineRegistryEntriesCompanion toCompanion(bool nullToAbsent) {
+    return MedicineRegistryEntriesCompanion(
+      id: Value(id),
+      name: Value(name),
+      genericName: Value(genericName),
+      form: Value(form),
+      searchText: Value(searchText),
+    );
+  }
+
+  factory MedicineRegistryRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MedicineRegistryRow(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      genericName: serializer.fromJson<String>(json['genericName']),
+      form: serializer.fromJson<String>(json['form']),
+      searchText: serializer.fromJson<String>(json['searchText']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'genericName': serializer.toJson<String>(genericName),
+      'form': serializer.toJson<String>(form),
+      'searchText': serializer.toJson<String>(searchText),
+    };
+  }
+
+  MedicineRegistryRow copyWith({
+    int? id,
+    String? name,
+    String? genericName,
+    String? form,
+    String? searchText,
+  }) => MedicineRegistryRow(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    genericName: genericName ?? this.genericName,
+    form: form ?? this.form,
+    searchText: searchText ?? this.searchText,
+  );
+  MedicineRegistryRow copyWithCompanion(MedicineRegistryEntriesCompanion data) {
+    return MedicineRegistryRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      genericName: data.genericName.present
+          ? data.genericName.value
+          : this.genericName,
+      form: data.form.present ? data.form.value : this.form,
+      searchText: data.searchText.present
+          ? data.searchText.value
+          : this.searchText,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MedicineRegistryRow(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('genericName: $genericName, ')
+          ..write('form: $form, ')
+          ..write('searchText: $searchText')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, genericName, form, searchText);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MedicineRegistryRow &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.genericName == this.genericName &&
+          other.form == this.form &&
+          other.searchText == this.searchText);
+}
+
+class MedicineRegistryEntriesCompanion
+    extends UpdateCompanion<MedicineRegistryRow> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> genericName;
+  final Value<String> form;
+  final Value<String> searchText;
+  const MedicineRegistryEntriesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.genericName = const Value.absent(),
+    this.form = const Value.absent(),
+    this.searchText = const Value.absent(),
+  });
+  MedicineRegistryEntriesCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required String genericName,
+    required String form,
+    required String searchText,
+  }) : name = Value(name),
+       genericName = Value(genericName),
+       form = Value(form),
+       searchText = Value(searchText);
+  static Insertable<MedicineRegistryRow> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? genericName,
+    Expression<String>? form,
+    Expression<String>? searchText,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (genericName != null) 'generic_name': genericName,
+      if (form != null) 'form': form,
+      if (searchText != null) 'search_text': searchText,
+    });
+  }
+
+  MedicineRegistryEntriesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<String>? genericName,
+    Value<String>? form,
+    Value<String>? searchText,
+  }) {
+    return MedicineRegistryEntriesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      genericName: genericName ?? this.genericName,
+      form: form ?? this.form,
+      searchText: searchText ?? this.searchText,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (genericName.present) {
+      map['generic_name'] = Variable<String>(genericName.value);
+    }
+    if (form.present) {
+      map['form'] = Variable<String>(form.value);
+    }
+    if (searchText.present) {
+      map['search_text'] = Variable<String>(searchText.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MedicineRegistryEntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('genericName: $genericName, ')
+          ..write('form: $form, ')
+          ..write('searchText: $searchText')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MedicineRegistryMetaTable extends MedicineRegistryMeta
+    with TableInfo<$MedicineRegistryMetaTable, MedicineRegistryMetaRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MedicineRegistryMetaTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _sourceNameMeta = const VerificationMeta(
+    'sourceName',
+  );
+  @override
+  late final GeneratedColumn<String> sourceName = GeneratedColumn<String>(
+    'source_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _importedAtMeta = const VerificationMeta(
+    'importedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> importedAt = GeneratedColumn<DateTime>(
+    'imported_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _entryCountMeta = const VerificationMeta(
+    'entryCount',
+  );
+  @override
+  late final GeneratedColumn<int> entryCount = GeneratedColumn<int>(
+    'entry_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sourceName,
+    importedAt,
+    entryCount,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'medicine_registry_meta';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MedicineRegistryMetaRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('source_name')) {
+      context.handle(
+        _sourceNameMeta,
+        sourceName.isAcceptableOrUnknown(data['source_name']!, _sourceNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceNameMeta);
+    }
+    if (data.containsKey('imported_at')) {
+      context.handle(
+        _importedAtMeta,
+        importedAt.isAcceptableOrUnknown(data['imported_at']!, _importedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_importedAtMeta);
+    }
+    if (data.containsKey('entry_count')) {
+      context.handle(
+        _entryCountMeta,
+        entryCount.isAcceptableOrUnknown(data['entry_count']!, _entryCountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entryCountMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MedicineRegistryMetaRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MedicineRegistryMetaRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      sourceName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_name'],
+      )!,
+      importedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}imported_at'],
+      )!,
+      entryCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}entry_count'],
+      )!,
+    );
+  }
+
+  @override
+  $MedicineRegistryMetaTable createAlias(String alias) {
+    return $MedicineRegistryMetaTable(attachedDatabase, alias);
+  }
+}
+
+class MedicineRegistryMetaRow extends DataClass
+    implements Insertable<MedicineRegistryMetaRow> {
+  final int id;
+  final String sourceName;
+  final DateTime importedAt;
+  final int entryCount;
+  const MedicineRegistryMetaRow({
+    required this.id,
+    required this.sourceName,
+    required this.importedAt,
+    required this.entryCount,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['source_name'] = Variable<String>(sourceName);
+    map['imported_at'] = Variable<DateTime>(importedAt);
+    map['entry_count'] = Variable<int>(entryCount);
+    return map;
+  }
+
+  MedicineRegistryMetaCompanion toCompanion(bool nullToAbsent) {
+    return MedicineRegistryMetaCompanion(
+      id: Value(id),
+      sourceName: Value(sourceName),
+      importedAt: Value(importedAt),
+      entryCount: Value(entryCount),
+    );
+  }
+
+  factory MedicineRegistryMetaRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MedicineRegistryMetaRow(
+      id: serializer.fromJson<int>(json['id']),
+      sourceName: serializer.fromJson<String>(json['sourceName']),
+      importedAt: serializer.fromJson<DateTime>(json['importedAt']),
+      entryCount: serializer.fromJson<int>(json['entryCount']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'sourceName': serializer.toJson<String>(sourceName),
+      'importedAt': serializer.toJson<DateTime>(importedAt),
+      'entryCount': serializer.toJson<int>(entryCount),
+    };
+  }
+
+  MedicineRegistryMetaRow copyWith({
+    int? id,
+    String? sourceName,
+    DateTime? importedAt,
+    int? entryCount,
+  }) => MedicineRegistryMetaRow(
+    id: id ?? this.id,
+    sourceName: sourceName ?? this.sourceName,
+    importedAt: importedAt ?? this.importedAt,
+    entryCount: entryCount ?? this.entryCount,
+  );
+  MedicineRegistryMetaRow copyWithCompanion(
+    MedicineRegistryMetaCompanion data,
+  ) {
+    return MedicineRegistryMetaRow(
+      id: data.id.present ? data.id.value : this.id,
+      sourceName: data.sourceName.present
+          ? data.sourceName.value
+          : this.sourceName,
+      importedAt: data.importedAt.present
+          ? data.importedAt.value
+          : this.importedAt,
+      entryCount: data.entryCount.present
+          ? data.entryCount.value
+          : this.entryCount,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MedicineRegistryMetaRow(')
+          ..write('id: $id, ')
+          ..write('sourceName: $sourceName, ')
+          ..write('importedAt: $importedAt, ')
+          ..write('entryCount: $entryCount')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, sourceName, importedAt, entryCount);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MedicineRegistryMetaRow &&
+          other.id == this.id &&
+          other.sourceName == this.sourceName &&
+          other.importedAt == this.importedAt &&
+          other.entryCount == this.entryCount);
+}
+
+class MedicineRegistryMetaCompanion
+    extends UpdateCompanion<MedicineRegistryMetaRow> {
+  final Value<int> id;
+  final Value<String> sourceName;
+  final Value<DateTime> importedAt;
+  final Value<int> entryCount;
+  const MedicineRegistryMetaCompanion({
+    this.id = const Value.absent(),
+    this.sourceName = const Value.absent(),
+    this.importedAt = const Value.absent(),
+    this.entryCount = const Value.absent(),
+  });
+  MedicineRegistryMetaCompanion.insert({
+    this.id = const Value.absent(),
+    required String sourceName,
+    required DateTime importedAt,
+    required int entryCount,
+  }) : sourceName = Value(sourceName),
+       importedAt = Value(importedAt),
+       entryCount = Value(entryCount);
+  static Insertable<MedicineRegistryMetaRow> custom({
+    Expression<int>? id,
+    Expression<String>? sourceName,
+    Expression<DateTime>? importedAt,
+    Expression<int>? entryCount,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sourceName != null) 'source_name': sourceName,
+      if (importedAt != null) 'imported_at': importedAt,
+      if (entryCount != null) 'entry_count': entryCount,
+    });
+  }
+
+  MedicineRegistryMetaCompanion copyWith({
+    Value<int>? id,
+    Value<String>? sourceName,
+    Value<DateTime>? importedAt,
+    Value<int>? entryCount,
+  }) {
+    return MedicineRegistryMetaCompanion(
+      id: id ?? this.id,
+      sourceName: sourceName ?? this.sourceName,
+      importedAt: importedAt ?? this.importedAt,
+      entryCount: entryCount ?? this.entryCount,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (sourceName.present) {
+      map['source_name'] = Variable<String>(sourceName.value);
+    }
+    if (importedAt.present) {
+      map['imported_at'] = Variable<DateTime>(importedAt.value);
+    }
+    if (entryCount.present) {
+      map['entry_count'] = Variable<int>(entryCount.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MedicineRegistryMetaCompanion(')
+          ..write('id: $id, ')
+          ..write('sourceName: $sourceName, ')
+          ..write('importedAt: $importedAt, ')
+          ..write('entryCount: $entryCount')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1465,6 +2137,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $DoseLogTable doseLog = $DoseLogTable(this);
   late final $SettingsRowsTable settingsRows = $SettingsRowsTable(this);
   late final $NotifOffRowsTable notifOffRows = $NotifOffRowsTable(this);
+  late final $MedicineRegistryEntriesTable medicineRegistryEntries =
+      $MedicineRegistryEntriesTable(this);
+  late final $MedicineRegistryMetaTable medicineRegistryMeta =
+      $MedicineRegistryMetaTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1474,6 +2150,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     doseLog,
     settingsRows,
     notifOffRows,
+    medicineRegistryEntries,
+    medicineRegistryMeta,
   ];
 }
 
@@ -2274,6 +2952,420 @@ typedef $$NotifOffRowsTableProcessedTableManager =
       NotifOffRow,
       PrefetchHooks Function()
     >;
+typedef $$MedicineRegistryEntriesTableCreateCompanionBuilder =
+    MedicineRegistryEntriesCompanion Function({
+      Value<int> id,
+      required String name,
+      required String genericName,
+      required String form,
+      required String searchText,
+    });
+typedef $$MedicineRegistryEntriesTableUpdateCompanionBuilder =
+    MedicineRegistryEntriesCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<String> genericName,
+      Value<String> form,
+      Value<String> searchText,
+    });
+
+class $$MedicineRegistryEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $MedicineRegistryEntriesTable> {
+  $$MedicineRegistryEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get genericName => $composableBuilder(
+    column: $table.genericName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get form => $composableBuilder(
+    column: $table.form,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get searchText => $composableBuilder(
+    column: $table.searchText,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MedicineRegistryEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $MedicineRegistryEntriesTable> {
+  $$MedicineRegistryEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get genericName => $composableBuilder(
+    column: $table.genericName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get form => $composableBuilder(
+    column: $table.form,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get searchText => $composableBuilder(
+    column: $table.searchText,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MedicineRegistryEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MedicineRegistryEntriesTable> {
+  $$MedicineRegistryEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get genericName => $composableBuilder(
+    column: $table.genericName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get form =>
+      $composableBuilder(column: $table.form, builder: (column) => column);
+
+  GeneratedColumn<String> get searchText => $composableBuilder(
+    column: $table.searchText,
+    builder: (column) => column,
+  );
+}
+
+class $$MedicineRegistryEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MedicineRegistryEntriesTable,
+          MedicineRegistryRow,
+          $$MedicineRegistryEntriesTableFilterComposer,
+          $$MedicineRegistryEntriesTableOrderingComposer,
+          $$MedicineRegistryEntriesTableAnnotationComposer,
+          $$MedicineRegistryEntriesTableCreateCompanionBuilder,
+          $$MedicineRegistryEntriesTableUpdateCompanionBuilder,
+          (
+            MedicineRegistryRow,
+            BaseReferences<
+              _$AppDatabase,
+              $MedicineRegistryEntriesTable,
+              MedicineRegistryRow
+            >,
+          ),
+          MedicineRegistryRow,
+          PrefetchHooks Function()
+        > {
+  $$MedicineRegistryEntriesTableTableManager(
+    _$AppDatabase db,
+    $MedicineRegistryEntriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MedicineRegistryEntriesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$MedicineRegistryEntriesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$MedicineRegistryEntriesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> genericName = const Value.absent(),
+                Value<String> form = const Value.absent(),
+                Value<String> searchText = const Value.absent(),
+              }) => MedicineRegistryEntriesCompanion(
+                id: id,
+                name: name,
+                genericName: genericName,
+                form: form,
+                searchText: searchText,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required String genericName,
+                required String form,
+                required String searchText,
+              }) => MedicineRegistryEntriesCompanion.insert(
+                id: id,
+                name: name,
+                genericName: genericName,
+                form: form,
+                searchText: searchText,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MedicineRegistryEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MedicineRegistryEntriesTable,
+      MedicineRegistryRow,
+      $$MedicineRegistryEntriesTableFilterComposer,
+      $$MedicineRegistryEntriesTableOrderingComposer,
+      $$MedicineRegistryEntriesTableAnnotationComposer,
+      $$MedicineRegistryEntriesTableCreateCompanionBuilder,
+      $$MedicineRegistryEntriesTableUpdateCompanionBuilder,
+      (
+        MedicineRegistryRow,
+        BaseReferences<
+          _$AppDatabase,
+          $MedicineRegistryEntriesTable,
+          MedicineRegistryRow
+        >,
+      ),
+      MedicineRegistryRow,
+      PrefetchHooks Function()
+    >;
+typedef $$MedicineRegistryMetaTableCreateCompanionBuilder =
+    MedicineRegistryMetaCompanion Function({
+      Value<int> id,
+      required String sourceName,
+      required DateTime importedAt,
+      required int entryCount,
+    });
+typedef $$MedicineRegistryMetaTableUpdateCompanionBuilder =
+    MedicineRegistryMetaCompanion Function({
+      Value<int> id,
+      Value<String> sourceName,
+      Value<DateTime> importedAt,
+      Value<int> entryCount,
+    });
+
+class $$MedicineRegistryMetaTableFilterComposer
+    extends Composer<_$AppDatabase, $MedicineRegistryMetaTable> {
+  $$MedicineRegistryMetaTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceName => $composableBuilder(
+    column: $table.sourceName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get importedAt => $composableBuilder(
+    column: $table.importedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get entryCount => $composableBuilder(
+    column: $table.entryCount,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MedicineRegistryMetaTableOrderingComposer
+    extends Composer<_$AppDatabase, $MedicineRegistryMetaTable> {
+  $$MedicineRegistryMetaTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceName => $composableBuilder(
+    column: $table.sourceName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get importedAt => $composableBuilder(
+    column: $table.importedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get entryCount => $composableBuilder(
+    column: $table.entryCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MedicineRegistryMetaTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MedicineRegistryMetaTable> {
+  $$MedicineRegistryMetaTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceName => $composableBuilder(
+    column: $table.sourceName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get importedAt => $composableBuilder(
+    column: $table.importedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get entryCount => $composableBuilder(
+    column: $table.entryCount,
+    builder: (column) => column,
+  );
+}
+
+class $$MedicineRegistryMetaTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MedicineRegistryMetaTable,
+          MedicineRegistryMetaRow,
+          $$MedicineRegistryMetaTableFilterComposer,
+          $$MedicineRegistryMetaTableOrderingComposer,
+          $$MedicineRegistryMetaTableAnnotationComposer,
+          $$MedicineRegistryMetaTableCreateCompanionBuilder,
+          $$MedicineRegistryMetaTableUpdateCompanionBuilder,
+          (
+            MedicineRegistryMetaRow,
+            BaseReferences<
+              _$AppDatabase,
+              $MedicineRegistryMetaTable,
+              MedicineRegistryMetaRow
+            >,
+          ),
+          MedicineRegistryMetaRow,
+          PrefetchHooks Function()
+        > {
+  $$MedicineRegistryMetaTableTableManager(
+    _$AppDatabase db,
+    $MedicineRegistryMetaTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MedicineRegistryMetaTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MedicineRegistryMetaTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$MedicineRegistryMetaTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> sourceName = const Value.absent(),
+                Value<DateTime> importedAt = const Value.absent(),
+                Value<int> entryCount = const Value.absent(),
+              }) => MedicineRegistryMetaCompanion(
+                id: id,
+                sourceName: sourceName,
+                importedAt: importedAt,
+                entryCount: entryCount,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String sourceName,
+                required DateTime importedAt,
+                required int entryCount,
+              }) => MedicineRegistryMetaCompanion.insert(
+                id: id,
+                sourceName: sourceName,
+                importedAt: importedAt,
+                entryCount: entryCount,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MedicineRegistryMetaTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MedicineRegistryMetaTable,
+      MedicineRegistryMetaRow,
+      $$MedicineRegistryMetaTableFilterComposer,
+      $$MedicineRegistryMetaTableOrderingComposer,
+      $$MedicineRegistryMetaTableAnnotationComposer,
+      $$MedicineRegistryMetaTableCreateCompanionBuilder,
+      $$MedicineRegistryMetaTableUpdateCompanionBuilder,
+      (
+        MedicineRegistryMetaRow,
+        BaseReferences<
+          _$AppDatabase,
+          $MedicineRegistryMetaTable,
+          MedicineRegistryMetaRow
+        >,
+      ),
+      MedicineRegistryMetaRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2286,4 +3378,11 @@ class $AppDatabaseManager {
       $$SettingsRowsTableTableManager(_db, _db.settingsRows);
   $$NotifOffRowsTableTableManager get notifOffRows =>
       $$NotifOffRowsTableTableManager(_db, _db.notifOffRows);
+  $$MedicineRegistryEntriesTableTableManager get medicineRegistryEntries =>
+      $$MedicineRegistryEntriesTableTableManager(
+        _db,
+        _db.medicineRegistryEntries,
+      );
+  $$MedicineRegistryMetaTableTableManager get medicineRegistryMeta =>
+      $$MedicineRegistryMetaTableTableManager(_db, _db.medicineRegistryMeta);
 }

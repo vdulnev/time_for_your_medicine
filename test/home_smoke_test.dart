@@ -11,7 +11,7 @@ import 'package:time_for_your_medicine/core/state/providers.dart';
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
-  testWidgets('boots to Home and shows a seeded medicine', (tester) async {
+  testWidgets('boots to an empty Home without demo medicines', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
@@ -26,7 +26,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Metformin'), findsOneWidget);
-    expect(find.text('Morning'), findsOneWidget);
+    expect(find.text('Metformin'), findsNothing);
+    expect(find.text('No medicines yet.\nTap + to add one.'), findsOneWidget);
   });
 }
