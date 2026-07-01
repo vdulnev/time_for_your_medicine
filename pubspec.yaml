@@ -26,6 +26,9 @@ dependencies:
   # Functional error handling
   fpdart: ^1.1.1
 
+  # Testable wall-clock access ("today")
+  clock: ^1.1.2
+
   # Models / unions
   freezed_annotation: ^3.1.0
   json_annotation: ^4.11.0

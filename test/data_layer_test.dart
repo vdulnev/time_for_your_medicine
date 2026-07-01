@@ -13,6 +13,7 @@ import 'package:time_for_your_medicine/core/models/pill_kind.dart';
 import 'package:time_for_your_medicine/core/state/providers.dart';
 import 'package:time_for_your_medicine/core/util/day_utils.dart';
 
+import 'support/fixed_clock.dart';
 import 'support/seed_test_data.dart';
 
 void main() {
@@ -41,43 +42,62 @@ void main() {
   });
 
   test('deleteMedicine removes the med and its dose log', () async {
-    final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
-    await repo.addMedicine(med);
-    await repo.setTaken(DayUtils.iso(kToday), med.id, med.times.first.id, true);
-    await repo.deleteMedicine(med.id);
-    final data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
-    expect(data.meds.any((m) => m.id == med.id), isFalse);
-    expect(data.taken.keys.any((k) => k.split('|')[1] == med.id), isFalse);
+    await withFixedToday(() async {
+      final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
+      await repo.addMedicine(med);
+      await repo.setTaken(
+        DayUtils.iso(kToday),
+        med.id,
+        med.times.first.id,
+        true,
+      );
+      await repo.deleteMedicine(med.id);
+      final data = (await repo.loadAll()).getOrElse(
+        (_) => throw StateError('x'),
+      );
+      expect(data.meds.any((m) => m.id == med.id), isFalse);
+      expect(data.taken.keys.any((k) => k.split('|')[1] == med.id), isFalse);
+    });
   });
 
   test('addMedicine persists multiple dose times a day', () async {
-    final med = Medicine(
-      id: 'test-multi',
-      name: 'Amoxicillin',
-      dose: '500 mg',
-      times: const [
-        DoseTime(id: 't0', time: '8:00 AM', period: Period.morning),
-        DoseTime(id: 't1', time: '2:00 PM', period: Period.afternoon),
-        DoseTime(id: 't2', time: '9:00 PM', period: Period.evening),
-      ],
-      withFood: true,
-      kind: PillKind.round,
-      c1: 0xFF5566D6,
-      soft: 0xFFE7E8FB,
-      supply: 30,
-      cap: 30,
-    );
-    await repo.addMedicine(med);
-    final data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
-    final loaded = data.meds.firstWhere((m) => m.id == med.id);
-    expect(loaded.times, hasLength(3));
+    await withFixedToday(() async {
+      final med = Medicine(
+        id: 'test-multi',
+        name: 'Amoxicillin',
+        dose: '500 mg',
+        times: const [
+          DoseTime(id: 't0', time: '8:00 AM', period: Period.morning),
+          DoseTime(id: 't1', time: '2:00 PM', period: Period.afternoon),
+          DoseTime(id: 't2', time: '9:00 PM', period: Period.evening),
+        ],
+        withFood: true,
+        kind: PillKind.round,
+        c1: 0xFF5566D6,
+        soft: 0xFFE7E8FB,
+        supply: 30,
+        cap: 30,
+      );
+      await repo.addMedicine(med);
+      final data = (await repo.loadAll()).getOrElse(
+        (_) => throw StateError('x'),
+      );
+      final loaded = data.meds.firstWhere((m) => m.id == med.id);
+      expect(loaded.times, hasLength(3));
 
-    await repo.setTaken(DayUtils.iso(kToday), med.id, 't0', true);
-    final afterOneToggle = (await repo.loadAll()).getOrElse(
-      (_) => throw StateError('x'),
-    );
-    expect(afterOneToggle.isTaken(DayUtils.iso(kToday), med.id, 't0'), isTrue);
-    expect(afterOneToggle.isTaken(DayUtils.iso(kToday), med.id, 't1'), isFalse);
+      await repo.setTaken(DayUtils.iso(kToday), med.id, 't0', true);
+      final afterOneToggle = (await repo.loadAll()).getOrElse(
+        (_) => throw StateError('x'),
+      );
+      expect(
+        afterOneToggle.isTaken(DayUtils.iso(kToday), med.id, 't0'),
+        isTrue,
+      );
+      expect(
+        afterOneToggle.isTaken(DayUtils.iso(kToday), med.id, 't1'),
+        isFalse,
+      );
+    });
   });
 
   test('localeOverride persists across save/load', () async {
@@ -141,24 +161,26 @@ void main() {
   );
 
   test('toggleTaken completing the day returns true', () async {
-    await seedTestMedicines(db);
-    final container = ProviderContainer(
-      overrides: [
-        databaseProvider.overrideWithValue(db),
-        talkerProvider.overrideWithValue(Talker()),
-      ],
-    );
-    addTearDown(container.dispose);
+    await withFixedToday(() async {
+      await seedTestMedicines(db);
+      final container = ProviderContainer(
+        overrides: [
+          databaseProvider.overrideWithValue(db),
+          talkerProvider.overrideWithValue(Talker()),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    await container.read(dataProvider.future);
-    final notifier = container.read(dataProvider.notifier);
-    final iso = DayUtils.iso(kToday);
+      await container.read(dataProvider.future);
+      final notifier = container.read(dataProvider.notifier);
+      final iso = DayUtils.iso(kToday);
 
-    // Seed state: only m1 is taken today. Toggling m2 and m3 keeps it partial.
-    expect(await notifier.toggleTaken(iso, 'm2', 't1'), isFalse);
-    expect(await notifier.toggleTaken(iso, 'm3', 't1'), isFalse);
-    // The final dose completes the day.
-    expect(await notifier.toggleTaken(iso, 'm4', 't1'), isTrue);
+      // Seed state: only m1 is taken today. Toggling m2/m3 keeps it partial.
+      expect(await notifier.toggleTaken(iso, 'm2', 't1'), isFalse);
+      expect(await notifier.toggleTaken(iso, 'm3', 't1'), isFalse);
+      // The final dose completes the day.
+      expect(await notifier.toggleTaken(iso, 'm4', 't1'), isTrue);
+    });
   });
 }
 

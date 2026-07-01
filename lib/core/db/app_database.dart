@@ -1,10 +1,18 @@
+import 'package:clock/clock.dart';
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
 part 'app_database.g.dart';
 
-/// The fixed "today" the design is anchored to (June 30, 2026).
-final DateTime kToday = DateTime(2026, 6, 30);
+/// The app's notion of "today", at midnight local time. Backed by
+/// `package:clock` so production always reflects the real device date,
+/// while tests can pin it to a fixed day via `withClock(Clock.fixed(...))`
+/// for deterministic, day-independent assertions.
+DateTime get kToday {
+  final now = clock.now();
+  return DateTime(now.year, now.month, now.day);
+}
+
 const _legacyDemoMedicineIds = <String>['m1', 'm2', 'm3', 'm4'];
 
 @DataClassName('MedicineRow')

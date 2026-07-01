@@ -345,6 +345,15 @@ talks to drift and returns `Either<AppException, T>`.
   `git worktree` checkout, not hand-rolled DDL — confirming data survives
   the upgrade and the old columns are actually gone afterward.
 
+`kToday` (`lib/core/db/app_database.dart`) is the app's single notion of
+"today" — a `DateTime get` at local midnight, backed by `package:clock`.
+Production never overrides it, so it always reflects the real device date.
+Tests that assert against fixture data anchored to a specific day (the
+design's original Tuesday, June 30, 2026) pin it via
+`withFixedToday(() async { ... })` (`test/support/fixed_clock.dart`), which
+wraps the test body in `withClock(Clock.fixed(...))` — a `Zone`-scoped
+override, so nothing in production code needs to know it exists.
+
 ---
 
 ## 7a. Error handling
@@ -661,3 +670,27 @@ Tracked as a future phase.
     reproducing the exact repro (two slots, no typed text, Morning +
     Evening) asserting both are persisted with distinct times; re-verified
     live on-device. 25 tests green.
+- **`kToday` now tracks the real device date.** Since the original design
+  handoff, `kToday` was a hardcoded `DateTime(2026, 6, 30)` the whole app
+  was anchored to (calendar "today" marker, week strip, history's "last 7
+  days", streak calculation) — flagged by the user after noticing the app
+  still showed June 30 as "today" a day later, on July 1.
+  - `kToday` became a `DateTime get` computed from `clock.now()`
+    (`package:clock`, added as a direct dependency), normalized to local
+    midnight, instead of a fixed literal. All call sites (`ui_providers`,
+    `selectors`) are unchanged syntactically — Dart getters and field
+    reads look identical at the call site.
+  - Five tests depend on the fixed anchor date, directly (`kToday` in
+    assertions) or indirectly (`seedTestMedicines` seeds dose history
+    relative to it, one test hardcodes `"June 2026"`). Rather than compute
+    expected values dynamically against the real date (which would make
+    test failures depend on which day the test happens to run), each is
+    wrapped in `withFixedToday(() async { ... })`
+    (`test/support/fixed_clock.dart`), pinning `kToday` to the original
+    Tuesday, June 30, 2026 for that test only via `package:clock`'s
+    `Zone`-scoped `withClock`. Production code is never wrapped, so it
+    always sees the real date.
+  - Verified live on-device: Home now shows "Wednesday, July 1" and the
+    Calendar shows "July 2026" with today correctly highlighted, instead
+    of being stuck on the old anchor date. 25 tests green, `flutter
+    analyze` clean, `dart format .` clean.

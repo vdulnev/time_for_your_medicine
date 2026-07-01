@@ -9,6 +9,7 @@ import 'package:time_for_your_medicine/core/db/app_database.dart';
 import 'package:time_for_your_medicine/core/logging/talker.dart';
 import 'package:time_for_your_medicine/core/state/providers.dart';
 
+import 'support/fixed_clock.dart';
 import 'support/seed_test_data.dart';
 
 void main() {
@@ -17,33 +18,35 @@ void main() {
   testWidgets('marking the last dose shows the Done celebration content', (
     tester,
   ) async {
-    final db = AppDatabase(NativeDatabase.memory());
-    addTearDown(db.close);
-    await seedTestMedicines(db);
+    await withFixedToday(() async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      await seedTestMedicines(db);
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          talkerProvider.overrideWithValue(Talker()),
-          databaseProvider.overrideWithValue(db),
-        ],
-        child: const PillpalApp(),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    // The test fixture has m1 already taken; tap the remaining three.
-    for (final id in ['m2', 'm3', 'm4']) {
-      final finder = find.byKey(ValueKey('toggle-$id-t1'));
-      await tester.ensureVisible(finder);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            talkerProvider.overrideWithValue(Talker()),
+            databaseProvider.overrideWithValue(db),
+          ],
+          child: const PillpalApp(),
+        ),
+      );
       await tester.pumpAndSettle();
-      await tester.tap(finder);
-      await tester.pumpAndSettle();
-    }
 
-    expect(find.text('All done!'), findsOneWidget);
-    expect(find.text('4/4'), findsOneWidget);
-    expect(find.text('View tomorrow'), findsOneWidget);
-    expect(find.text('Back to today'), findsOneWidget);
+      // The test fixture has m1 already taken; tap the remaining three.
+      for (final id in ['m2', 'm3', 'm4']) {
+        final finder = find.byKey(ValueKey('toggle-$id-t1'));
+        await tester.ensureVisible(finder);
+        await tester.pumpAndSettle();
+        await tester.tap(finder);
+        await tester.pumpAndSettle();
+      }
+
+      expect(find.text('All done!'), findsOneWidget);
+      expect(find.text('4/4'), findsOneWidget);
+      expect(find.text('View tomorrow'), findsOneWidget);
+      expect(find.text('Back to today'), findsOneWidget);
+    });
   });
 }
