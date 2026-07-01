@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  input{font-family:inherit}
+  @keyframes flyUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+  @keyframes screenIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;width:100%;overflow-x:hidden;background:#EDEAF3;font-family:'Plus Jakarta Sans',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:36px 20px 60px">
+
+  <div style="text-align:center;margin-bottom:26px">
+    <div style="display:inline-flex;align-items:center;gap:9px;margin-bottom:8px">
+      <div style="width:30px;height:30px;border-radius:10px;background:#5566D6;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M9 13.5l3.5-3.5a3.5 3.5 0 015 5L14 18.5a3.5 3.5 0 01-5-5z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 11l3 3" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></div>
+      <span style="font:800 14px 'Plus Jakarta Sans';color:#28253D;letter-spacing:.01em">Pillpal — interactive prototype</span>
+    </div>
+    <div style="font:500 12.5px 'Plus Jakarta Sans';color:#807CA0">Tap doses to check them off · use ‹ › to change day · the bar &amp; chips below jump between screens</div>
+  </div>
+
+  <!-- PHONE -->
+  <div style="width:300px;background:#26243A;border-radius:48px;padding:9px;box-shadow:0 36px 70px -24px rgba(40,37,61,.6),0 8px 20px -8px rgba(0,0,0,.22)">
+    <div style="position:relative;width:282px;height:610px;background:#FCFBFE;border-radius:40px;overflow:hidden;display:flex;flex-direction:column">
+
+      <!-- status bar -->
+      <div style="height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:700 12.5px 'Plus Jakarta Sans';z-index:5;background:{{ statusBg }};color:{{ statusColor }}">
+        <span>9:41</span>
+        <div style="position:absolute;left:50%;top:9px;transform:translateX(-50%);width:64px;height:18px;background:#26243A;border-radius:11px"></div>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:17px;height:9px;border:1.5px solid {{ statusColor }};border-radius:3px;display:inline-block"></span></span>
+      </div>
+
+      <!-- ============ HOME ============ -->
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;display:flex;flex-direction:column;min-height:0;animation:screenIn .25s both">
+          <div style="flex:none;padding:6px 18px 12px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:6px">
+                <button onClick="{{ prevDay }}" style="width:30px;height:30px;border:none;background:transparent;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="9" height="14" viewBox="0 0 9 14" fill="none"><path d="M7.5 1L1.5 7l6 6" stroke="#52507A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <div>
+                  <div style="font:500 11.5px 'Plus Jakarta Sans';color:#A6A2C0">{{ weekdayLabel }}</div>
+                  <div style="font:800 22px 'Bricolage Grotesque';color:#28253D;line-height:1.05">{{ dateLabel }}</div>
+                </div>
+                <button onClick="{{ nextDay }}" style="width:30px;height:30px;border:none;background:transparent;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="9" height="14" viewBox="0 0 9 14" fill="none"><path d="M1.5 1L7.5 7l-6 6" stroke="#52507A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              </div>
+              <div style="display:flex;gap:7px">
+                <button onClick="{{ goNotifications }}" style="width:38px;height:38px;border:none;background:#F0EEF8;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 0112 0c0 5 2 6 2 6H4s2-1 2-6z" stroke="#52507A" stroke-width="2" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="#52507A" stroke-width="2" stroke-linecap="round"/></svg></button>
+                <button onClick="{{ goCalendar }}" style="width:38px;height:38px;border:none;background:#E7E8FB;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3.5" stroke="#5566D6" stroke-width="2"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="#5566D6" stroke-width="2" stroke-linecap="round"/></svg></button>
+              </div>
+            </div>
+            <!-- week strip -->
+            <div style="margin-top:13px;display:flex;justify-content:space-between;gap:3px">
+              <sc-for list="{{ weekStrip }}" as="d" hint-placeholder-count="7">
+                <button onClick="{{ d.onClick }}" style="{{ d.style }}">
+                  <span style="{{ d.dowStyle }}">{{ d.dow }}</span>
+                  <span style="{{ d.numStyle }}">{{ d.day }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <!-- progress -->
+            <button onClick="{{ goHistory }}" style="margin-top:12px;width:100%;border:none;text-align:left;background:#F4F3FB;border-radius:16px;padding:11px 14px;display:flex;align-items:center;gap:12px;cursor:pointer">
+              <div style="{{ ringStyle }}"><div style="width:30px;height:30px;border-radius:50%;background:#F4F3FB;display:flex;align-items:center;justify-content:center;font:800 10px 'Plus Jakarta Sans';color:#28253D">{{ progressFrac }}</div></div>
+              <div style="flex:1"><div style="font:700 13.5px 'Bricolage Grotesque';color:#28253D">{{ progressTitle }}</div><div style="font:500 11px 'Plus Jakarta Sans';color:#A6A2C0">{{ progressSub }}</div></div>
+              <svg width="8" height="13" viewBox="0 0 9 14" fill="none"><path d="M1.5 1L7.5 7l-6 6" stroke="#B6B2CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <!-- list -->
+          <div style="flex:1;overflow-y:auto;padding:2px 18px 14px">
+            <sc-for list="{{ periods }}" as="p" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:8px;margin:4px 0 9px"><span style="{{ p.iconStyle }}"><span style="{{ p.dotStyle }}"></span></span><span style="font:700 13px 'Bricolage Grotesque';color:#28253D">{{ p.label }}</span><span style="font:600 11px 'Plus Jakarta Sans';color:#A6A2C0">{{ p.time }}</span></div>
+              <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:16px">
+                <sc-for list="{{ p.meds }}" as="m" hint-placeholder-count="2">
+                  <div style="background:#fff;border-radius:18px;padding:12px;display:flex;align-items:center;gap:11px;box-shadow:0 4px 14px -5px rgba(60,55,90,.12)">
+                    <div onClick="{{ m.onOpen }}" style="{{ m.thumbStyle }}"><div style="{{ m.pillStyle }}"></div></div>
+                    <div onClick="{{ m.onOpen }}" style="flex:1;min-width:0;cursor:pointer"><div style="font:700 14px 'Plus Jakarta Sans';color:#28253D">{{ m.name }}</div><div style="font:500 11.5px 'Plus Jakarta Sans';color:#A6A2C0">{{ m.sub }}</div></div>
+                    <button onClick="{{ m.onToggle }}" style="{{ m.checkStyle }}"><sc-if value="{{ m.taken }}" hint-placeholder-val="{{ true }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if></button>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ============ CALENDAR ============ -->
+      <sc-if value="{{ isCalendar }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;display:flex;flex-direction:column;min-height:0;animation:screenIn .25s both">
+          <div style="flex:none;padding:6px 20px 4px;display:flex;align-items:center;justify-content:space-between">
+            <span style="font:800 20px 'Bricolage Grotesque';color:#28253D">{{ monthLabel }}</span>
+            <div style="display:flex;gap:8px">
+              <button onClick="{{ prevMonth }}" style="width:34px;height:34px;border:none;background:#F0EEF8;border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="8" height="13" viewBox="0 0 9 14" fill="none"><path d="M7.5 1L1.5 7l6 6" stroke="#52507A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button onClick="{{ nextMonth }}" style="width:34px;height:34px;border:none;background:#F0EEF8;border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="8" height="13" viewBox="0 0 9 14" fill="none"><path d="M1.5 1L7.5 7l-6 6" stroke="#52507A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </div>
+          </div>
+          <div style="padding:12px 16px 0">
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font:700 10px 'Plus Jakarta Sans';color:#A6A2C0;margin-bottom:4px"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px 0">
+              <sc-for list="{{ calCells }}" as="c" hint-placeholder-count="35">
+                <button onClick="{{ c.onClick }}" style="{{ c.wrapStyle }}"><span style="{{ c.numStyle }}">{{ c.label }}</span><sc-if value="{{ c.dot }}" hint-placeholder-val="{{ true }}"><span style="{{ c.dotStyle }}"></span></sc-if></button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:16px 18px 14px">
+            <div style="font:700 14px 'Bricolage Grotesque';color:#28253D">{{ weekdayLabel }}, {{ dateLabel }}</div>
+            <div style="font:500 11.5px 'Plus Jakarta Sans';color:#A6A2C0;margin:2px 0 12px">{{ dayCountLabel }}</div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ dayAgenda }}" as="a" hint-placeholder-count="3">
+                <div style="background:#fff;border-radius:16px;padding:11px 13px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 14px -5px rgba(60,55,90,.12)"><span style="{{ a.timeStyle }}">{{ a.time }}</span><div style="font:700 13px 'Plus Jakarta Sans';color:#28253D">{{ a.names }}</div></div>
+              </sc-for>
+            </div>
+            <button onClick="{{ goHome }}" style="margin-top:16px;width:100%;height:48px;border:none;border-radius:15px;background:#5566D6;color:#fff;font:800 14px 'Bricolage Grotesque';cursor:pointer">Open this day</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ============ ADD ============ -->
+      <sc-if value="{{ isAdd }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;display:flex;flex-direction:column;min-height:0;animation:screenIn .25s both">
+          <div style="flex:none;padding:6px 18px 10px;display:flex;align-items:center;gap:12px"><button onClick="{{ goBack }}" style="width:36px;height:36px;border:none;background:#F0EEF8;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="#52507A" stroke-width="2.2" stroke-linecap="round"/></svg></button><span style="font:800 19px 'Bricolage Grotesque';color:#28253D">Add medicine</span></div>
+          <div style="flex:1;overflow-y:auto;padding:2px 18px 0">
+            <div style="display:flex;justify-content:center;margin-bottom:16px"><div style="width:72px;height:72px;border-radius:22px;background:repeating-linear-gradient(135deg,#ECEAF5 0 7px,#F5F4FB 7px 14px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1.5px dashed #CFCBE2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="3" stroke="#A6A2C0" stroke-width="2"/><circle cx="12" cy="13.5" r="3.5" stroke="#A6A2C0" stroke-width="2"/><path d="M8.5 7l1.5-2.5h4L15.5 7" stroke="#A6A2C0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font:600 8px ui-monospace,monospace;color:#A6A2C0">add photo</span></div></div>
+            <div style="font:700 11px 'Plus Jakarta Sans';color:#807CA0;margin-bottom:6px">MEDICINE NAME</div>
+            <input value="{{ addName }}" onInput="{{ onAddName }}" placeholder="e.g. Amoxicillin" style="width:100%;height:46px;background:#F4F3FB;border:none;border-radius:14px;padding:0 14px;font:700 14px 'Plus Jakarta Sans';color:#28253D;outline:none;margin-bottom:14px" />
+            <div style="display:flex;gap:10px;margin-bottom:14px"><div style="flex:1"><div style="font:700 11px 'Plus Jakarta Sans';color:#807CA0;margin-bottom:6px">DOSE</div><input value="{{ addDose }}" onInput="{{ onAddDose }}" placeholder="500 mg" style="width:100%;height:46px;background:#F4F3FB;border:none;border-radius:14px;padding:0 14px;font:700 14px 'Plus Jakarta Sans';color:#28253D;outline:none" /></div><div style="flex:1"><div style="font:700 11px 'Plus Jakarta Sans';color:#807CA0;margin-bottom:6px">TIME</div><input value="{{ addTime }}" onInput="{{ onAddTime }}" placeholder="8:00 AM" style="width:100%;height:46px;background:#F4F3FB;border:none;border-radius:14px;padding:0 14px;font:700 14px 'Plus Jakarta Sans';color:#28253D;outline:none" /></div></div>
+            <div style="font:700 11px 'Plus Jakarta Sans';color:#807CA0;margin-bottom:7px">TIME OF DAY</div>
+            <div style="display:flex;gap:7px;margin-bottom:14px">
+              <sc-for list="{{ periodChoices }}" as="pc" hint-placeholder-count="3"><button onClick="{{ pc.onClick }}" style="{{ pc.style }}">{{ pc.label }}</button></sc-for>
+            </div>
+            <div style="font:700 11px 'Plus Jakarta Sans';color:#807CA0;margin-bottom:7px">FOOD</div>
+            <div style="display:flex;gap:9px"><button onClick="{{ onFoodYes }}" style="{{ foodYesStyle }}">With food</button><button onClick="{{ onFoodNo }}" style="{{ foodNoStyle }}">Empty stomach</button></div>
+          </div>
+          <div style="flex:none;padding:12px 18px 20px"><button onClick="{{ saveMed }}" style="width:100%;height:52px;border:none;border-radius:16px;background:#5566D6;color:#fff;font:800 15px 'Bricolage Grotesque';box-shadow:0 12px 22px -8px rgba(85,102,214,.6);cursor:pointer">Save medicine</button></div>
+        </div>
+      </sc-if>
+
+      <!-- ============ DETAIL ============ -->
+      <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;display:flex;flex-direction:column;min-height:0;animation:screenIn .25s both">
+          <div style="background:#5566D6;padding:8px 20px 24px;color:#fff;flex:none;position:relative">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><button onClick="{{ goBack }}" style="width:36px;height:36px;border:none;background:rgba(255,255,255,.18);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="9" height="14" viewBox="0 0 9 14" fill="none"><path d="M7.5 1L1.5 7l6 6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button onClick="{{ askDelete }}" style="width:36px;height:36px;border:none;background:rgba(255,255,255,.18);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+            <div style="display:flex;align-items:center;gap:14px"><div style="width:62px;height:62px;border-radius:20px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex:none"><div style="{{ detailPillStyle }}"></div></div><div><div style="font:800 22px 'Bricolage Grotesque'">{{ detailName }}</div><div style="font:500 13px 'Plus Jakarta Sans';color:#D7DAF7;margin-top:2px">{{ detailDose }}</div></div></div>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:16px 18px 16px">
+            <div style="display:flex;gap:9px;margin-bottom:8px">
+              <div style="flex:1;background:#F4F3FB;border-radius:14px;padding:11px"><div style="font:600 9.5px 'Plus Jakarta Sans';color:#A6A2C0">NEXT</div><div style="font:800 15px 'Bricolage Grotesque';color:#28253D;margin-top:2px">{{ detailTime }}</div></div>
+              <div style="flex:1;background:#F4F3FB;border-radius:14px;padding:11px"><div style="font:600 9.5px 'Plus Jakarta Sans';color:#A6A2C0">FOOD</div><div style="font:800 15px 'Bricolage Grotesque';color:#28253D;margin-top:2px">{{ detailFood }}</div></div>
+              <div style="flex:1;background:#F4F3FB;border-radius:14px;padding:11px"><div style="font:600 9.5px 'Plus Jakarta Sans';color:#A6A2C0">LEFT</div><div style="{{ detailSupplyStyle }}">{{ detailSupply }}</div></div>
+            </div>
+            <div style="font:700 11px 'Plus Jakarta Sans';color:#807CA0;margin:16px 0 9px">LAST 7 DAYS</div>
+            <div style="background:#F4F3FB;border-radius:16px;padding:14px;display:flex;justify-content:space-between">
+              <sc-for list="{{ detailWeek }}" as="w" hint-placeholder-count="7"><div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="{{ w.dotStyle }}"><sc-if value="{{ w.done }}" hint-placeholder-val="{{ true }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if></div><span style="font:600 10px 'Plus Jakarta Sans';color:#807CA0">{{ w.dow }}</span></div></sc-for>
+            </div>
+            <button onClick="{{ detailToggle }}" style="{{ detailBtnStyle }}">{{ detailBtnLabel }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ============ DONE ============ -->
+      <sc-if value="{{ isDone }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;background:#5566D6;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 30px;text-align:center;position:relative;animation:screenIn .25s both">
+          <div style="position:absolute;top:96px;left:42px;width:9px;height:9px;border-radius:2px;background:#D69A5A;transform:rotate(20deg)"></div>
+          <div style="position:absolute;top:150px;right:48px;width:8px;height:8px;border-radius:50%;background:#88E0B8"></div>
+          <div style="position:absolute;top:120px;left:64px;width:7px;height:7px;border-radius:2px;background:#fff;transform:rotate(40deg)"></div>
+          <div style="position:absolute;top:130px;right:74px;width:6px;height:6px;border-radius:50%;background:#C3C7F4"></div>
+          <div style="width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;animation:pop .5s both"><div style="width:86px;height:86px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center"><svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#5566D6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+          <div style="font:800 27px 'Bricolage Grotesque';color:#fff;margin-top:28px">All done!</div>
+          <div style="font:500 14px/1.5 'Plus Jakarta Sans';color:#D7DAF7;margin-top:8px">Every medicine taken for {{ dateLabel }}.<br>Keep that streak going.</div>
+          <div style="margin-top:24px;display:flex;gap:10px"><div style="background:rgba(255,255,255,.16);border-radius:15px;padding:12px 18px"><div style="font:800 22px 'Bricolage Grotesque';color:#fff">{{ doneCount }}</div><div style="font:500 10px 'Plus Jakarta Sans';color:#C3C7F4;margin-top:2px">doses</div></div><div style="background:rgba(255,255,255,.16);border-radius:15px;padding:12px 18px"><div style="font:800 22px 'Bricolage Grotesque';color:#fff">{{ streak }}</div><div style="font:500 10px 'Plus Jakarta Sans';color:#C3C7F4;margin-top:2px">day streak</div></div></div>
+          <div style="position:absolute;left:22px;right:22px;bottom:26px;display:flex;flex-direction:column;gap:9px"><button onClick="{{ doneNext }}" style="width:100%;height:50px;border:none;border-radius:16px;background:#fff;color:#5566D6;font:800 15px 'Bricolage Grotesque';cursor:pointer">View tomorrow</button><button onClick="{{ goHome }}" style="width:100%;height:44px;border:none;border-radius:14px;background:transparent;color:#D7DAF7;font:700 13px 'Plus Jakarta Sans';cursor:pointer">Back to today</button></div>
+        </div>
+      </sc-if>
+
+      <!-- ============ HISTORY ============ -->
+      <sc-if value="{{ isHistory }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;display:flex;flex-direction:column;min-height:0;animation:screenIn .25s both">
+          <div style="flex:none;padding:6px 18px 8px;display:flex;align-items:center;gap:12px"><button onClick="{{ goHome }}" style="width:36px;height:36px;border:none;background:#F0EEF8;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="9" height="14" viewBox="0 0 9 14" fill="none"><path d="M7.5 1L1.5 7l6 6" stroke="#52507A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span style="font:800 19px 'Bricolage Grotesque';color:#28253D">History</span></div>
+          <div style="flex:1;overflow-y:auto;padding:6px 18px 14px">
+            <div style="background:#5566D6;border-radius:20px;padding:18px;color:#fff;margin-bottom:16px"><div style="font:500 12px 'Plus Jakarta Sans';color:#D7DAF7">7-day adherence</div><div style="font:800 38px 'Bricolage Grotesque';line-height:1.05;margin-top:4px">{{ adherence }}%</div><div style="font:500 12px 'Plus Jakarta Sans';color:#D7DAF7;margin-top:2px">{{ adherenceSub }}</div></div>
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:7px;height:120px;padding:0 2px;margin-bottom:8px">
+              <sc-for list="{{ history }}" as="h" hint-placeholder-count="7"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%;justify-content:flex-end"><div style="{{ h.barStyle }}"></div><span style="font:700 10px 'Plus Jakarta Sans';color:#A6A2C0">{{ h.dow }}</span></div></sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px;margin-top:8px">
+              <sc-for list="{{ historyRows }}" as="r" hint-placeholder-count="3"><div style="background:#fff;border-radius:14px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 14px -5px rgba(60,55,90,.1)"><div style="font:700 13px 'Plus Jakarta Sans';color:#28253D">{{ r.label }}</div><div style="{{ r.valStyle }}">{{ r.value }}</div></div></sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ============ REFILLS ============ -->
+      <sc-if value="{{ isRefills }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;display:flex;flex-direction:column;min-height:0;animation:screenIn .25s both">
+          <div style="flex:none;padding:6px 18px 8px;display:flex;align-items:center;gap:12px"><button onClick="{{ goHome }}" style="width:36px;height:36px;border:none;background:#F0EEF8;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="9" height="14" viewBox="0 0 9 14" fill="none"><path d="M7.5 1L1.5 7l6 6" stroke="#52507A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span style="font:800 19px 'Bricolage Grotesque';color:#28253D">Refills</span></div>
+          <div style="flex:1;overflow-y:auto;padding:6px 18px 14px">
+            <div style="display:flex;align-items:center;gap:11px;background:#FBEFE9;border-radius:16px;padding:13px 14px;margin-bottom:14px"><div style="width:34px;height:34px;border-radius:11px;background:#F2C6B4;display:flex;align-items:center;justify-content:center;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v9m0 4h.01" stroke="#C0573A" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="#C0573A" stroke-width="2"/></svg></div><div><div style="font:700 13px 'Plus Jakarta Sans';color:#9A3F26">{{ refillAlert }}</div><div style="font:500 11px 'Plus Jakarta Sans';color:#C0573A">Running low — order soon</div></div></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ refills }}" as="r" hint-placeholder-count="4"><div style="background:#fff;border-radius:16px;padding:13px;box-shadow:0 4px 14px -5px rgba(60,55,90,.1)"><div style="display:flex;align-items:center;gap:11px"><div style="{{ r.thumbStyle }}"><div style="{{ r.pillStyle }}"></div></div><div style="flex:1"><div style="font:700 13.5px 'Plus Jakarta Sans';color:#28253D">{{ r.name }}</div><div style="{{ r.countStyle }}">{{ r.count }}</div></div><button onClick="{{ r.onOrder }}" style="{{ r.btnStyle }}">{{ r.btn }}</button></div><div style="margin-top:10px;height:7px;border-radius:4px;background:#F0EEF8;overflow:hidden"><div style="{{ r.barStyle }}"></div></div></div></sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ============ NOTIFICATIONS ============ -->
+      <sc-if value="{{ isNotifications }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;display:flex;flex-direction:column;min-height:0;animation:screenIn .25s both">
+          <div style="flex:none;padding:6px 18px 8px;display:flex;align-items:center;gap:12px"><button onClick="{{ goHome }}" style="width:36px;height:36px;border:none;background:#F0EEF8;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="9" height="14" viewBox="0 0 9 14" fill="none"><path d="M7.5 1L1.5 7l6 6" stroke="#52507A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span style="font:800 19px 'Bricolage Grotesque';color:#28253D">Reminders</span></div>
+          <div style="flex:1;overflow-y:auto;padding:6px 18px 14px">
+            <div style="font:600 11px 'Plus Jakarta Sans';color:#807CA0;margin-bottom:10px">Today · {{ dateLabel }}</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="4"><div style="background:#fff;border-radius:16px;padding:13px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 14px -5px rgba(60,55,90,.1)"><div style="width:42px;height:42px;border-radius:13px;background:#E7E8FB;display:flex;align-items:center;justify-content:center;flex:none"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 0112 0c0 5 2 6 2 6H4s2-1 2-6z" stroke="#5566D6" stroke-width="2" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="#5566D6" stroke-width="2" stroke-linecap="round"/></svg></div><div style="flex:1"><div style="font:700 13.5px 'Plus Jakarta Sans';color:#28253D">{{ n.name }}</div><div style="font:500 11px 'Plus Jakarta Sans';color:#A6A2C0">{{ n.time }} · {{ n.detail }}</div></div><button onClick="{{ n.onToggle }}" style="{{ n.switchStyle }}"><span style="{{ n.knobStyle }}"></span></button></div></sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ============ SETTINGS ============ -->
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;display:flex;flex-direction:column;min-height:0;animation:screenIn .25s both">
+          <div style="flex:none;padding:6px 18px 8px"><span style="font:800 22px 'Bricolage Grotesque';color:#28253D">Settings</span></div>
+          <div style="flex:1;overflow-y:auto;padding:6px 18px 14px">
+            <div style="display:flex;align-items:center;gap:13px;background:#fff;border-radius:18px;padding:14px;box-shadow:0 4px 14px -5px rgba(60,55,90,.1);margin-bottom:16px"><div style="width:48px;height:48px;border-radius:50%;background:#E7E8FB;display:flex;align-items:center;justify-content:center;font:800 17px 'Bricolage Grotesque';color:#5566D6">AM</div><div><div style="font:700 15px 'Plus Jakarta Sans';color:#28253D">Alex Morgan</div><div style="font:500 11.5px 'Plus Jakarta Sans';color:#A6A2C0">4 active medicines</div></div></div>
+            <div style="font:700 11px 'Plus Jakarta Sans';color:#807CA0;margin:4px 2px 8px">PREFERENCES</div>
+            <div style="background:#fff;border-radius:16px;padding:4px 14px;box-shadow:0 4px 14px -5px rgba(60,55,90,.1);margin-bottom:14px">
+              <sc-for list="{{ toggles }}" as="t" hint-placeholder-count="3"><div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid {{ t.border }}"><span style="font:700 13.5px 'Plus Jakarta Sans';color:#28253D">{{ t.label }}</span><button onClick="{{ t.onToggle }}" style="{{ t.switchStyle }}"><span style="{{ t.knobStyle }}"></span></button></div></sc-for>
+            </div>
+            <div style="font:700 11px 'Plus Jakarta Sans';color:#807CA0;margin:4px 2px 8px">MORE</div>
+            <div style="background:#fff;border-radius:16px;padding:4px 14px;box-shadow:0 4px 14px -5px rgba(60,55,90,.1)">
+              <button onClick="{{ goHistory }}" style="width:100%;border:none;background:transparent;display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #F2F0F8;cursor:pointer"><span style="font:700 13.5px 'Plus Jakarta Sans';color:#28253D">History &amp; adherence</span><svg width="8" height="13" viewBox="0 0 9 14" fill="none"><path d="M1.5 1L7.5 7l-6 6" stroke="#B6B2CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button onClick="{{ goRefills }}" style="width:100%;border:none;background:transparent;display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #F2F0F8;cursor:pointer"><span style="font:700 13.5px 'Plus Jakarta Sans';color:#28253D">Refills</span><svg width="8" height="13" viewBox="0 0 9 14" fill="none"><path d="M1.5 1L7.5 7l-6 6" stroke="#B6B2CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button onClick="{{ goNotifications }}" style="width:100%;border:none;background:transparent;display:flex;align-items:center;justify-content:space-between;padding:14px 0;cursor:pointer"><span style="font:700 13.5px 'Plus Jakarta Sans';color:#28253D">Reminders</span><svg width="8" height="13" viewBox="0 0 9 14" fill="none"><path d="M1.5 1L7.5 7l-6 6" stroke="#B6B2CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ============ BOTTOM NAV ============ -->
+      <sc-if value="{{ showNav }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:none;height:62px;background:#fff;border-top:1px solid #F0EEF7;display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:relative">
+          <button onClick="{{ goHome }}" style="border:none;background:transparent;cursor:pointer;padding:6px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M4 11l8-7 8 7v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1z" stroke="{{ navHome }}" stroke-width="2" stroke-linejoin="round"/></svg></button>
+          <button onClick="{{ goCalendar }}" style="border:none;background:transparent;cursor:pointer;padding:6px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3.5" stroke="{{ navCal }}" stroke-width="2"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="{{ navCal }}" stroke-width="2" stroke-linecap="round"/></svg></button>
+          <div style="width:46px"></div>
+          <button onClick="{{ goRefills }}" style="border:none;background:transparent;cursor:pointer;padding:6px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M9 3.5h6V6l1 2v11a2 2 0 01-2 2H10a2 2 0 01-2-2V8l1-2z" stroke="{{ navRef }}" stroke-width="2" stroke-linejoin="round"/><path d="M8 12h8" stroke="{{ navRef }}" stroke-width="2"/></svg></button>
+          <button onClick="{{ goSettings }}" style="border:none;background:transparent;cursor:pointer;padding:6px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M4 8h8M18 8h2M4 16h2M12 16h8" stroke="{{ navSet }}" stroke-width="2" stroke-linecap="round"/><circle cx="15" cy="8" r="2.4" stroke="{{ navSet }}" stroke-width="2"/><circle cx="9" cy="16" r="2.4" stroke="{{ navSet }}" stroke-width="2"/></svg></button>
+          <button onClick="{{ openAdd }}" style="position:absolute;left:50%;top:-18px;transform:translateX(-50%);width:52px;height:52px;border:none;border-radius:18px;background:#5566D6;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 22px -6px rgba(85,102,214,.6);cursor:pointer"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+        </div>
+      </sc-if>
+
+      <!-- ============ DELETE DIALOG ============ -->
+      <sc-if value="{{ confirmDelete }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ cancelDelete }}" style="position:absolute;inset:0;z-index:30;background:rgba(40,37,61,.45);display:flex;align-items:flex-end;justify-content:center;padding:14px;animation:screenIn .2s both">
+          <div style="background:#fff;border-radius:24px;padding:22px 20px 18px;width:100%;box-shadow:0 24px 50px -12px rgba(40,37,61,.45)">
+            <div style="width:50px;height:50px;border-radius:15px;background:#FBEAE4;display:flex;align-items:center;justify-content:center;margin:0 auto 14px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#D9533A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div style="text-align:center;font:800 18px 'Bricolage Grotesque';color:#28253D">Delete reminder?</div>
+            <div style="text-align:center;font:500 13px/1.5 'Plus Jakarta Sans';color:#807CA0;margin-top:6px">{{ detailName }} and its schedule will be removed. This can’t be undone.</div>
+            <div style="display:flex;gap:10px;margin-top:18px">
+              <button onClick="{{ cancelDelete }}" style="flex:1;height:48px;border:none;border-radius:14px;background:#F0EEF8;color:#52507A;font:800 14px 'Bricolage Grotesque';cursor:pointer">Cancel</button>
+              <button onClick="{{ deleteMed }}" style="flex:1;height:48px;border:none;border-radius:14px;background:#D9533A;color:#fff;font:800 14px 'Bricolage Grotesque';cursor:pointer">Delete</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+
+  <!-- jump chips -->
+  <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:380px;margin-top:24px">
+    <sc-for list="{{ jumps }}" as="j" hint-placeholder-count="9"><button onClick="{{ j.onClick }}" style="{{ j.style }}">{{ j.label }}</button></sc-for>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const meds=[
+      {id:'m1',name:'Metformin',dose:'500 mg',period:'morning',time:'8:00 AM',withFood:true,kind:'capsule',c1:'#5566D6',c2:'#A6B0EE',soft:'#E7E8FB',supply:12,cap:60},
+      {id:'m2',name:'Vitamin D',dose:'1000 IU',period:'morning',time:'8:00 AM',withFood:true,kind:'round',c1:'#D69A5A',soft:'#FBF0DF',supply:30,cap:60},
+      {id:'m3',name:'Ibuprofen',dose:'200 mg',period:'afternoon',time:'1:00 PM',withFood:true,kind:'round',c1:'#5AA0D6',soft:'#E2F0F8',supply:20,cap:30},
+      {id:'m4',name:'Atorvastatin',dose:'20 mg',period:'evening',time:'9:00 PM',withFood:false,kind:'capsule',c1:'#A77FD0',c2:'#CDB6E6',soft:'#F1ECF9',supply:6,cap:30}
+    ];
+    const today=new Date(2026,5,30);
+    const taken={};
+    for(let off=-6;off<=-1;off++){ const iso=this.iso(this.addDays(today,off)); meds.forEach(m=>{ taken[iso+'|'+m.id]=true; }); }
+    taken[this.iso(today)+'|m1']=true;
+    this.MN=MN;
+    this.today=today;
+    this.state={
+      screen:'home', iso:this.iso(today), selectedId:null,
+      viewY:today.getFullYear(), viewM:today.getMonth(),
+      meds, taken,
+      add:{name:'',dose:'',time:'',period:'morning',withFood:true},
+      toggles:{sound:true,vibrate:false,refill:true},
+      notifOff:{}, confirmDelete:false
+    };
+  }
+  iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  parse(s){ const p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+  addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+  dow(d){ return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]; }
+  weekdayFull(d){ return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()]; }
+  isTaken(iso,id){ return !!this.state.taken[iso+'|'+id]; }
+  go(s){ this.setState({screen:s}); }
+
+  toggleTaken(id){
+    const iso=this.state.iso;
+    const key=iso+'|'+id;
+    const taken={...this.state.taken};
+    taken[key]=!taken[key];
+    const all=this.state.meds.every(m=>!!taken[iso+'|'+m.id]);
+    const wasAll=this.state.meds.every(m=>this.isTaken(iso,m.id));
+    this.setState({taken, screen:(all && !wasAll)?'done':this.state.screen});
+  }
+  openDetail(id){ this.setState({selectedId:id,screen:'detail'}); }
+  setDay(d){ this.setState({iso:this.iso(d),screen:'home'}); }
+  setAdd(k,v){ this.setState({add:{...this.state.add,[k]:v}}); }
+  saveMed(){
+    const a=this.state.add;
+    if(!a.name.trim()){ this.setState({screen:'home'}); return; }
+    const id='m'+Date.now();
+    const meds=[...this.state.meds,{id,name:a.name.trim(),dose:a.dose.trim()||'1 dose',period:a.period,time:a.time.trim()||'8:00 AM',withFood:a.withFood,kind:'round',c1:'#5566D6',soft:'#E7E8FB',supply:30,cap:30}];
+    this.setState({meds,screen:'home',add:{name:'',dose:'',time:'',period:'morning',withFood:true}});
+  }
+  toggleSetting(k){ this.setState({toggles:{...this.state.toggles,[k]:!this.state.toggles[k]}}); }
+  deleteMed(){
+    const id=this.state.selectedId;
+    const meds=this.state.meds.filter(m=>m.id!==id);
+    const taken={...this.state.taken};
+    Object.keys(taken).forEach(k=>{ if(k.endsWith('|'+id)) delete taken[k]; });
+    this.setState({meds,taken,confirmDelete:false,selectedId:null,screen:'home'});
+  }
+  toggleNotif(id){ this.setState({notifOff:{...this.state.notifOff,[id]:!this.state.notifOff[id]}}); }
+
+  decorate(m,iso){
+    const taken=this.isTaken(iso,m.id);
+    const pill = m.kind==='capsule'
+      ? 'width:25px;height:13px;border-radius:7px;background:linear-gradient(90deg,'+m.c1+' 50%,'+m.c2+' 50%);transform:rotate(-28deg)'
+      : 'width:18px;height:18px;border-radius:50%;background:'+m.c1;
+    return {
+      id:m.id, name:m.name, sub:m.dose+' · '+(m.withFood?'with food':'empty stomach'),
+      thumbStyle:'width:42px;height:42px;border-radius:13px;background:'+m.soft+';display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer',
+      pillStyle:pill, taken,
+      checkStyle: taken
+        ? 'width:28px;height:28px;border-radius:50%;background:#5566D6;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;flex:none'
+        : 'width:28px;height:28px;border-radius:50%;border:2px solid #DAD7E8;background:transparent;cursor:pointer;flex:none',
+      onToggle:()=>this.toggleTaken(m.id),
+      onOpen:()=>this.openDetail(m.id)
+    };
+  }
+
+  renderVals(){
+    const S=this.state;
+    const cur=this.parse(S.iso);
+    const screen=S.screen;
+    const META={morning:{label:'Morning',accent:'#D69A5A',bg:'#FBF0DF'},afternoon:{label:'Afternoon',accent:'#5AA0D6',bg:'#E2F0F8'},evening:{label:'Evening',accent:'#A77FD0',bg:'#F1ECF9'}};
+    const ORDER=['morning','afternoon','evening'];
+
+    // periods for current day
+    const periods=ORDER.map(k=>{
+      const list=S.meds.filter(m=>m.period===k);
+      if(!list.length) return null;
+      return {
+        key:k,label:META[k].label,time:list[0].time,
+        iconStyle:'width:24px;height:24px;border-radius:8px;background:'+META[k].bg+';display:flex;align-items:center;justify-content:center;flex:none',
+        dotStyle:'width:11px;height:11px;border-radius:50%;background:'+META[k].accent,
+        meds:list.map(m=>this.decorate(m,S.iso))
+      };
+    }).filter(Boolean);
+
+    const total=S.meds.length;
+    const takenCount=S.meds.filter(m=>this.isTaken(S.iso,m.id)).length;
+    const pct=total?Math.round(takenCount/total*100):0;
+    const left=total-takenCount;
+
+    // week strip (Mon-Sun of current week)
+    const wd=(cur.getDay()+6)%7;
+    const monday=this.addDays(cur,-wd);
+    const weekStrip=[0,1,2,3,4,5,6].map(i=>{
+      const d=this.addDays(monday,i);
+      const active=this.iso(d)===S.iso;
+      return {
+        dow:this.dow(d).slice(0,1),
+        day:d.getDate(),
+        onClick:()=>this.setDay(d),
+        style:'flex:1;border:none;cursor:pointer;padding:8px 0;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:3px;'+(active?'background:#5566D6;box-shadow:0 9px 16px -7px rgba(85,102,214,.6)':'background:transparent'),
+        dowStyle:'font:600 9px "Plus Jakarta Sans";'+(active?'color:#C3C7F4':'color:#A6A2C0'),
+        numStyle:'font:800 14px "Bricolage Grotesque";'+(active?'color:#fff':'color:#52507A')
+      };
+    });
+
+    // progress ring (conic)
+    const ringStyle='position:relative;width:40px;height:40px;flex:none;border-radius:50%;background:conic-gradient(#5566D6 '+pct+'%,#E2E0EF 0);display:flex;align-items:center;justify-content:center';
+
+    // calendar grid
+    const viewFirst=new Date(S.viewY,S.viewM,1);
+    const lead=(viewFirst.getDay()+6)%7;
+    const dim=new Date(S.viewY,S.viewM+1,0).getDate();
+    const calCells=[];
+    for(let i=0;i<lead;i++) calCells.push({label:'',isBlank:true,wrapStyle:'border:none;background:transparent;height:40px',numStyle:'',dot:false,onClick:()=>{}});
+    for(let day=1;day<=dim;day++){
+      const d=new Date(S.viewY,S.viewM,day);
+      const di=this.iso(d);
+      const sel=di===S.iso;
+      const isToday=di===this.iso(this.today);
+      calCells.push({
+        label:String(day),
+        wrapStyle:'border:none;background:transparent;cursor:pointer;height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0',
+        numStyle: sel
+          ? 'width:30px;height:30px;border-radius:50%;background:#5566D6;color:#fff;display:flex;align-items:center;justify-content:center;font:800 13px "Bricolage Grotesque"'
+          : 'width:30px;height:30px;display:flex;align-items:center;justify-content:center;font:700 13px "Bricolage Grotesque";color:'+(isToday?'#5566D6':'#28253D'),
+        dot:!sel,
+        dotStyle:'width:5px;height:5px;border-radius:50%;background:#C9CEF1',
+        onClick:()=>this.setState({iso:di})
+      });
+    }
+
+    // day agenda (for calendar bottom + notifications)
+    const byTime={};
+    S.meds.forEach(m=>{ (byTime[m.time]=byTime[m.time]||[]).push(m); });
+    const timeOrder=['8:00 AM','1:00 PM','9:00 PM'];
+    const allTimes=Object.keys(byTime).sort((a,b)=>{
+      const ia=timeOrder.indexOf(a), ib=timeOrder.indexOf(b);
+      return (ia<0?99:ia)-(ib<0?99:ib);
+    });
+    const accentFor=t=>{ const m=byTime[t][0]; return META[m.period].accent; };
+    const dayAgenda=allTimes.map(t=>({
+      time:t.replace(' AM','').replace(' PM',''),
+      timeStyle:'font:800 13px "Bricolage Grotesque";color:'+accentFor(t)+';width:46px;flex:none',
+      names:byTime[t].map(m=>m.name).join(', ')
+    }));
+
+    // detail
+    const sel=S.meds.find(m=>m.id===S.selectedId)||S.meds[0];
+    const selTaken=sel?this.isTaken(S.iso,sel.id):false;
+    const detailPill = sel? (sel.kind==='capsule'
+      ? 'width:32px;height:16px;border-radius:9px;background:linear-gradient(90deg,#fff 50%,#C3C7F4 50%);transform:rotate(-28deg)'
+      : 'width:24px;height:24px;border-radius:50%;background:#fff') : '';
+    const detailWeek=[6,5,4,3,2,1,0].map(off=>{
+      const d=this.addDays(cur,-off);
+      const done=sel?this.isTaken(this.iso(d),sel.id):false;
+      return {
+        dow:this.dow(d).slice(0,1),
+        done,
+        dotStyle: done
+          ? 'width:24px;height:24px;border-radius:50%;background:#5BAE8A;display:flex;align-items:center;justify-content:center'
+          : (off===0?'width:24px;height:24px;border-radius:50%;background:#5566D6':'width:24px;height:24px;border-radius:50%;border:2px solid #DAD7E8')
+      };
+    });
+    const lowSupply = sel && sel.supply<=7;
+
+    // history (7 days ending today)
+    const history=[6,5,4,3,2,1,0].map(off=>{
+      const d=this.addDays(this.today,-off);
+      const di=this.iso(d);
+      const c=S.meds.filter(m=>this.isTaken(di,m.id)).length;
+      const p=total?c/total:0;
+      const h=Math.max(8,Math.round(p*100));
+      return {
+        dow:this.dow(d).slice(0,1),
+        barStyle:'width:74%;height:'+h+'%;border-radius:7px;background:'+(p>=1?'#5566D6':(p>0?'#A6B0EE':'#E2E0EF'))
+      };
+    });
+    const adhVals=history.map(h=>parseInt(h.barStyle.match(/height:(\d+)/)[1]));
+    const adherence=Math.round(adhVals.reduce((a,b)=>a+b,0)/adhVals.length);
+    // streak: consecutive fully-taken days up to yesterday + today if done
+    let streak=0;
+    for(let off=(takenCount===total?0:1);off<30;off++){
+      const di=this.iso(this.addDays(this.today,-off));
+      if(S.meds.every(m=>this.isTaken(di,m.id))) streak++; else break;
+    }
+
+    // refills
+    const refills=S.meds.map(m=>{
+      const low=m.supply<=7;
+      const p=Math.min(100,Math.round(m.supply/m.cap*100));
+      const pill=m.kind==='capsule'
+        ? 'width:20px;height:11px;border-radius:6px;background:linear-gradient(90deg,'+m.c1+' 50%,'+m.c2+' 50%);transform:rotate(-28deg)'
+        : 'width:15px;height:15px;border-radius:50%;background:'+m.c1;
+      return {
+        name:m.name,
+        count:m.supply+' '+(m.kind==='capsule'?'capsules':'tablets')+' left',
+        countStyle:'font:600 11.5px "Plus Jakarta Sans";color:'+(low?'#C0573A':'#A6A2C0'),
+        thumbStyle:'width:38px;height:38px;border-radius:12px;background:'+m.soft+';display:flex;align-items:center;justify-content:center;flex:none',
+        pillStyle:pill,
+        btn: low?'Order':'OK',
+        onOrder:()=>{},
+        btnStyle: low
+          ? 'border:none;background:#5566D6;color:#fff;font:700 12px "Plus Jakarta Sans";padding:8px 14px;border-radius:11px;cursor:pointer'
+          : 'border:none;background:#EAF4EF;color:#3E9C73;font:700 12px "Plus Jakarta Sans";padding:8px 14px;border-radius:11px;cursor:default',
+        barStyle:'height:100%;width:'+p+'%;border-radius:4px;background:'+(low?'#E8896B':'#5566D6')
+      };
+    });
+    const lowName=(S.meds.find(m=>m.supply<=7)||{}).name||'';
+
+    // notifications
+    const notifs=S.meds.map(m=>{
+      const on=!S.notifOff[m.id];
+      return {
+        name:m.name, time:m.time, detail:m.dose,
+        onToggle:()=>this.toggleNotif(m.id),
+        switchStyle:'width:44px;height:26px;border:none;border-radius:14px;position:relative;cursor:pointer;flex:none;background:'+(on?'#5566D6':'#DAD7E8'),
+        knobStyle:'position:absolute;top:3px;'+(on?'right:3px':'left:3px')+';width:20px;height:20px;border-radius:50%;background:#fff'
+      };
+    });
+
+    // settings toggles
+    const tdefs=[{k:'sound',label:'Reminder sound'},{k:'vibrate',label:'Vibration'},{k:'refill',label:'Refill alerts'}];
+    const toggles=tdefs.map((t,i)=>{
+      const on=S.toggles[t.k];
+      return {
+        label:t.label,
+        border:i===tdefs.length-1?'transparent':'#F2F0F8',
+        onToggle:()=>this.toggleSetting(t.k),
+        switchStyle:'width:44px;height:26px;border:none;border-radius:14px;position:relative;cursor:pointer;background:'+(on?'#5566D6':'#DAD7E8'),
+        knobStyle:'position:absolute;top:3px;'+(on?'right:3px':'left:3px')+';width:20px;height:20px;border-radius:50%;background:#fff'
+      };
+    });
+
+    // jump chips
+    const chip=(active)=>'border:none;cursor:pointer;font:700 11px "Plus Jakarta Sans";padding:7px 12px;border-radius:10px;'+(active?'background:#5566D6;color:#fff':'background:#fff;color:#52507A;box-shadow:0 2px 6px rgba(60,55,90,.08)');
+    const jumpDefs=[['Home','home'],['Calendar','calendar'],['Add','add'],['Detail','detail'],['Done','done'],['History','history'],['Refills','refills'],['Reminders','notifications'],['Settings','settings']];
+    const jumps=jumpDefs.map(([label,key])=>({
+      label,
+      style:chip(screen===key),
+      onClick:()=>{ if(key==='detail'){ this.openDetail(S.selectedId||'m1'); } else { this.go(key); } }
+    }));
+
+    const navColor=k=>screen===k?'#5566D6':'#B6B2CC';
+
+    return {
+      // status / screen flags
+      isHome:screen==='home', isCalendar:screen==='calendar', isAdd:screen==='add',
+      isDetail:screen==='detail', isDone:screen==='done', isHistory:screen==='history',
+      isRefills:screen==='refills', isNotifications:screen==='notifications', isSettings:screen==='settings',
+      showNav:['home','calendar','history','refills','settings','notifications'].includes(screen),
+      statusBg:(screen==='detail'||screen==='done')?'#5566D6':'#FCFBFE',
+      statusColor:(screen==='detail'||screen==='done')?'#fff':'#28253D',
+
+      // header
+      weekdayLabel:this.weekdayFull(cur),
+      dateLabel:this.MN[cur.getMonth()]+' '+cur.getDate(),
+      prevDay:()=>this.setState({iso:this.iso(this.addDays(cur,-1))}),
+      nextDay:()=>this.setState({iso:this.iso(this.addDays(cur,1))}),
+      weekStrip, ringStyle, progressFrac:takenCount+'/'+total,
+      progressTitle: left===0?'All doses taken':left+' dose'+(left>1?'s':'')+' left today',
+      progressSub: left===0?'Tap to see your history':(pct+'% complete'),
+
+      // list
+      periods,
+
+      // calendar
+      monthLabel:this.MN[S.viewM]+' '+S.viewY,
+      prevMonth:()=>this.setState({viewM:(S.viewM+11)%12,viewY:S.viewM===0?S.viewY-1:S.viewY}),
+      nextMonth:()=>this.setState({viewM:(S.viewM+1)%12,viewY:S.viewM===11?S.viewY+1:S.viewY}),
+      calCells, dayAgenda,
+      dayCountLabel:total+' reminders scheduled',
+
+      // add
+      addName:S.add.name, addDose:S.add.dose, addTime:S.add.time,
+      onAddName:(e)=>this.setAdd('name',e.target.value),
+      onAddDose:(e)=>this.setAdd('dose',e.target.value),
+      onAddTime:(e)=>this.setAdd('time',e.target.value),
+      periodChoices:['morning','afternoon','evening'].map(k=>({
+        label:META[k].label,
+        onClick:()=>this.setAdd('period',k),
+        style:'flex:1;border:none;cursor:pointer;text-align:center;padding:10px 0;border-radius:13px;font:700 12px "Bricolage Grotesque";'+(S.add.period===k?'background:#5566D6;color:#fff':'background:#F4F3FB;color:#A6A2C0')
+      })),
+      onFoodYes:()=>this.setAdd('withFood',true),
+      onFoodNo:()=>this.setAdd('withFood',false),
+      foodYesStyle:'flex:1;border:none;cursor:pointer;text-align:center;padding:11px 0;border-radius:13px;font:700 12.5px "Plus Jakarta Sans";'+(S.add.withFood?'background:#5566D6;color:#fff':'background:#F4F3FB;color:#807CA0'),
+      foodNoStyle:'flex:1;border:none;cursor:pointer;text-align:center;padding:11px 0;border-radius:13px;font:700 12.5px "Plus Jakarta Sans";'+(!S.add.withFood?'background:#5566D6;color:#fff':'background:#F4F3FB;color:#807CA0'),
+      saveMed:()=>this.saveMed(),
+
+      // detail
+      detailName:sel?sel.name:'', detailDose:sel?(sel.dose+' '+(sel.kind==='capsule'?'capsule':'tablet')):'',
+      detailPillStyle:detailPill, detailTime:sel?sel.time.replace(' AM','').replace(' PM',''):'',
+      detailFood:sel?(sel.withFood?'With':'Empty'):'', detailSupply:sel?sel.supply:'',
+      detailSupplyStyle:'font:800 15px "Bricolage Grotesque";margin-top:2px;color:'+(lowSupply?'#C0573A':'#28253D'),
+      detailWeek,
+      detailToggle:()=>sel&&this.toggleTaken(sel.id),
+      detailBtnLabel:selTaken?'Taken today ✓':'Mark as taken',
+      detailBtnStyle:'margin-top:16px;width:100%;height:50px;border:none;border-radius:15px;cursor:pointer;font:800 14px "Bricolage Grotesque";'+(selTaken?'background:#EAF4EF;color:#3E9C73':'background:#28253D;color:#fff'),
+
+      // delete dialog
+      confirmDelete:S.confirmDelete,
+      askDelete:()=>this.setState({confirmDelete:true}),
+      cancelDelete:()=>this.setState({confirmDelete:false}),
+      deleteMed:()=>this.deleteMed(),
+
+      // done
+      doneCount:total+'/'+total, streak, doneNext:()=>this.setState({iso:this.iso(this.addDays(cur,1)),screen:'home'}),
+
+      // history
+      history, adherence, adherenceSub: adherence>=90?'Excellent — keep it up':'Room to improve',
+      historyRows:[
+        {label:'Doses taken',value:adhVals.filter(v=>v>=100).length+' / 7 days',valStyle:'font:800 13px "Bricolage Grotesque";color:#28253D'},
+        {label:'Current streak',value:streak+' days',valStyle:'font:800 13px "Bricolage Grotesque";color:#5566D6'},
+        {label:'Best time',value:'Morning',valStyle:'font:800 13px "Bricolage Grotesque";color:#28253D'}
+      ],
+
+      // refills
+      refills, refillAlert: lowName?(lowName+' is low'):'All supplies healthy',
+
+      // notifications
+      notifs,
+
+      // settings
+      toggles,
+
+      // nav + jumps
+      goHome:()=>this.go('home'), goCalendar:()=>this.go('calendar'), openAdd:()=>this.setState({screen:'add',add:{name:'',dose:'',time:'',period:'morning',withFood:true}}),
+      goSettings:()=>this.go('settings'), goHistory:()=>this.go('history'), goRefills:()=>this.go('refills'),
+      goNotifications:()=>this.go('notifications'), goBack:()=>this.go('home'),
+      navHome:navColor('home'), navCal:navColor('calendar'), navRef:navColor('refills'), navSet:navColor('settings'),
+      jumps
+    };
+  }
+}
+</script>
+</body>
+</html>
