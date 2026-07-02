@@ -274,7 +274,9 @@ as Period,
 /// @nodoc
 mixin _$AddDraft {
 
- String get name; String get dose; List<DraftTime> get times; bool get withFood;
+ String get name; String get dose;/// How many pills the user has on hand right now. Free text so the
+/// field behaves like `dose`/`name`; parsed (and defaulted) on save.
+ String get supply; List<DraftTime> get times; bool get withFood;
 /// Create a copy of AddDraft
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -285,16 +287,16 @@ $AddDraftCopyWith<AddDraft> get copyWith => _$AddDraftCopyWithImpl<AddDraft>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.dose, dose) || other.dose == dose)&&const DeepCollectionEquality().equals(other.times, times)&&(identical(other.withFood, withFood) || other.withFood == withFood));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.dose, dose) || other.dose == dose)&&(identical(other.supply, supply) || other.supply == supply)&&const DeepCollectionEquality().equals(other.times, times)&&(identical(other.withFood, withFood) || other.withFood == withFood));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,dose,const DeepCollectionEquality().hash(times),withFood);
+int get hashCode => Object.hash(runtimeType,name,dose,supply,const DeepCollectionEquality().hash(times),withFood);
 
 @override
 String toString() {
-  return 'AddDraft(name: $name, dose: $dose, times: $times, withFood: $withFood)';
+  return 'AddDraft(name: $name, dose: $dose, supply: $supply, times: $times, withFood: $withFood)';
 }
 
 
@@ -305,7 +307,7 @@ abstract mixin class $AddDraftCopyWith<$Res>  {
   factory $AddDraftCopyWith(AddDraft value, $Res Function(AddDraft) _then) = _$AddDraftCopyWithImpl;
 @useResult
 $Res call({
- String name, String dose, List<DraftTime> times, bool withFood
+ String name, String dose, String supply, List<DraftTime> times, bool withFood
 });
 
 
@@ -322,10 +324,11 @@ class _$AddDraftCopyWithImpl<$Res>
 
 /// Create a copy of AddDraft
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? dose = null,Object? times = null,Object? withFood = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? dose = null,Object? supply = null,Object? times = null,Object? withFood = null,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,dose: null == dose ? _self.dose : dose // ignore: cast_nullable_to_non_nullable
+as String,supply: null == supply ? _self.supply : supply // ignore: cast_nullable_to_non_nullable
 as String,times: null == times ? _self.times : times // ignore: cast_nullable_to_non_nullable
 as List<DraftTime>,withFood: null == withFood ? _self.withFood : withFood // ignore: cast_nullable_to_non_nullable
 as bool,
@@ -413,10 +416,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String dose,  List<DraftTime> times,  bool withFood)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String dose,  String supply,  List<DraftTime> times,  bool withFood)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AddDraft() when $default != null:
-return $default(_that.name,_that.dose,_that.times,_that.withFood);case _:
+return $default(_that.name,_that.dose,_that.supply,_that.times,_that.withFood);case _:
   return orElse();
 
 }
@@ -434,10 +437,10 @@ return $default(_that.name,_that.dose,_that.times,_that.withFood);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String dose,  List<DraftTime> times,  bool withFood)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String dose,  String supply,  List<DraftTime> times,  bool withFood)  $default,) {final _that = this;
 switch (_that) {
 case _AddDraft():
-return $default(_that.name,_that.dose,_that.times,_that.withFood);case _:
+return $default(_that.name,_that.dose,_that.supply,_that.times,_that.withFood);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -454,10 +457,10 @@ return $default(_that.name,_that.dose,_that.times,_that.withFood);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String dose,  List<DraftTime> times,  bool withFood)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String dose,  String supply,  List<DraftTime> times,  bool withFood)?  $default,) {final _that = this;
 switch (_that) {
 case _AddDraft() when $default != null:
-return $default(_that.name,_that.dose,_that.times,_that.withFood);case _:
+return $default(_that.name,_that.dose,_that.supply,_that.times,_that.withFood);case _:
   return null;
 
 }
@@ -469,11 +472,14 @@ return $default(_that.name,_that.dose,_that.times,_that.withFood);case _:
 
 
 class _AddDraft implements AddDraft {
-  const _AddDraft({this.name = '', this.dose = '', final  List<DraftTime> times = const <DraftTime>[], this.withFood = true}): _times = times;
+  const _AddDraft({this.name = '', this.dose = '', this.supply = '', final  List<DraftTime> times = const <DraftTime>[], this.withFood = true}): _times = times;
   
 
 @override@JsonKey() final  String name;
 @override@JsonKey() final  String dose;
+/// How many pills the user has on hand right now. Free text so the
+/// field behaves like `dose`/`name`; parsed (and defaulted) on save.
+@override@JsonKey() final  String supply;
  final  List<DraftTime> _times;
 @override@JsonKey() List<DraftTime> get times {
   if (_times is EqualUnmodifiableListView) return _times;
@@ -493,16 +499,16 @@ _$AddDraftCopyWith<_AddDraft> get copyWith => __$AddDraftCopyWithImpl<_AddDraft>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AddDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.dose, dose) || other.dose == dose)&&const DeepCollectionEquality().equals(other._times, _times)&&(identical(other.withFood, withFood) || other.withFood == withFood));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AddDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.dose, dose) || other.dose == dose)&&(identical(other.supply, supply) || other.supply == supply)&&const DeepCollectionEquality().equals(other._times, _times)&&(identical(other.withFood, withFood) || other.withFood == withFood));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,dose,const DeepCollectionEquality().hash(_times),withFood);
+int get hashCode => Object.hash(runtimeType,name,dose,supply,const DeepCollectionEquality().hash(_times),withFood);
 
 @override
 String toString() {
-  return 'AddDraft(name: $name, dose: $dose, times: $times, withFood: $withFood)';
+  return 'AddDraft(name: $name, dose: $dose, supply: $supply, times: $times, withFood: $withFood)';
 }
 
 
@@ -513,7 +519,7 @@ abstract mixin class _$AddDraftCopyWith<$Res> implements $AddDraftCopyWith<$Res>
   factory _$AddDraftCopyWith(_AddDraft value, $Res Function(_AddDraft) _then) = __$AddDraftCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String dose, List<DraftTime> times, bool withFood
+ String name, String dose, String supply, List<DraftTime> times, bool withFood
 });
 
 
@@ -530,10 +536,11 @@ class __$AddDraftCopyWithImpl<$Res>
 
 /// Create a copy of AddDraft
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? dose = null,Object? times = null,Object? withFood = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? dose = null,Object? supply = null,Object? times = null,Object? withFood = null,}) {
   return _then(_AddDraft(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,dose: null == dose ? _self.dose : dose // ignore: cast_nullable_to_non_nullable
+as String,supply: null == supply ? _self.supply : supply // ignore: cast_nullable_to_non_nullable
 as String,times: null == times ? _self._times : times // ignore: cast_nullable_to_non_nullable
 as List<DraftTime>,withFood: null == withFood ? _self.withFood : withFood // ignore: cast_nullable_to_non_nullable
 as bool,

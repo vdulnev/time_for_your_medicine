@@ -11,6 +11,7 @@ class AddFormNotifier extends AutoDisposeNotifier<AddDraft> {
 
   void setName(String value) => state = state.copyWith(name: value);
   void setDose(String value) => state = state.copyWith(dose: value);
+  void setSupply(String value) => state = state.copyWith(supply: value);
   void setFood(bool withFood) => state = state.copyWith(withFood: withFood);
 
   void setTimeAt(int index, String value) {

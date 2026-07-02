@@ -24,11 +24,13 @@ class AddMedicinePage extends ConsumerStatefulWidget {
 class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
   late final TextEditingController _name = TextEditingController();
   late final TextEditingController _dose = TextEditingController();
+  late final TextEditingController _supply = TextEditingController();
 
   @override
   void dispose() {
     _name.dispose();
     _dose.dispose();
+    _supply.dispose();
     super.dispose();
   }
 
@@ -38,10 +40,18 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
     if (mounted) context.router.maybePop();
   }
 
+  /// Mirrors the validation `DataNotifier.addMedicine` applies before
+  /// saving, so the button can't be tapped into a silent no-op.
+  bool _canSave(AddDraft draft) {
+    final pills = int.tryParse(draft.supply.trim());
+    return draft.name.trim().isNotEmpty && pills != null && pills >= 1;
+  }
+
   @override
   Widget build(BuildContext context) {
     final form = ref.read(addFormProvider.notifier);
     final draft = ref.watch(addFormProvider);
+    final canSave = _canSave(draft);
     final l10n = context.l10n;
 
     return Scaffold(
@@ -82,18 +92,45 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
                 children: [
                   const Center(child: PhotoPlaceholder()),
                   const SizedBox(height: 16),
-                  _FieldLabel(l10n.addMedicineNameLabel),
+                  _FieldLabel(l10n.addMedicineNameLabel, isRequired: true),
                   MedicineRegistryField(
                     controller: _name,
                     hint: l10n.addMedicineNameHint,
                     onNameChanged: form.setName,
                   ),
                   const SizedBox(height: 14),
-                  _FieldLabel(l10n.addDoseLabel),
-                  _Field(
-                    controller: _dose,
-                    hint: l10n.addDoseHint,
-                    onChanged: form.setDose,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _FieldLabel(l10n.addDoseLabel),
+                            _Field(
+                              controller: _dose,
+                              hint: l10n.addDoseHint,
+                              onChanged: form.setDose,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _FieldLabel(l10n.addPillsLabel, isRequired: true),
+                            _Field(
+                              controller: _supply,
+                              hint: l10n.addPillsHint,
+                              keyboardType: TextInputType.number,
+                              onChanged: form.setSupply,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 14),
                   for (var i = 0; i < draft.times.length; i++) ...[
@@ -174,28 +211,49 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
                 18,
                 20 + MediaQuery.of(context).padding.bottom,
               ),
-              child: GestureDetector(
-                onTap: _save,
-                child: Container(
-                  height: 52,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.6),
-                        blurRadius: 22,
-                        offset: const Offset(0, 12),
-                        spreadRadius: -8,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!canSave) ...[
+                    Text(
+                      l10n.addSaveRequirementsHint,
+                      textAlign: TextAlign.center,
+                      style: AppText.jakarta(
+                        size: 11.5,
+                        weight: FontWeight.w600,
+                        color: AppColors.muted,
                       ),
-                    ],
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  GestureDetector(
+                    onTap: canSave ? _save : null,
+                    child: Container(
+                      height: 52,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: canSave ? AppColors.primary : AppColors.muted3,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: canSave
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                  blurRadius: 22,
+                                  offset: const Offset(0, 12),
+                                  spreadRadius: -8,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Text(
+                        l10n.addSaveButton,
+                        style: AppText.bricolage(size: 15, color: Colors.white),
+                      ),
+                    ),
                   ),
-                  child: Text(
-                    l10n.addSaveButton,
-                    style: AppText.bricolage(size: 15, color: Colors.white),
-                  ),
-                ),
+                ],
               ),
             ),
           ],
@@ -206,23 +264,35 @@ class _AddMedicinePageState extends ConsumerState<AddMedicinePage> {
 }
 
 class _FieldLabel extends StatelessWidget {
-  const _FieldLabel(this.text);
+  const _FieldLabel(this.text, {this.isRequired = false});
 
   final String text;
+  final bool isRequired;
 
   @override
   Widget build(BuildContext context) {
+    final style = AppText.jakarta(
+      size: 11,
+      weight: FontWeight.w700,
+      color: AppColors.muted,
+      letterSpacing: 0.5,
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        text,
-        style: AppText.jakarta(
-          size: 11,
-          weight: FontWeight.w700,
-          color: AppColors.muted,
-          letterSpacing: 0.5,
-        ),
-      ),
+      child: isRequired
+          ? RichText(
+              text: TextSpan(
+                style: style,
+                children: [
+                  TextSpan(text: text),
+                  TextSpan(
+                    text: ' *',
+                    style: style.copyWith(color: AppColors.danger),
+                  ),
+                ],
+              ),
+            )
+          : Text(text, style: style),
     );
   }
 }
@@ -334,17 +404,20 @@ class _Field extends StatelessWidget {
     required this.controller,
     required this.hint,
     required this.onChanged,
+    this.keyboardType,
   });
 
   final TextEditingController controller;
   final String hint;
   final ValueChanged<String> onChanged;
+  final TextInputType? keyboardType;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
       onChanged: onChanged,
+      keyboardType: keyboardType,
       style: AppText.jakarta(size: 14, weight: FontWeight.w700),
       cursorColor: AppColors.primary,
       decoration: InputDecoration(
