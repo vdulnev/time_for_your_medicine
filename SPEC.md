@@ -41,6 +41,10 @@ pixel-faithfully from the Claude Design handoff
   `flutter gen-l10n` after changing an ARB file.
 - Run `dart format .`, then `flutter analyze` (zero warnings), then
   `flutter test` before considering a task done.
+- **Never run `git commit` or `git push` unless the user directly asks
+  for it in that turn.** Finishing a feature/fix is not an implicit
+  request to commit — leave the working tree as-is and let the user
+  review the diff first.
 
 ---
 
@@ -143,6 +147,7 @@ lib/
     state/
       data_state.dart    # @freezed DataState (meds, taken, settings, notifOff)
       data_notifier.dart # AsyncNotifier<DataState> — mutations via repo
+      error_notifier.dart # Notifier<AppException?> — surfaces failed writes (see §7a)
       ui_providers.dart  # selectedDayProvider, calendarMonthProvider
       selectors.dart     # pure derivations for widgets
     router/
@@ -289,24 +294,81 @@ rows.
 1. **Home** — day header + prev/next, notifications & calendar buttons,
    week strip, progress ring card (→ history), dose-occurrence list grouped
    by period (a medicine with several daily doses appears once per slot,
-   each independently toggleable), tap-to-toggle check, tap tile → detail.
+   each independently trackable), tap the check circle → dose action
+   sheet (see §6a), tap tile → detail.
 2. **Calendar** — month grid with today/selected/dots, day agenda (one row
    per dose occurrence), "Open this day" CTA.
-3. **Add medicine** — photo placeholder, name/dose fields, a repeatable
-   list of time + time-of-day slots ("+ Add another time" / remove per
-   row, minimum 1) so a medicine can be scheduled several times a day,
-   food choice, Save.
+3. **Add medicine** — photo placeholder, name/dose/pills fields (pills =
+   how many you have now; becomes both `supply` and `cap`, since a newly
+   added medicine starts full), a repeatable list of time + time-of-day
+   slots ("+ Add another time" / remove per row, minimum 1) so a medicine
+   can be scheduled several times a day, food choice, Save. NAME and
+   PILLS are marked required (`*`); Save is disabled (greyed, no shadow,
+   `onTap: null`) until both are filled in with a valid pill count
+   (≥ 1), with a hint line above the button explaining why.
 4. **Detail** — indigo header, next/food/left stat cards (NEXT shows the
    earliest untaken slot today, "+N" suffixed when there's more than one),
    last-7-days row (a day counts as done only once every slot is taken),
-   a "today's doses" list with one independent taken toggle per slot,
-   delete.
+   a "today's doses" list with one independent dose-status button per slot
+   (opens the same dose action sheet as Home), delete.
 5. **Done** — celebration (pop check + confetti dots), doses/streak stats,
    view-tomorrow / back-to-today.
 6. **History** — 7-day adherence card, bar chart, summary rows.
-7. **Refills** — low-supply alert, per-med supply bars + order button.
+7. **Refills** — low-supply alert, per-med supply bars + a tappable
+   order/OK button that opens a "Refill {name}?" sheet (pre-filled with
+   the current pack size) and sets both `supply` and `cap` to the entered
+   count.
 8. **Reminders** — per-med reminder switches.
 9. **Settings** — profile, preference switches, navigation rows.
+
+---
+
+## 6a. Dose states and the supply ledger
+
+Every scheduled dose has three possible states — `DoseStatus`
+(`lib/core/models/dose_status.dart`): **pending** (not touched — the
+default), **taken**, and **rejected** (deliberately skipped, e.g. the
+user chose not to take it). Absence from `DataState.doseStatus` means
+pending; a `DoseLog` row only exists once a dose has been touched.
+
+Tapping a dose's check control (Home tile or Detail's toggle button)
+always opens the shared **dose action sheet**
+(`lib/core/widgets/dose_action_sheet.dart`) rather than mutating state
+directly:
+- **pending** → "Mark as taken" / "Mark as rejected" / Cancel.
+- **taken** / **rejected** → "Undo" (reverts to pending) / Cancel.
+
+`DataNotifier` exposes `markTaken`, `markRejected`, and `revertDose`
+(`lib/core/state/data_notifier.dart`) — there is no direct
+"set status" mutation from the UI. `markTaken` also consumes one pill;
+`revertDose` credits it back if the dose had been taken. `markRejected`
+never touches supply — nothing was consumed.
+
+**Supply transactions.** A medicine's current pill count is **not
+stored** — `Medicines` has no `supply` column. It's derived at read
+time by summing every row logged in `SupplyTransactions`
+(`lib/core/db/app_database.dart`), the sole source of truth:
+- `initial` — the starting stock entered on Add.
+- `refill` — from the Refills sheet; `delta` is the signed difference
+  between the entered total and the current (derived) supply, so
+  entering a *lower* total than the current supply logs a **negative**
+  delta — this doubles as the error-correction path (no separate
+  "correct" action; see `MedicineRepository.refillMedicine`).
+- `take` (-1) / `revertTake` (+1) — from `markTaken` / `revertDose`,
+  tied back to the triggering dose via nullable `iso`/`doseTimeId`
+  columns, logged by `MedicineRepository._logSupplyTransaction`.
+
+`MedicineRepository.loadAll` computes every medicine's supply in one
+pass (`_supplyTotals`: load all `SupplyTransactions` rows, fold by
+`medId`) and `_toMedicine` clamps the sum to `0..cap` before it ever
+reaches the domain `Medicine.supply` field — the ledger itself is
+never clamped or rewritten, only the derived display value is.
+`refillMedicine` needs the current balance for a single medicine to
+compute its delta; `_currentSupply(medId)` does that same fold scoped
+to one `medId`. The ledger has no read-side UI yet (nothing surfaces
+transaction history) — it exists purely as an audit trail per the
+feature request; `deleteMedicine` clears a medicine's rows along with
+its other data.
 
 ---
 
@@ -316,14 +378,15 @@ rows.
 
 | Table | Columns |
 |---|---|
-| `Medicines` | id (PK text), name, dose, withFood, kind, c1, c2 (nullable), soft, supply, cap |
+| `Medicines` | id (PK text), name, dose, withFood, kind, c1, c2 (nullable), soft, cap. **No `supply` column** — the current pill count is derived from `SupplyTransactions`, never stored (see §6a). |
 | `DoseTimes` | medId (text), id (text), time, period, sortOrder — PK (medId, id) |
-| `DoseLog` | iso (text), medId (text), doseTimeId (text), taken (bool) — PK (iso, medId, doseTimeId) |
+| `DoseLog` | iso (text), medId (text), doseTimeId (text), status (text, `DoseStatus` name) — PK (iso, medId, doseTimeId). A row only exists once a dose is touched; absence means pending. |
+| `SupplyTransactions` | id (PK autoincrement), medId, delta (signed int), kind ('initial'/'refill'/'take'/'revertTake'), createdAt, iso (nullable), doseTimeId (nullable) — append-only ledger, sole source of truth for pill counts, see §6a |
 | `SettingsRows` | id (PK, single row = 0), sound, vibrate, refill, localeOverride (nullable text) |
 | `NotifOffRows` | medId (PK text) — presence means reminder disabled |
 | `MedicineRegistryEntries` / `MedicineRegistryMeta` | imported medicine-name lookup data (search, CSV import) |
 
-`schemaVersion = 5`. Migrations are **append-only** — never edit a past
+`schemaVersion = 8`. Migrations are **append-only** — never edit a past
 migration; add a new one and bump the version. On first open the database
 starts empty (see §4). The `MedicineRepository` is the only thing that
 talks to drift and returns `Either<AppException, T>`.
@@ -344,6 +407,40 @@ talks to drift and returns `Either<AppException, T>`.
   v4 database — built by running the actual pre-migration code from a
   `git worktree` checkout, not hand-rolled DDL — confirming data survives
   the upgrade and the old columns are actually gone afterward.
+- **v5 → v6** (tri-state doses + supply ledger, see §6a): creates
+  `SupplyTransactions`; adds `DoseLog.status` (default `'pending'`),
+  backfills it from the old `taken` boolean (`taken = 1` → `'taken'`),
+  deletes rows where `taken = 0` (they carry no information under the
+  new "absence == pending" convention), then drops `DoseLog.taken`.
+  Seeds the ledger with each medicine's current `supply` as an
+  `'initial'` transaction, so every medicine has a consistent opening
+  balance regardless of how it got there pre-migration.
+- **v6 → v7**: drops `Medicines.supply`. By this point every write path
+  already kept the column and the ledger in lockstep (the v6 migration
+  seeded a matching opening balance, and `addMedicine`/`refillMedicine`/
+  `recordTake`/`recordRevertTake` all logged a transaction alongside
+  the column write), so this is a pure `ALTER TABLE ... DROP COLUMN`
+  with no backfill needed — nothing changes for the user, the column
+  was already redundant.
+- **v7 → v8** (critical data-loss fix): rebuilds `DoseLog` because its
+  physical PRIMARY KEY was never actually `(iso, medId, doseTimeId)` on
+  any real device — the v4 → v5 migration added `doseTimeId` via
+  `m.addColumn`, which adds a column but **cannot change a table's
+  PRIMARY KEY**. Every device that had ever upgraded through v5 stayed
+  physically keyed on just `(iso, medId)`. `MedicineRepository.setDoseStatus`'s
+  `insertOnConflictUpdate` targets the *Dart-declared* key, and SQLite
+  rejects an `ON CONFLICT` target that doesn't match any real
+  constraint — so on every such device, marking a dose taken or
+  rejected threw inside `MedicineRepository._guard`, which caught and
+  logged the error but never surfaced it (the notifier doesn't inspect
+  the returned `Either`). The optimistic in-memory state looked
+  correct until the next app restart reloaded from the untouched
+  table, silently reverting every dose back to pending. Fixed by
+  renaming the old table, recreating `dose_log` from the current Dart
+  definition (correct 3-column key), copying rows across, and dropping
+  the renamed original — safe because the old 2-column key means there
+  was at most one legacy row per `(iso, medId)`, so re-keying to the
+  finer-grained triple can never collide.
 
 `kToday` (`lib/core/db/app_database.dart`) is the app's single notion of
 "today" — a `DateTime get` at local midnight, backed by `package:clock`.
@@ -359,10 +456,44 @@ override, so nothing in production code needs to know it exists.
 ## 7a. Error handling
 
 - `AppException` — `@freezed` sealed union:
-  `databaseFailure(message)`, `notFound(id)`, `unknown(error)`.
+  `databaseFailure(message)`, `notFound(id)`, `invalidRegistryFile(message)`,
+  `unknown(error)`.
 - Repositories catch drift/SQLite errors and map to `Left(AppException)`.
-- `dataProvider` folds the `Either` inside `AsyncValue.guard`; failures
-  surface as `AsyncValue.error` and render via a shared `ErrorView`.
+- **Load failures** (`dataProvider`'s own `build()`): folds the `Either`
+  directly — `Left` rethrows, so the whole screen falls into
+  `AsyncValue.error` and renders via a shared `ErrorView`. Appropriate
+  when the app has no data to show at all.
+- **Write failures** (every mutation method on `DataNotifier` —
+  `markTaken`, `markRejected`, `revertDose`, `addMedicine`,
+  `refillMedicine`, `deleteMedicine`, `toggleSetting`,
+  `setLocaleOverride`, `toggleNotif`): each applies its optimistic UI
+  update first, then awaits the repository call and passes the
+  returned `Either` through `_reportIfFailed`. A `Left` calls
+  `ref.read(errorNotifierProvider.notifier).report(failure)`
+  (`lib/core/state/error_notifier.dart` — a bare
+  `Notifier<AppException?>`); a `Right` is a no-op. This exists because
+  a write failure here previously had **no** failure path at all: the
+  `Either` was simply discarded, so a thrown exception was caught and
+  logged by `MedicineRepository._guard` and then vanished — this is
+  exactly how the v7→v8 `DoseLog` primary-key bug (§7) went unnoticed
+  for as long as it did. `_PillpalAppState.build()`
+  (`lib/app.dart`) calls `ref.listen<AppException?>(errorNotifierProvider, ...)`
+  and, on a non-null value, shows a `SnackBar` via a
+  `GlobalKey<ScaffoldMessengerState>` passed to
+  `MaterialApp.router(scaffoldMessengerKey: ...)`, using
+  `AppExceptionL10n.message(l10n)` for the text — then immediately
+  calls `.clear()` so the same failure can't re-fire on the next
+  rebuild. The `l10n` there comes from `AppLocalizations.of(messenger.context)`
+  (the `ScaffoldMessengerState`'s own context), not the `context`
+  argument to `build()` — that outer context sits *above*
+  `MaterialApp.router` and has no `Localizations` ancestor yet on the
+  first build, while the messenger's context is guaranteed to be a
+  `MaterialApp.router` descendant once mounted.
+- Whether a failed write should also roll back its optimistic UI
+  update is a separate, unresolved question — right now it doesn't:
+  the snackbar tells the user something went wrong, but the UI still
+  shows the (unpersisted) new state until the next full reload
+  resyncs it from the database.
 - `main()` installs `FlutterError.onError` and
   `PlatformDispatcher.instance.onError` → Talker.
 
@@ -381,6 +512,26 @@ override, so nothing in production code needs to know it exists.
 - Widget smoke test: app boots to an empty Home with no demo medicines.
 - Toggle test: checking the last remaining dose routes to Done.
 - Add test: saving a named medicine appends a tile.
+- Migration test (`test/dose_log_migration_test.dart`): every other
+  test opens a brand-new `NativeDatabase.memory()`, which always
+  builds tables from the *current* Dart schema via `onCreate` — never
+  through a real `onUpgrade` chain. That blind spot is exactly how the
+  v7→v8 `DoseLog` primary-key bug (see §7) went undetected, so this
+  test hand-builds a temp-file database matching a real migrated
+  device's on-disk schema (verified against a live simulator via the
+  `sqlite3` CLI before fixing it), runs it through `AppDatabase`'s
+  actual migration strategy, and asserts the repaired table accepts
+  the writes the broken one rejected. When adding a migration that
+  changes a primary key or any other constraint SQLite can't alter
+  in-place, add a fixture here rather than trusting the rest of the
+  suite to catch it — it won't.
+- Error-snackbar test (`test/error_snackbar_test.dart`): closes the
+  in-memory database mid-test (`await db.close()`) to force the next
+  `DataNotifier` write to throw, then asserts a `SnackBar` appears —
+  the regression test for §7a's write-failure surfacing. Verified it
+  actually catches a regression, not just a tautology, by temporarily
+  deleting the `ref.listen` block in `app.dart` and confirming the
+  test fails.
 
 ---
 
@@ -694,3 +845,257 @@ Tracked as a future phase.
     Calendar shows "July 2026" with today correctly highlighted, instead
     of being stuck on the old anchor date. 25 tests green, `flutter
     analyze` clean, `dart format .` clean.
+- **Set pill count on add, and refill from the Refills screen.** Neither
+  was previously possible — every new medicine was silently hardcoded to
+  `supply: 30, cap: 30`, and the Refills screen's order/OK button was
+  decorative (no `onTap`).
+  - `AddDraft` gained a `supply` field (free text, like `dose`/`name`) and
+    the Add form gained a PILLS field next to DOSE. `DataNotifier
+    .addMedicine` parses it via `_parseSupply` (falls back to 30 for
+    blank/invalid input, never 0) and sets **both** `supply` and `cap` to
+    that value — a freshly added medicine is, by definition, full.
+  - New `MedicineRepository.setSupply(medId, supply, cap)` (a drift
+    `UPDATE`, the model's first) and `DataNotifier.refillMedicine(medId,
+    newSupply)`, which sets `supply` **and** `cap` to the new count
+    together — a refill resets the "full pack" size too, since the next
+    pack purchased may not match the original.
+  - `RefillTile` (`lib/features/refills/widgets/refill_tile.dart`)
+    became a `ConsumerWidget`; its order/OK button now opens
+    `showRefillSheet` (`refill_sheet.dart`, mirrors `delete_sheet.dart`'s
+    pattern) — a bottom sheet pre-filled with the medicine's current
+    `cap`, digits-only input, Cancel/Refill — and calls
+    `refillMedicine` with the result. Tappable in both the low-supply
+    ("Order") and healthy ("OK") states, so a count can be corrected
+    proactively, not just when it's already low.
+  - Tests: `data_layer_test.dart` covers a custom pill count persisting
+    through `addMedicine`, invalid input falling back to a default, and
+    `refillMedicine` updating supply/cap together. Verified live: added a
+    medicine with 60 pills (confirmed on Detail's LEFT stat and the
+    Refills list), then refilled another medicine from 30 to 90 pills via
+    the sheet and confirmed the list updated live. 27 tests green,
+    `flutter analyze` clean, `dart format .` clean.
+  - **Follow-up bug, caught by the user:** clearing the refill sheet's
+    pill-count field looked like it "auto-filled with the previous
+    value." Root cause: the `TextField` set a `hintText` ("30") but never
+    a `hintStyle`, so with no theme-level `InputDecorationTheme` override
+    either, Flutter fell back to rendering the hint in the *same* dark,
+    bold style as real input (`AppText.bricolage`'s default `ink`
+    color/`w800` weight) — an empty field showing its hint was visually
+    indistinguishable from a committed value. The underlying logic was
+    always correct (`_confirm()` already treated empty/unparseable input
+    as invalid and returned `null`); this was a pure styling bug. Fixed
+    by giving the hint an explicit muted style
+    (`AppText.bricolage(color: AppColors.muted2)`), matching the
+    convention every other hinted field in the app already follows (e.g.
+    `_Field` in `add_medicine_page.dart`). Verified live by clearing the
+    field character-by-character with zoomed screenshots at each step,
+    confirming the hint now renders visibly lighter/greyer than real
+    input, and that confirming on an empty field is still correctly a
+    no-op. 27 tests green, `flutter analyze` clean, `dart format .`
+    clean.
+  - **Tri-state doses + supply transaction ledger** (see §6a): doses
+    gained a third state — `DoseStatus.pending` / `.taken` / `.rejected`
+    — and every change to a medicine's pill count (initial stock,
+    refills/corrections, a dose being taken, a taken dose being
+    reverted) is now logged as an immutable row in a new
+    `SupplyTransactions` table, alongside the running `Medicines.supply`
+    total.
+    - Tapping a dose's check control now opens a confirmation sheet
+      (`dose_action_sheet.dart`) instead of toggling directly — pending
+      doses offer "Mark as taken" / "Mark as rejected", touched doses
+      offer "Undo". `DataNotifier.markTaken`/`markRejected`/`revertDose`
+      replace the old `toggleTaken`.
+    - Marking a dose taken now consumes one pill (previously taking a
+      dose never touched supply); reverting a taken dose credits it
+      back. Rejecting a dose never touches supply. Supply is clamped to
+      `0..cap`.
+    - The Refill sheet is unchanged UX-wise (still asks for a new
+      total), but now doubles as the "correct an error" path: entering
+      a total lower than the current supply logs a negative-delta
+      transaction.
+    - DB: `schemaVersion` 5 → 6. `DoseLog.taken` (bool) replaced by
+      `DoseLog.status` (text); new `SupplyTransactions` table.
+      Migration backfills status from the old boolean, drops
+      rows/columns per the new "absence == pending" convention, and
+      seeds one `'initial'` ledger transaction per medicine from its
+      current supply.
+    - Tests: `data_layer_test.dart` covers `markTaken` consuming a pill,
+      `revertDose` crediting it back, `markRejected` leaving supply
+      untouched, and `refillMedicine` logging a negative delta on a
+      downward correction; `done_screen_test.dart` updated for the new
+      confirm-in-sheet flow. 30 tests green, `flutter analyze` clean,
+      `dart format .` clean. Verified live on the iOS Simulator: opened
+      the sheet from Home and Detail, marked a dose taken (supply
+      59→60→59 across mark/undo/mark), marked a dose rejected (supply
+      unchanged, red ✕ shown on Home and Detail), and confirmed the
+      Refills list reflects the final state — all against the real,
+      already-migrated on-device database (not a fresh install), and
+      with the confirmation sheet's initial three-button layout fixed
+      for a RenderFlex overflow found during that same test run.
+  - **`addMedicine` no longer defaults an unparseable PILLS field to
+    30.** A blank or invalid pill count is now a validation failure
+    like an empty name — `DataNotifier.addMedicine` returns early and
+    nothing is saved, rather than silently inventing a 30-pill starting
+    supply. Test updated: `Metoprolol` with `supply: 'not a number'` now
+    asserts the medicine was never added, instead of asserting a
+    fallback `supply > 0`.
+  - **`markTaken` refuses to mark a dose taken when the medicine has
+    fewer than 1 pill left.** `DataNotifier.markTaken` now looks up the
+    medicine and no-ops (returns `false`) if `supply < 1`, on top of the
+    existing already-taken guard. The dose action sheet mirrors this in
+    the UI: `showDoseActionSheet` takes a `canTake` flag (wired from
+    `med.supply >= 1` at both call sites, Home and Detail) and hides the
+    "Mark as taken" button when out of stock, swapping the body copy for
+    `doseSheetOutOfStock` ("No pills left — refill before marking this
+    dose taken.") so the remaining "Mark as rejected"/"Cancel" options
+    aren't presented as if taking were still possible. Test added:
+    `markTaken is a no-op when supply is 0`. 31 tests green, `flutter
+    analyze` clean, `dart format .` clean. Verified live: added a
+    2-dose-slot medicine with 1 pill, marked the first dose taken
+    (supply → 0), then tapped the second dose's check — the sheet showed
+    the out-of-stock message with no "Mark as taken" button, only
+    "Mark as rejected" and "Cancel".
+  - **Add medicine: Save button disabled until name + pills are valid.**
+    `_AddMedicinePageState._canSave` mirrors the exact validation
+    `DataNotifier.addMedicine` already applies (non-empty name, pill
+    count parses to ≥ 1) and drives the Save button's `onTap`
+    (`null` when invalid — no silent no-op tap anymore), background
+    color (`AppColors.muted3` vs `primary`), and shadow (dropped when
+    disabled). MEDICINE NAME and PILLS labels gained a small red `*`
+    (`_FieldLabel(..., isRequired: true)`) and a hint line
+    (`addSaveRequirementsHint`, en/uk) appears above the button while
+    it's disabled: "Enter a medicine name and at least 1 pill to
+    save." `flutter analyze` clean, `dart format .` clean, 31 tests
+    green (no test change needed — behavior wasn't previously covered
+    by a widget test). Verified live: opened Add with both fields
+    empty (button greyed, hint visible, both labels starred); typed a
+    name only (still greyed); typed "5" into PILLS (button turned
+    blue with its shadow immediately, hint disappeared) — confirmed
+    reactive on every keystroke via the existing `addFormProvider`
+    watch, not just on save-attempt.
+  - **`Medicines.supply` dropped — pill count is now purely derived
+    from the ledger.** Previously the column and `SupplyTransactions`
+    were kept in lockstep by every write path (belt-and-suspenders);
+    now there's exactly one source of truth. DB: `schemaVersion` 6 → 7,
+    `ALTER TABLE medicines DROP COLUMN supply` (no backfill — the
+    ledger was already consistent, see §7). Repository:
+    `MedicineRepository._supplyTotals()` (batch, used by `loadAll`) and
+    `_currentSupply(medId)` (single medicine, used by `refillMedicine`
+    to compute its delta) both fold `SupplyTransactions.delta` in
+    Dart rather than a SQL aggregate; `_toMedicine` clamps the summed
+    total to `0..cap` only when building the domain `Medicine` — the
+    ledger rows themselves are never rewritten or clamped.
+    `_adjustSupply` (renamed `_logSupplyTransaction`) no longer reads
+    or writes `Medicines` at all — it's a single ledger insert.
+    `_toCompanion`/`addMedicine`'s DB write no longer sets `supply`
+    (the domain `Medicine.supply` field is unchanged; only its
+    *storage* moved). `DataNotifier` and every UI/selector were
+    untouched — they only ever read the in-memory `Medicine.supply`
+    field, never the DB column directly. Tests:
+    `test/support/seed_test_data.dart` now seeds an `'initial'`
+    `SupplyTransactions` row per medicine instead of a `supply:` value
+    on the `MedicinesCompanion`; no assertions changed since the
+    computed values are identical to what was previously stored — 31
+    tests green with zero test-logic changes beyond the seed helper.
+    `flutter analyze` clean, `dart format .` clean. Verified live
+    against the real, already-v6 on-device database: app launched
+    without error (confirming the drop-column migration ran cleanly),
+    Refills screen showed the same pill counts as before the change
+    (Zinc 60, others matching), and marking a dose taken still
+    correctly decremented the displayed count (60 → 59) purely via the
+    new ledger-sum code path.
+  - **Follow-up bug, caught by the user:** after marking a dose taken,
+    tapping a medicine's Refills button still showed the old (unchanged)
+    pill count in the sheet, not the just-decremented one. Root cause:
+    `_RefillSheetState._controller` in `refill_sheet.dart` pre-filled
+    from `widget.med.cap` (the fixed full-pack size, which a `take`
+    never touches) instead of `widget.med.supply` (the current
+    remaining count, which does). This predates the ledger refactor —
+    it only became visible once marking a dose taken started actually
+    changing supply. Fixed by pre-filling from `.supply` instead of
+    `.cap`, matching the sheet's own prompt ("How many pills do you
+    have now?"). `flutter analyze` clean, `dart format .` clean, 31
+    tests green (no existing test covered this pre-fill value).
+    Verified live: marked Zinc taken (60 → 59 on the Refills row),
+    opened its refill sheet, and confirmed the field now shows "59"
+    instead of the stale "60".
+  - **Critical fix, caught by the user: dose taken/rejected status
+    never actually persisted across an app restart.** Reported as
+    "application doesnt save reminder status after restart." Root
+    cause (see §7's v7→v8 note and §8's migration-test note for full
+    detail): `DoseLog`'s physical PRIMARY KEY was silently stuck at the
+    pre-v5 `(iso, medId)` on every real device, because the v4→v5
+    migration added `doseTimeId` via `m.addColumn` — which cannot
+    change a PRIMARY KEY. `setDoseStatus`'s `insertOnConflictUpdate`
+    targets the Dart-declared 3-column key, which SQLite rejects when
+    it doesn't match a real constraint, so every "mark taken"/"mark
+    rejected" write threw inside `_guard`, was logged and swallowed,
+    and never reached disk — while the optimistic in-memory UI state
+    looked correct until the next restart reloaded from the untouched
+    table. This was completely invisible to the test suite, which only
+    ever exercises fresh in-memory databases (always built via
+    `onCreate` from the *current* schema, never through a real
+    `onUpgrade` chain). `schemaVersion` 7 → 8; new migration renames
+    the old table, recreates `dose_log` from the current definition,
+    copies rows across, drops the renamed original.
+    - Confirmed root cause by direct inspection: queried the live
+      simulator's on-disk `pillpal.sqlite` via the `sqlite3` CLI and
+      found `PRIMARY KEY ("iso", "med_id")` — missing `dose_time_id`
+      entirely — despite the Dart table having declared the 3-column
+      key since v5.
+    - Added `test/dose_log_migration_test.dart`, which hand-builds a
+      temp-file database replicating that exact broken schema, runs it
+      through `AppDatabase`'s real migration strategy, and asserts two
+      independent dose slots on the same day both survive
+      `insertOnConflictUpdate` without colliding or throwing. Verified
+      the test actually catches the regression (not a tautology) by
+      temporarily reverting the fix and re-running it — it failed with
+      the exact production error, `SqliteException: ON CONFLICT clause
+      does not match any PRIMARY KEY or UNIQUE constraint`.
+    - Added `sqlite3` as an explicit `dev_dependency` (was only
+      transitive via drift) since the new test imports it directly to
+      construct the fixture.
+    - 32 tests green, `flutter analyze` clean, `dart format .` clean.
+    - Verified live against the actual broken on-device database (not
+      a fresh install): relaunched the app, confirmed
+      `PRAGMA user_version` went 7 → 8 and `dose_log`'s schema now
+      reads `PRIMARY KEY ("iso", "med_id", "dose_time_id")`; marked a
+      dose taken and confirmed the row landed on disk via direct
+      `sqlite3` query (previously would have silently failed); then
+      did a **true restart** — `xcrun simctl terminate` +
+      `xcrun simctl launch` on the already-installed binary, not a
+      `flutter run` rebuild — and confirmed the taken status survived,
+      where before the fix it reverted to pending every time.
+  - **Follow-up hardening, requested by the user: surface write
+    failures via an error snackbar instead of swallowing them.** Every
+    `DataNotifier` mutation method (`markTaken`, `markRejected`,
+    `revertDose`, `addMedicine`, `refillMedicine`, `deleteMedicine`,
+    `toggleSetting`, `setLocaleOverride`, `toggleNotif`) now passes the
+    `Either` its repository call returns through a new
+    `_reportIfFailed` helper; on `Left`, it reports the `AppException`
+    into a new `errorNotifierProvider`
+    (`lib/core/state/error_notifier.dart`, a bare
+    `Notifier<AppException?>`). `_PillpalAppState.build()`
+    (`lib/app.dart`) listens on that provider and shows a `SnackBar`
+    via a `GlobalKey<ScaffoldMessengerState>` using
+    `AppExceptionL10n.message(l10n)` for the text, then clears the
+    provider so the same failure can't re-fire. See §7a for the full
+    design (including why the snackbar's `l10n` comes from the
+    `ScaffoldMessengerState`'s own context rather than `build()`'s
+    `context` argument, and the still-open question of whether a
+    failed write should also roll back its optimistic UI update — it
+    currently doesn't).
+    - Added `test/error_snackbar_test.dart`: forces a real write
+      failure by closing the in-memory DB mid-test, then asserts a
+      `SnackBar` renders. Verified it's not a tautology by temporarily
+      deleting the `ref.listen` block and confirming the test then
+      fails — restored immediately after.
+    - 33 tests green, `flutter analyze` clean, `dart format .` clean.
+    - Verified live: relaunched the app, confirmed the happy path is
+      unaffected (marking a dose taken shows no snackbar, works
+      exactly as before) — a live forced-failure repro on-device was
+      not attempted since it would require destructively corrupting
+      the app's real database file mid-session; the widget test
+      already exercises the real `PillpalApp` widget tree end to end
+      (real providers, real `SnackBar`, real repository write) and was
+      confirmed to fail without the fix, which was judged sufficient.
