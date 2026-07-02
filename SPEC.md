@@ -279,7 +279,8 @@ rows.
   `AutoTabsScaffold`: **Home**, **Calendar**, **Refills**, **Settings**,
   with the floating center **+** FAB pushing `AddRoute`.
 - Pushed full-screen routes (no bottom nav): `AddRoute`,
-  `DetailRoute(medId)`, `DoneRoute`, `HistoryRoute`, `NotificationsRoute`.
+  `DetailRoute(medId)`, `DoneRoute`, `HistoryRoute`, `NotificationsRoute`,
+  `TransactionsRoute`.
 - The "all doses taken" celebration: after `toggleTaken` reports the day
   just completed, the calling widget `router.push(const DoneRoute())`.
 - Delete confirmation is shown via `showModalBottomSheet` /
@@ -313,13 +314,21 @@ rows.
    (opens the same dose action sheet as Home), delete.
 5. **Done** — celebration (pop check + confetti dots), doses/streak stats,
    view-tomorrow / back-to-today.
-6. **History** — 7-day adherence card, bar chart, summary rows.
+6. **History** — 7-day adherence card, bar chart, summary rows, a
+   "View transactions" nav row → **Transactions**.
 7. **Refills** — low-supply alert, per-med supply bars + a tappable
    order/OK button that opens a "Refill {name}?" sheet (pre-filled with
    the current pack size) and sets both `supply` and `cap` to the entered
    count.
 8. **Reminders** — per-med reminder switches.
 9. **Settings** — profile, preference switches, navigation rows.
+10. **Transactions** — the `SupplyTransactions` ledger, newest first, as
+    a filterable list (see §6a). A medicine dropdown ("All medicines" +
+    one entry per medicine) and a 4-way interval segmented control
+    (All time / 7 days / 30 days / 90 days) narrow the list; each row
+    shows the medicine name, a kind label + icon, the timestamp, and
+    the signed pill delta (green for positive, ink for negative).
+    Reached only from History, per the feature request.
 
 ---
 
@@ -365,10 +374,21 @@ reaches the domain `Medicine.supply` field — the ledger itself is
 never clamped or rewritten, only the derived display value is.
 `refillMedicine` needs the current balance for a single medicine to
 compute its delta; `_currentSupply(medId)` does that same fold scoped
-to one `medId`. The ledger has no read-side UI yet (nothing surfaces
-transaction history) — it exists purely as an audit trail per the
-feature request; `deleteMedicine` clears a medicine's rows along with
+to one `medId`. `deleteMedicine` clears a medicine's rows along with
 its other data.
+
+**Reading the ledger.** `MedicineRepository.loadTransactions()` returns
+every `SupplyTransactionRow`, newest first (`ORDER BY createdAt DESC`);
+filtering by medicine and by date range happens client-side in
+`Selectors.transactions` rather than as query params — the ledger stays
+small enough for a personal app that loading it in full and filtering
+in memory is simpler than threading filter state into SQL.
+`transactionsProvider` (`lib/core/state/providers.dart`) is a
+`FutureProvider.autoDispose` that watches `dataProvider` so it reloads
+after every mutation that touches supply; `transactionFilterProvider`
+holds the screen's own UI-only filter state (`medId`, a
+`TransactionInterval` enum — `all` / `last7Days` / `last30Days` /
+`last90Days`). See §6 for the screen itself.
 
 ---
 
@@ -1099,3 +1119,25 @@ Tracked as a future phase.
       already exercises the real `PillpalApp` widget tree end to end
       (real providers, real `SnackBar`, real repository write) and was
       confirmed to fail without the fix, which was judged sufficient.
+  - **Transactions screen** (§6, §6a): a filterable read view over the
+    supply ledger, reached from History. Added
+    `MedicineRepository.loadTransactions()`, `transactionsProvider` /
+    `transactionFilterProvider`, `Selectors.transactions` (joins ledger
+    rows with medicine names, applies the medicine/interval filter),
+    `TransactionsPage` + `TransactionTile` / `TransactionFilterBar`
+    widgets, and a `TransactionsRoute`.
+    - Repository test: `loadTransactions` returns the ledger newest
+      first (pinned to two distinct `Clock.fixed` timestamps so the
+      ordering assertion isn't relying on two same-millisecond writes).
+    - Widget test (`test/transactions_page_test.dart`): navigates
+      Settings → History → Transactions and asserts every seeded
+      medicine's initial-stock row renders; a second test selects a
+      medicine from the filter dropdown and asserts the list narrows
+      to just that medicine's rows.
+    - 36 tests green, `flutter analyze` clean, `dart format .` clean.
+    - Verified live on the simulator against the real on-device
+      database (not a fresh seed): the ledger rendered real
+      take/revert/initial-stock history with correct icons, labels,
+      and signed deltas; the medicine dropdown and interval segmented
+      control both updated the list live; back-navigation to History
+      worked cleanly; no overflow or exceptions in the run log.
