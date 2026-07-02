@@ -320,7 +320,13 @@ rows.
    order/OK button that opens a "Refill {name}?" sheet (pre-filled with
    the current pack size) and sets both `supply` and `cap` to the entered
    count.
-8. **Reminders** — per-med reminder switches.
+8. **Reminders** — per-med reminder switches. Switching a medicine's
+   reminder off excludes it from today's active dose-tracking surfaces
+   (see §6a) — it disappears from the Home list, Calendar agenda, and
+   the "doses left today" count, and can no longer block the "all
+   doses taken" celebration. It still exists everywhere else: Detail,
+   Refills, and History's adherence stats are unaffected, and it
+   reappears the moment the reminder is switched back on.
 9. **Settings** — profile, preference switches, navigation rows.
 10. **Transactions** — the `SupplyTransactions` ledger, newest first, as
     a filterable list (see §6a). A medicine dropdown ("All medicines" +
@@ -389,6 +395,23 @@ after every mutation that touches supply; `transactionFilterProvider`
 holds the screen's own UI-only filter state (`medId`, a
 `TransactionInterval` enum — `all` / `last7Days` / `last30Days` /
 `last90Days`). See §6 for the screen itself.
+
+**Reminder-off exclusion.** `DataState.notifOff` (toggled from the
+Reminders screen, §6) doesn't just drive that screen's switches — a
+medicine with its reminder off is excluded from every surface built on
+`Selectors._activeOccurrences` (Home's `periods`, `progress` — which
+also feeds Calendar's reminder count and the Done screen's total — and
+Calendar's `dayAgenda`), and `DataState.allTaken` (the Done-celebration
+trigger and `Selectors.streak`) skips it the same way. This is a live
+filter on the *current* reminder setting, not a per-day historical
+one — toggling a reminder affects today's (and any future) trigger,
+but doesn't rewrite what already happened. Two things deliberately
+still see every medicine regardless of its reminder setting:
+`Selectors._occurrences` (used only by `history()`, so 7-day adherence
+numbers don't change retroactively when a reminder is toggled) and
+everything on Detail/Refills, which read `med.times` / `data.meds`
+directly rather than going through the occurrence helpers — a
+medicine stays fully manageable there even while muted.
 
 ---
 
@@ -1141,3 +1164,26 @@ Tracked as a future phase.
       and signed deltas; the medicine dropdown and interval segmented
       control both updated the list live; back-navigation to History
       worked cleanly; no overflow or exceptions in the run log.
+  - **Reminder toggle now actually excludes a medicine from today's
+    tracking** (§6, §6a), per user feedback that the switch previously
+    did nothing observable. `DataState.allTaken` and a new
+    `Selectors._activeOccurrences` helper both filter by
+    `reminderOn(medId)`; `periods`, `progress`, and `dayAgenda` were
+    switched to the active variant, so a reminder-off medicine
+    disappears from the Home list, the "doses left today" count,
+    Calendar's agenda/reminder count, and can't block the Done
+    celebration. `history()` deliberately keeps using the unfiltered
+    `_occurrences`, and Detail/Refills read `med.times`/`data.meds`
+    directly, so none of those change — the medicine stays fully
+    manageable, just muted from active reminders.
+    - Added `test/reminder_off_test.dart` (pure `Selectors`/`DataState`
+      unit tests: `periods`, `progress`, `dayAgenda`, and `allTaken`
+      all exclude a reminder-off medicine; `refills` doesn't) and
+      `test/reminder_toggle_test.dart` (end-to-end: toggling a
+      medicine's reminder off in the running app hides it from Home,
+      toggling it back on restores it).
+    - 43 tests green, `flutter analyze` clean, `dart format .` clean.
+    - Verified live on the simulator against the real on-device data:
+      turning off "Zinc"'s reminder dropped it from the Home list and
+      the doses-left count (9 → 8) immediately; turning it back on
+      restored both; no overflow or exceptions in the run log.
