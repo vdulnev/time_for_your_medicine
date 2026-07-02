@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/pill_kind.dart';
+import '../../../core/state/providers.dart';
 import '../../../core/state/selectors.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/pill_shape.dart';
 import '../../../l10n/l10n_extensions.dart';
+import 'refill_sheet.dart';
 
-/// A single medicine's supply row with a progress bar and order button.
-class RefillTile extends StatelessWidget {
+/// A single medicine's supply row with a progress bar and a refill button.
+class RefillTile extends ConsumerWidget {
   const RefillTile({super.key, required this.item});
 
   final RefillItem item;
 
+  Future<void> _refill(BuildContext context, WidgetRef ref) async {
+    final newSupply = await showRefillSheet(context, item.med);
+    if (newSupply == null) return;
+    await ref
+        .read(dataProvider.notifier)
+        .refillMedicine(item.med.id, newSupply);
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final med = item.med;
     final l10n = context.l10n;
     final countLabel = med.kind == PillKind.capsule
@@ -73,7 +84,7 @@ class RefillTile extends StatelessWidget {
                   ],
                 ),
               ),
-              _OrderButton(low: item.low),
+              _OrderButton(low: item.low, onTap: () => _refill(context, ref)),
             ],
           ),
           const SizedBox(height: 10),
@@ -101,24 +112,28 @@ class RefillTile extends StatelessWidget {
 }
 
 class _OrderButton extends StatelessWidget {
-  const _OrderButton({required this.low});
+  const _OrderButton({required this.low, required this.onTap});
 
   final bool low;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: low ? AppColors.primary : AppColors.successBg,
-        borderRadius: BorderRadius.circular(11),
-      ),
-      child: Text(
-        low ? context.l10n.refillsOrder : context.l10n.ok,
-        style: AppText.jakarta(
-          size: 12,
-          weight: FontWeight.w700,
-          color: low ? Colors.white : AppColors.success,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: low ? AppColors.primary : AppColors.successBg,
+          borderRadius: BorderRadius.circular(11),
+        ),
+        child: Text(
+          low ? context.l10n.refillsOrder : context.l10n.ok,
+          style: AppText.jakarta(
+            size: 12,
+            weight: FontWeight.w700,
+            color: low ? Colors.white : AppColors.success,
+          ),
         ),
       ),
     );
