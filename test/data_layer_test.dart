@@ -6,6 +6,7 @@ import 'package:time_for_your_medicine/core/data/medicine_repository.dart';
 import 'package:time_for_your_medicine/core/db/app_database.dart';
 import 'package:time_for_your_medicine/core/logging/talker.dart';
 import 'package:time_for_your_medicine/core/models/add_draft.dart';
+import 'package:time_for_your_medicine/core/models/dose_status.dart';
 import 'package:time_for_your_medicine/core/models/dose_time.dart';
 import 'package:time_for_your_medicine/core/models/medicine.dart';
 import 'package:time_for_your_medicine/core/models/period.dart';
@@ -31,7 +32,7 @@ void main() {
     final result = await repo.loadAll();
     final data = result.getOrElse((_) => throw StateError('load failed'));
     expect(data.meds, isEmpty);
-    expect(data.taken, isEmpty);
+    expect(data.doseStatus, isEmpty);
   });
 
   test('addMedicine persists a new row', () async {
@@ -45,18 +46,21 @@ void main() {
     await withFixedToday(() async {
       final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
       await repo.addMedicine(med);
-      await repo.setTaken(
+      await repo.setDoseStatus(
         DayUtils.iso(kToday),
         med.id,
         med.times.first.id,
-        true,
+        DoseStatus.taken,
       );
       await repo.deleteMedicine(med.id);
       final data = (await repo.loadAll()).getOrElse(
         (_) => throw StateError('x'),
       );
       expect(data.meds.any((m) => m.id == med.id), isFalse);
-      expect(data.taken.keys.any((k) => k.split('|')[1] == med.id), isFalse);
+      expect(
+        data.doseStatus.keys.any((k) => k.split('|')[1] == med.id),
+        isFalse,
+      );
     });
   });
 
@@ -85,7 +89,12 @@ void main() {
       final loaded = data.meds.firstWhere((m) => m.id == med.id);
       expect(loaded.times, hasLength(3));
 
-      await repo.setTaken(DayUtils.iso(kToday), med.id, 't0', true);
+      await repo.setDoseStatus(
+        DayUtils.iso(kToday),
+        med.id,
+        't0',
+        DoseStatus.taken,
+      );
       final afterOneToggle = (await repo.loadAll()).getOrElse(
         (_) => throw StateError('x'),
       );
@@ -142,6 +151,7 @@ void main() {
       await notifier.addMedicine(
         const AddDraft(
           name: 'Ibuprofen',
+          supply: '30',
           times: [
             DraftTime(period: Period.morning),
             DraftTime(period: Period.evening),
@@ -160,7 +170,59 @@ void main() {
     },
   );
 
-  test('toggleTaken completing the day returns true', () async {
+  test('addMedicine persists the user-entered pill count', () async {
+    final container = ProviderContainer(
+      overrides: [
+        databaseProvider.overrideWithValue(db),
+        talkerProvider.overrideWithValue(Talker()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(dataProvider.future);
+    final notifier = container.read(dataProvider.notifier);
+
+    await notifier.addMedicine(
+      const AddDraft(name: 'Lisinopril', supply: '60'),
+    );
+    await notifier.addMedicine(
+      const AddDraft(name: 'Metoprolol', supply: 'not a number'),
+    );
+
+    final data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
+    final withCount = data.meds.singleWhere((m) => m.name == 'Lisinopril');
+    expect(withCount.supply, 60);
+    expect(withCount.cap, 60);
+
+    // Blank/invalid input is not silently defaulted — the medicine isn't
+    // added at all, same as an empty name.
+    expect(data.meds.any((m) => m.name == 'Metoprolol'), isFalse);
+  });
+
+  test('refillMedicine updates supply and cap together', () async {
+    final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
+    await repo.addMedicine(med);
+
+    final container = ProviderContainer(
+      overrides: [
+        databaseProvider.overrideWithValue(db),
+        talkerProvider.overrideWithValue(Talker()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(dataProvider.future);
+    final notifier = container.read(dataProvider.notifier);
+
+    await notifier.refillMedicine(med.id, 45);
+
+    final data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
+    final refilled = data.meds.singleWhere((m) => m.id == med.id);
+    expect(refilled.supply, 45);
+    expect(refilled.cap, 45);
+  });
+
+  test('markTaken completing the day returns true', () async {
     await withFixedToday(() async {
       await seedTestMedicines(db);
       final container = ProviderContainer(
@@ -175,13 +237,130 @@ void main() {
       final notifier = container.read(dataProvider.notifier);
       final iso = DayUtils.iso(kToday);
 
-      // Seed state: only m1 is taken today. Toggling m2/m3 keeps it partial.
-      expect(await notifier.toggleTaken(iso, 'm2', 't1'), isFalse);
-      expect(await notifier.toggleTaken(iso, 'm3', 't1'), isFalse);
+      // Seed state: only m1 is taken today. Marking m2/m3 keeps it partial.
+      expect(await notifier.markTaken(iso, 'm2', 't1'), isFalse);
+      expect(await notifier.markTaken(iso, 'm3', 't1'), isFalse);
       // The final dose completes the day.
-      expect(await notifier.toggleTaken(iso, 'm4', 't1'), isTrue);
+      expect(await notifier.markTaken(iso, 'm4', 't1'), isTrue);
     });
   });
+
+  test('markTaken consumes a pill; revertDose credits it back', () async {
+    await withFixedToday(() async {
+      await seedTestMedicines(db);
+      final container = ProviderContainer(
+        overrides: [
+          databaseProvider.overrideWithValue(db),
+          talkerProvider.overrideWithValue(Talker()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(dataProvider.future);
+      final notifier = container.read(dataProvider.notifier);
+      final iso = DayUtils.iso(kToday);
+
+      // m2 starts with supply 30 and no dose taken yet today.
+      await notifier.markTaken(iso, 'm2', 't1');
+      var data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
+      expect(data.meds.singleWhere((m) => m.id == 'm2').supply, 29);
+      expect(data.isTaken(iso, 'm2', 't1'), isTrue);
+
+      await notifier.revertDose(iso, 'm2', 't1');
+      data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
+      expect(data.meds.singleWhere((m) => m.id == 'm2').supply, 30);
+      expect(data.statusOf(iso, 'm2', 't1'), DoseStatus.pending);
+    });
+  });
+
+  test('markTaken is a no-op when supply is 0', () async {
+    await withFixedToday(() async {
+      final med = Medicine(
+        id: 'test-empty',
+        name: 'EmptyStock',
+        dose: '10 mg',
+        times: const [
+          DoseTime(id: 't1', time: '8:00 AM', period: Period.morning),
+        ],
+        withFood: false,
+        kind: PillKind.round,
+        c1: 0xFF5566D6,
+        soft: 0xFFE7E8FB,
+        supply: 0,
+        cap: 30,
+      );
+      await repo.addMedicine(med);
+
+      final container = ProviderContainer(
+        overrides: [
+          databaseProvider.overrideWithValue(db),
+          talkerProvider.overrideWithValue(Talker()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(dataProvider.future);
+      final notifier = container.read(dataProvider.notifier);
+      final iso = DayUtils.iso(kToday);
+
+      expect(await notifier.markTaken(iso, med.id, 't1'), isFalse);
+      final data = (await repo.loadAll()).getOrElse(
+        (_) => throw StateError('x'),
+      );
+      expect(data.statusOf(iso, med.id, 't1'), DoseStatus.pending);
+      expect(data.meds.singleWhere((m) => m.id == med.id).supply, 0);
+    });
+  });
+
+  test('markRejected does not touch supply', () async {
+    await withFixedToday(() async {
+      await seedTestMedicines(db);
+      final container = ProviderContainer(
+        overrides: [
+          databaseProvider.overrideWithValue(db),
+          talkerProvider.overrideWithValue(Talker()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(dataProvider.future);
+      final notifier = container.read(dataProvider.notifier);
+      final iso = DayUtils.iso(kToday);
+
+      await notifier.markRejected(iso, 'm3', 't1');
+      final data = (await repo.loadAll()).getOrElse(
+        (_) => throw StateError('x'),
+      );
+      expect(data.meds.singleWhere((m) => m.id == 'm3').supply, 20);
+      expect(data.statusOf(iso, 'm3', 't1'), DoseStatus.rejected);
+      expect(data.isTaken(iso, 'm3', 't1'), isFalse);
+    });
+  });
+
+  test(
+    'refillMedicine logs a negative delta when correcting downward',
+    () async {
+      final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
+      await repo.addMedicine(med); // supply/cap start at 30
+
+      final container = ProviderContainer(
+        overrides: [
+          databaseProvider.overrideWithValue(db),
+          talkerProvider.overrideWithValue(Talker()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(dataProvider.future);
+      final notifier = container.read(dataProvider.notifier);
+
+      await notifier.refillMedicine(med.id, 20);
+
+      final rows = await db.select(db.supplyTransactions).get();
+      final correction = rows.singleWhere((r) => r.kind == 'refill');
+      expect(correction.delta, -10);
+    },
+  );
 }
 
 Medicine _draftToMed(AddDraft draft) => Medicine(

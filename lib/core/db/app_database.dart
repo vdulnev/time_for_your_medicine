@@ -25,7 +25,10 @@ class Medicines extends Table {
   IntColumn get c1 => integer()();
   IntColumn get c2 => integer().nullable()();
   IntColumn get soft => integer()();
-  IntColumn get supply => integer()();
+
+  /// The "full pack" size, for refill %/alerts. The *current* pill count
+  /// is not stored here — it's derived from [SupplyTransactions], see
+  /// `MedicineRepository._currentSupply`.
   IntColumn get cap => integer()();
 
   @override
@@ -51,10 +54,33 @@ class DoseLog extends Table {
   TextColumn get iso => text()();
   TextColumn get medId => text()();
   TextColumn get doseTimeId => text().withDefault(const Constant(''))();
-  BoolColumn get taken => boolean().withDefault(const Constant(false))();
+
+  /// A [DoseStatus] name. A row only exists once a dose has been touched —
+  /// absence means pending, so this is never actually 'pending' in practice.
+  TextColumn get status => text().withDefault(const Constant('pending'))();
 
   @override
   Set<Column<Object>> get primaryKey => {iso, medId, doseTimeId};
+}
+
+/// An append-only ledger of every change to a medicine's pill [supply]:
+/// the initial stock on Add, refills (and corrections, which are just a
+/// refill whose new total is lower than the current supply), a dose being
+/// taken (-1), and a taken dose being reverted (+1).
+@DataClassName('SupplyTransactionRow')
+class SupplyTransactions extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get medId => text()();
+  IntColumn get delta => integer()();
+
+  /// 'initial' | 'refill' | 'take' | 'revertTake'
+  TextColumn get kind => text()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  /// Set for 'take' / 'revertTake' transactions, tying them back to the
+  /// specific dose that caused them.
+  TextColumn get iso => text().nullable()();
+  TextColumn get doseTimeId => text().nullable()();
 }
 
 @DataClassName('SettingsData')
@@ -105,6 +131,7 @@ class MedicineRegistryMeta extends Table {
     Medicines,
     DoseTimes,
     DoseLog,
+    SupplyTransactions,
     SettingsRows,
     NotifOffRows,
     MedicineRegistryEntries,
@@ -116,7 +143,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'pillpal'));
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -172,6 +199,71 @@ class AppDatabase extends _$AppDatabase {
         }
         await customStatement('ALTER TABLE medicines DROP COLUMN time');
         await customStatement('ALTER TABLE medicines DROP COLUMN period');
+      }
+      if (from < 6) {
+        // Dose tracking gains a third state (rejected), and pill counts
+        // gain an append-only transaction ledger.
+        await m.createTable(supplyTransactions);
+        await m.addColumn(doseLog, doseLog.status);
+        await customStatement(
+          "UPDATE dose_log SET status = 'taken' WHERE taken = 1",
+        );
+        // Rows that were merely toggled back to false carry no information
+        // under the new "absence == pending" convention.
+        await customStatement('DELETE FROM dose_log WHERE taken = 0');
+        await customStatement('ALTER TABLE dose_log DROP COLUMN taken');
+
+        // Seed the ledger with each medicine's current stock as an opening
+        // balance, so supply_transactions has a consistent starting point.
+        final meds = await customSelect(
+          'SELECT id, supply FROM medicines',
+        ).get();
+        for (final row in meds) {
+          final supply = row.read<int>('supply');
+          if (supply <= 0) continue;
+          await into(supplyTransactions).insert(
+            SupplyTransactionsCompanion.insert(
+              medId: row.read<String>('id'),
+              delta: supply,
+              kind: 'initial',
+              createdAt: clock.now(),
+            ),
+          );
+        }
+      }
+      if (from < 7) {
+        // `Medicines.supply` is now derived from `SupplyTransactions`
+        // instead of stored — the v6 migration already seeded the ledger
+        // with a matching opening balance, and every write since has kept
+        // both in lockstep, so this is a pure drop with no data loss.
+        await customStatement('ALTER TABLE medicines DROP COLUMN supply');
+      }
+      if (from < 8) {
+        // The v4 → v5 migration (`if (from < 5)` above) added
+        // `DoseLog.doseTimeId` via `m.addColumn`, which only adds a
+        // column — it cannot change a table's PRIMARY KEY. Every real
+        // device that migrated through v5 has been physically keyed on
+        // just `(iso, med_id)` ever since, even though the Dart table
+        // has declared `(iso, med_id, dose_time_id)` since v5.
+        // `insertOnConflictUpdate` (used by `setDoseStatus`) generates
+        // its ON CONFLICT target from the *declared* key, which SQLite
+        // rejects when it doesn't match any actual constraint — so on
+        // every such device, marking a dose taken or rejected has been
+        // silently throwing inside `MedicineRepository._guard` (caught,
+        // logged, never surfaced) and never reaching disk. The
+        // optimistic in-memory state looked right until the next
+        // restart reloaded from the untouched table. Rebuild the table
+        // with the correct primary key, preserving existing rows —
+        // there can be at most one legacy row per (iso, med_id), so
+        // re-keying to the finer-grained (iso, med_id, dose_time_id)
+        // can never collide.
+        await customStatement('ALTER TABLE dose_log RENAME TO dose_log_v7');
+        await m.createTable(doseLog);
+        await customStatement('''
+          INSERT INTO dose_log (iso, med_id, dose_time_id, status)
+          SELECT iso, med_id, dose_time_id, status FROM dose_log_v7
+        ''');
+        await customStatement('DROP TABLE dose_log_v7');
       }
     },
   );

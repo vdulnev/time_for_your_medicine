@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../db/app_database.dart' show kToday;
+import '../models/dose_status.dart';
 import '../models/dose_time.dart';
 import '../models/medicine.dart';
 import '../models/period.dart';
@@ -148,11 +149,11 @@ class RefillItem {
   final int pct;
 }
 
-/// One of a medicine's dose slots, with its taken status for a given day.
+/// One of a medicine's dose slots, with its status for a given day.
 class MedDoseStatus {
-  const MedDoseStatus({required this.doseTime, required this.taken});
+  const MedDoseStatus({required this.doseTime, required this.status});
   final DoseTime doseTime;
-  final bool taken;
+  final DoseStatus status;
 }
 
 abstract final class Selectors {
@@ -300,14 +301,14 @@ abstract final class Selectors {
     ];
   }
 
-  /// Today's scheduled dose slots for [med], each with its taken status.
+  /// Today's scheduled dose slots for [med], each with its status.
   static List<MedDoseStatus> medDosesForDay(
     DataState data,
     Medicine med,
     String iso,
   ) => [
     for (final t in med.times)
-      MedDoseStatus(doseTime: t, taken: data.isTaken(iso, med.id, t.id)),
+      MedDoseStatus(doseTime: t, status: data.statusOf(iso, med.id, t.id)),
   ];
 
   /// The earliest not-yet-taken dose time today, falling back to the first

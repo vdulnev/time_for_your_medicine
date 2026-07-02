@@ -86,15 +86,6 @@ class $MedicinesTable extends Medicines
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _supplyMeta = const VerificationMeta('supply');
-  @override
-  late final GeneratedColumn<int> supply = GeneratedColumn<int>(
-    'supply',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
   static const VerificationMeta _capMeta = const VerificationMeta('cap');
   @override
   late final GeneratedColumn<int> cap = GeneratedColumn<int>(
@@ -114,7 +105,6 @@ class $MedicinesTable extends Medicines
     c1,
     c2,
     soft,
-    supply,
     cap,
   ];
   @override
@@ -182,14 +172,6 @@ class $MedicinesTable extends Medicines
     } else if (isInserting) {
       context.missing(_softMeta);
     }
-    if (data.containsKey('supply')) {
-      context.handle(
-        _supplyMeta,
-        supply.isAcceptableOrUnknown(data['supply']!, _supplyMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_supplyMeta);
-    }
     if (data.containsKey('cap')) {
       context.handle(
         _capMeta,
@@ -239,10 +221,6 @@ class $MedicinesTable extends Medicines
         DriftSqlType.int,
         data['${effectivePrefix}soft'],
       )!,
-      supply: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}supply'],
-      )!,
       cap: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}cap'],
@@ -265,7 +243,10 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
   final int c1;
   final int? c2;
   final int soft;
-  final int supply;
+
+  /// The "full pack" size, for refill %/alerts. The *current* pill count
+  /// is not stored here — it's derived from [SupplyTransactions], see
+  /// `MedicineRepository._currentSupply`.
   final int cap;
   const MedicineRow({
     required this.id,
@@ -276,7 +257,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
     required this.c1,
     this.c2,
     required this.soft,
-    required this.supply,
     required this.cap,
   });
   @override
@@ -292,7 +272,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       map['c2'] = Variable<int>(c2);
     }
     map['soft'] = Variable<int>(soft);
-    map['supply'] = Variable<int>(supply);
     map['cap'] = Variable<int>(cap);
     return map;
   }
@@ -307,7 +286,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       c1: Value(c1),
       c2: c2 == null && nullToAbsent ? const Value.absent() : Value(c2),
       soft: Value(soft),
-      supply: Value(supply),
       cap: Value(cap),
     );
   }
@@ -326,7 +304,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       c1: serializer.fromJson<int>(json['c1']),
       c2: serializer.fromJson<int?>(json['c2']),
       soft: serializer.fromJson<int>(json['soft']),
-      supply: serializer.fromJson<int>(json['supply']),
       cap: serializer.fromJson<int>(json['cap']),
     );
   }
@@ -342,7 +319,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       'c1': serializer.toJson<int>(c1),
       'c2': serializer.toJson<int?>(c2),
       'soft': serializer.toJson<int>(soft),
-      'supply': serializer.toJson<int>(supply),
       'cap': serializer.toJson<int>(cap),
     };
   }
@@ -356,7 +332,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
     int? c1,
     Value<int?> c2 = const Value.absent(),
     int? soft,
-    int? supply,
     int? cap,
   }) => MedicineRow(
     id: id ?? this.id,
@@ -367,7 +342,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
     c1: c1 ?? this.c1,
     c2: c2.present ? c2.value : this.c2,
     soft: soft ?? this.soft,
-    supply: supply ?? this.supply,
     cap: cap ?? this.cap,
   );
   MedicineRow copyWithCompanion(MedicinesCompanion data) {
@@ -380,7 +354,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       c1: data.c1.present ? data.c1.value : this.c1,
       c2: data.c2.present ? data.c2.value : this.c2,
       soft: data.soft.present ? data.soft.value : this.soft,
-      supply: data.supply.present ? data.supply.value : this.supply,
       cap: data.cap.present ? data.cap.value : this.cap,
     );
   }
@@ -396,7 +369,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
           ..write('c1: $c1, ')
           ..write('c2: $c2, ')
           ..write('soft: $soft, ')
-          ..write('supply: $supply, ')
           ..write('cap: $cap')
           ..write(')'))
         .toString();
@@ -404,7 +376,7 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
 
   @override
   int get hashCode =>
-      Object.hash(id, name, dose, withFood, kind, c1, c2, soft, supply, cap);
+      Object.hash(id, name, dose, withFood, kind, c1, c2, soft, cap);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -417,7 +389,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
           other.c1 == this.c1 &&
           other.c2 == this.c2 &&
           other.soft == this.soft &&
-          other.supply == this.supply &&
           other.cap == this.cap);
 }
 
@@ -430,7 +401,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
   final Value<int> c1;
   final Value<int?> c2;
   final Value<int> soft;
-  final Value<int> supply;
   final Value<int> cap;
   final Value<int> rowid;
   const MedicinesCompanion({
@@ -442,7 +412,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     this.c1 = const Value.absent(),
     this.c2 = const Value.absent(),
     this.soft = const Value.absent(),
-    this.supply = const Value.absent(),
     this.cap = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -455,7 +424,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     required int c1,
     this.c2 = const Value.absent(),
     required int soft,
-    required int supply,
     required int cap,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -465,7 +433,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
        kind = Value(kind),
        c1 = Value(c1),
        soft = Value(soft),
-       supply = Value(supply),
        cap = Value(cap);
   static Insertable<MedicineRow> custom({
     Expression<String>? id,
@@ -476,7 +443,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     Expression<int>? c1,
     Expression<int>? c2,
     Expression<int>? soft,
-    Expression<int>? supply,
     Expression<int>? cap,
     Expression<int>? rowid,
   }) {
@@ -489,7 +455,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
       if (c1 != null) 'c1': c1,
       if (c2 != null) 'c2': c2,
       if (soft != null) 'soft': soft,
-      if (supply != null) 'supply': supply,
       if (cap != null) 'cap': cap,
       if (rowid != null) 'rowid': rowid,
     });
@@ -504,7 +469,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     Value<int>? c1,
     Value<int?>? c2,
     Value<int>? soft,
-    Value<int>? supply,
     Value<int>? cap,
     Value<int>? rowid,
   }) {
@@ -517,7 +481,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
       c1: c1 ?? this.c1,
       c2: c2 ?? this.c2,
       soft: soft ?? this.soft,
-      supply: supply ?? this.supply,
       cap: cap ?? this.cap,
       rowid: rowid ?? this.rowid,
     );
@@ -550,9 +513,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     if (soft.present) {
       map['soft'] = Variable<int>(soft.value);
     }
-    if (supply.present) {
-      map['supply'] = Variable<int>(supply.value);
-    }
     if (cap.present) {
       map['cap'] = Variable<int>(cap.value);
     }
@@ -573,7 +533,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
           ..write('c1: $c1, ')
           ..write('c2: $c2, ')
           ..write('soft: $soft, ')
-          ..write('supply: $supply, ')
           ..write('cap: $cap, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -964,21 +923,18 @@ class $DoseLogTable extends DoseLog with TableInfo<$DoseLogTable, DoseRow> {
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
-  static const VerificationMeta _takenMeta = const VerificationMeta('taken');
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
-  late final GeneratedColumn<bool> taken = GeneratedColumn<bool>(
-    'taken',
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
     aliasedName,
     false,
-    type: DriftSqlType.bool,
+    type: DriftSqlType.string,
     requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("taken" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
+    defaultValue: const Constant('pending'),
   );
   @override
-  List<GeneratedColumn> get $columns => [iso, medId, doseTimeId, taken];
+  List<GeneratedColumn> get $columns => [iso, medId, doseTimeId, status];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1016,10 +972,10 @@ class $DoseLogTable extends DoseLog with TableInfo<$DoseLogTable, DoseRow> {
         ),
       );
     }
-    if (data.containsKey('taken')) {
+    if (data.containsKey('status')) {
       context.handle(
-        _takenMeta,
-        taken.isAcceptableOrUnknown(data['taken']!, _takenMeta),
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
       );
     }
     return context;
@@ -1043,9 +999,9 @@ class $DoseLogTable extends DoseLog with TableInfo<$DoseLogTable, DoseRow> {
         DriftSqlType.string,
         data['${effectivePrefix}dose_time_id'],
       )!,
-      taken: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}taken'],
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
       )!,
     );
   }
@@ -1060,12 +1016,15 @@ class DoseRow extends DataClass implements Insertable<DoseRow> {
   final String iso;
   final String medId;
   final String doseTimeId;
-  final bool taken;
+
+  /// A [DoseStatus] name. A row only exists once a dose has been touched —
+  /// absence means pending, so this is never actually 'pending' in practice.
+  final String status;
   const DoseRow({
     required this.iso,
     required this.medId,
     required this.doseTimeId,
-    required this.taken,
+    required this.status,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1073,7 +1032,7 @@ class DoseRow extends DataClass implements Insertable<DoseRow> {
     map['iso'] = Variable<String>(iso);
     map['med_id'] = Variable<String>(medId);
     map['dose_time_id'] = Variable<String>(doseTimeId);
-    map['taken'] = Variable<bool>(taken);
+    map['status'] = Variable<String>(status);
     return map;
   }
 
@@ -1082,7 +1041,7 @@ class DoseRow extends DataClass implements Insertable<DoseRow> {
       iso: Value(iso),
       medId: Value(medId),
       doseTimeId: Value(doseTimeId),
-      taken: Value(taken),
+      status: Value(status),
     );
   }
 
@@ -1095,7 +1054,7 @@ class DoseRow extends DataClass implements Insertable<DoseRow> {
       iso: serializer.fromJson<String>(json['iso']),
       medId: serializer.fromJson<String>(json['medId']),
       doseTimeId: serializer.fromJson<String>(json['doseTimeId']),
-      taken: serializer.fromJson<bool>(json['taken']),
+      status: serializer.fromJson<String>(json['status']),
     );
   }
   @override
@@ -1105,7 +1064,7 @@ class DoseRow extends DataClass implements Insertable<DoseRow> {
       'iso': serializer.toJson<String>(iso),
       'medId': serializer.toJson<String>(medId),
       'doseTimeId': serializer.toJson<String>(doseTimeId),
-      'taken': serializer.toJson<bool>(taken),
+      'status': serializer.toJson<String>(status),
     };
   }
 
@@ -1113,12 +1072,12 @@ class DoseRow extends DataClass implements Insertable<DoseRow> {
     String? iso,
     String? medId,
     String? doseTimeId,
-    bool? taken,
+    String? status,
   }) => DoseRow(
     iso: iso ?? this.iso,
     medId: medId ?? this.medId,
     doseTimeId: doseTimeId ?? this.doseTimeId,
-    taken: taken ?? this.taken,
+    status: status ?? this.status,
   );
   DoseRow copyWithCompanion(DoseLogCompanion data) {
     return DoseRow(
@@ -1127,7 +1086,7 @@ class DoseRow extends DataClass implements Insertable<DoseRow> {
       doseTimeId: data.doseTimeId.present
           ? data.doseTimeId.value
           : this.doseTimeId,
-      taken: data.taken.present ? data.taken.value : this.taken,
+      status: data.status.present ? data.status.value : this.status,
     );
   }
 
@@ -1137,13 +1096,13 @@ class DoseRow extends DataClass implements Insertable<DoseRow> {
           ..write('iso: $iso, ')
           ..write('medId: $medId, ')
           ..write('doseTimeId: $doseTimeId, ')
-          ..write('taken: $taken')
+          ..write('status: $status')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(iso, medId, doseTimeId, taken);
+  int get hashCode => Object.hash(iso, medId, doseTimeId, status);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1151,27 +1110,27 @@ class DoseRow extends DataClass implements Insertable<DoseRow> {
           other.iso == this.iso &&
           other.medId == this.medId &&
           other.doseTimeId == this.doseTimeId &&
-          other.taken == this.taken);
+          other.status == this.status);
 }
 
 class DoseLogCompanion extends UpdateCompanion<DoseRow> {
   final Value<String> iso;
   final Value<String> medId;
   final Value<String> doseTimeId;
-  final Value<bool> taken;
+  final Value<String> status;
   final Value<int> rowid;
   const DoseLogCompanion({
     this.iso = const Value.absent(),
     this.medId = const Value.absent(),
     this.doseTimeId = const Value.absent(),
-    this.taken = const Value.absent(),
+    this.status = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DoseLogCompanion.insert({
     required String iso,
     required String medId,
     this.doseTimeId = const Value.absent(),
-    this.taken = const Value.absent(),
+    this.status = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : iso = Value(iso),
        medId = Value(medId);
@@ -1179,14 +1138,14 @@ class DoseLogCompanion extends UpdateCompanion<DoseRow> {
     Expression<String>? iso,
     Expression<String>? medId,
     Expression<String>? doseTimeId,
-    Expression<bool>? taken,
+    Expression<String>? status,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (iso != null) 'iso': iso,
       if (medId != null) 'med_id': medId,
       if (doseTimeId != null) 'dose_time_id': doseTimeId,
-      if (taken != null) 'taken': taken,
+      if (status != null) 'status': status,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1195,14 +1154,14 @@ class DoseLogCompanion extends UpdateCompanion<DoseRow> {
     Value<String>? iso,
     Value<String>? medId,
     Value<String>? doseTimeId,
-    Value<bool>? taken,
+    Value<String>? status,
     Value<int>? rowid,
   }) {
     return DoseLogCompanion(
       iso: iso ?? this.iso,
       medId: medId ?? this.medId,
       doseTimeId: doseTimeId ?? this.doseTimeId,
-      taken: taken ?? this.taken,
+      status: status ?? this.status,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1219,8 +1178,8 @@ class DoseLogCompanion extends UpdateCompanion<DoseRow> {
     if (doseTimeId.present) {
       map['dose_time_id'] = Variable<String>(doseTimeId.value);
     }
-    if (taken.present) {
-      map['taken'] = Variable<bool>(taken.value);
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -1234,8 +1193,459 @@ class DoseLogCompanion extends UpdateCompanion<DoseRow> {
           ..write('iso: $iso, ')
           ..write('medId: $medId, ')
           ..write('doseTimeId: $doseTimeId, ')
-          ..write('taken: $taken, ')
+          ..write('status: $status, ')
           ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SupplyTransactionsTable extends SupplyTransactions
+    with TableInfo<$SupplyTransactionsTable, SupplyTransactionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SupplyTransactionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _medIdMeta = const VerificationMeta('medId');
+  @override
+  late final GeneratedColumn<String> medId = GeneratedColumn<String>(
+    'med_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deltaMeta = const VerificationMeta('delta');
+  @override
+  late final GeneratedColumn<int> delta = GeneratedColumn<int>(
+    'delta',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isoMeta = const VerificationMeta('iso');
+  @override
+  late final GeneratedColumn<String> iso = GeneratedColumn<String>(
+    'iso',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _doseTimeIdMeta = const VerificationMeta(
+    'doseTimeId',
+  );
+  @override
+  late final GeneratedColumn<String> doseTimeId = GeneratedColumn<String>(
+    'dose_time_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    medId,
+    delta,
+    kind,
+    createdAt,
+    iso,
+    doseTimeId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'supply_transactions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SupplyTransactionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('med_id')) {
+      context.handle(
+        _medIdMeta,
+        medId.isAcceptableOrUnknown(data['med_id']!, _medIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_medIdMeta);
+    }
+    if (data.containsKey('delta')) {
+      context.handle(
+        _deltaMeta,
+        delta.isAcceptableOrUnknown(data['delta']!, _deltaMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deltaMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('iso')) {
+      context.handle(
+        _isoMeta,
+        iso.isAcceptableOrUnknown(data['iso']!, _isoMeta),
+      );
+    }
+    if (data.containsKey('dose_time_id')) {
+      context.handle(
+        _doseTimeIdMeta,
+        doseTimeId.isAcceptableOrUnknown(
+          data['dose_time_id']!,
+          _doseTimeIdMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SupplyTransactionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SupplyTransactionRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      medId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}med_id'],
+      )!,
+      delta: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}delta'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      iso: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}iso'],
+      ),
+      doseTimeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dose_time_id'],
+      ),
+    );
+  }
+
+  @override
+  $SupplyTransactionsTable createAlias(String alias) {
+    return $SupplyTransactionsTable(attachedDatabase, alias);
+  }
+}
+
+class SupplyTransactionRow extends DataClass
+    implements Insertable<SupplyTransactionRow> {
+  final int id;
+  final String medId;
+  final int delta;
+
+  /// 'initial' | 'refill' | 'take' | 'revertTake'
+  final String kind;
+  final DateTime createdAt;
+
+  /// Set for 'take' / 'revertTake' transactions, tying them back to the
+  /// specific dose that caused them.
+  final String? iso;
+  final String? doseTimeId;
+  const SupplyTransactionRow({
+    required this.id,
+    required this.medId,
+    required this.delta,
+    required this.kind,
+    required this.createdAt,
+    this.iso,
+    this.doseTimeId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['med_id'] = Variable<String>(medId);
+    map['delta'] = Variable<int>(delta);
+    map['kind'] = Variable<String>(kind);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || iso != null) {
+      map['iso'] = Variable<String>(iso);
+    }
+    if (!nullToAbsent || doseTimeId != null) {
+      map['dose_time_id'] = Variable<String>(doseTimeId);
+    }
+    return map;
+  }
+
+  SupplyTransactionsCompanion toCompanion(bool nullToAbsent) {
+    return SupplyTransactionsCompanion(
+      id: Value(id),
+      medId: Value(medId),
+      delta: Value(delta),
+      kind: Value(kind),
+      createdAt: Value(createdAt),
+      iso: iso == null && nullToAbsent ? const Value.absent() : Value(iso),
+      doseTimeId: doseTimeId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(doseTimeId),
+    );
+  }
+
+  factory SupplyTransactionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SupplyTransactionRow(
+      id: serializer.fromJson<int>(json['id']),
+      medId: serializer.fromJson<String>(json['medId']),
+      delta: serializer.fromJson<int>(json['delta']),
+      kind: serializer.fromJson<String>(json['kind']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      iso: serializer.fromJson<String?>(json['iso']),
+      doseTimeId: serializer.fromJson<String?>(json['doseTimeId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'medId': serializer.toJson<String>(medId),
+      'delta': serializer.toJson<int>(delta),
+      'kind': serializer.toJson<String>(kind),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'iso': serializer.toJson<String?>(iso),
+      'doseTimeId': serializer.toJson<String?>(doseTimeId),
+    };
+  }
+
+  SupplyTransactionRow copyWith({
+    int? id,
+    String? medId,
+    int? delta,
+    String? kind,
+    DateTime? createdAt,
+    Value<String?> iso = const Value.absent(),
+    Value<String?> doseTimeId = const Value.absent(),
+  }) => SupplyTransactionRow(
+    id: id ?? this.id,
+    medId: medId ?? this.medId,
+    delta: delta ?? this.delta,
+    kind: kind ?? this.kind,
+    createdAt: createdAt ?? this.createdAt,
+    iso: iso.present ? iso.value : this.iso,
+    doseTimeId: doseTimeId.present ? doseTimeId.value : this.doseTimeId,
+  );
+  SupplyTransactionRow copyWithCompanion(SupplyTransactionsCompanion data) {
+    return SupplyTransactionRow(
+      id: data.id.present ? data.id.value : this.id,
+      medId: data.medId.present ? data.medId.value : this.medId,
+      delta: data.delta.present ? data.delta.value : this.delta,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      iso: data.iso.present ? data.iso.value : this.iso,
+      doseTimeId: data.doseTimeId.present
+          ? data.doseTimeId.value
+          : this.doseTimeId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SupplyTransactionRow(')
+          ..write('id: $id, ')
+          ..write('medId: $medId, ')
+          ..write('delta: $delta, ')
+          ..write('kind: $kind, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('iso: $iso, ')
+          ..write('doseTimeId: $doseTimeId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, medId, delta, kind, createdAt, iso, doseTimeId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SupplyTransactionRow &&
+          other.id == this.id &&
+          other.medId == this.medId &&
+          other.delta == this.delta &&
+          other.kind == this.kind &&
+          other.createdAt == this.createdAt &&
+          other.iso == this.iso &&
+          other.doseTimeId == this.doseTimeId);
+}
+
+class SupplyTransactionsCompanion
+    extends UpdateCompanion<SupplyTransactionRow> {
+  final Value<int> id;
+  final Value<String> medId;
+  final Value<int> delta;
+  final Value<String> kind;
+  final Value<DateTime> createdAt;
+  final Value<String?> iso;
+  final Value<String?> doseTimeId;
+  const SupplyTransactionsCompanion({
+    this.id = const Value.absent(),
+    this.medId = const Value.absent(),
+    this.delta = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.iso = const Value.absent(),
+    this.doseTimeId = const Value.absent(),
+  });
+  SupplyTransactionsCompanion.insert({
+    this.id = const Value.absent(),
+    required String medId,
+    required int delta,
+    required String kind,
+    required DateTime createdAt,
+    this.iso = const Value.absent(),
+    this.doseTimeId = const Value.absent(),
+  }) : medId = Value(medId),
+       delta = Value(delta),
+       kind = Value(kind),
+       createdAt = Value(createdAt);
+  static Insertable<SupplyTransactionRow> custom({
+    Expression<int>? id,
+    Expression<String>? medId,
+    Expression<int>? delta,
+    Expression<String>? kind,
+    Expression<DateTime>? createdAt,
+    Expression<String>? iso,
+    Expression<String>? doseTimeId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (medId != null) 'med_id': medId,
+      if (delta != null) 'delta': delta,
+      if (kind != null) 'kind': kind,
+      if (createdAt != null) 'created_at': createdAt,
+      if (iso != null) 'iso': iso,
+      if (doseTimeId != null) 'dose_time_id': doseTimeId,
+    });
+  }
+
+  SupplyTransactionsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? medId,
+    Value<int>? delta,
+    Value<String>? kind,
+    Value<DateTime>? createdAt,
+    Value<String?>? iso,
+    Value<String?>? doseTimeId,
+  }) {
+    return SupplyTransactionsCompanion(
+      id: id ?? this.id,
+      medId: medId ?? this.medId,
+      delta: delta ?? this.delta,
+      kind: kind ?? this.kind,
+      createdAt: createdAt ?? this.createdAt,
+      iso: iso ?? this.iso,
+      doseTimeId: doseTimeId ?? this.doseTimeId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (medId.present) {
+      map['med_id'] = Variable<String>(medId.value);
+    }
+    if (delta.present) {
+      map['delta'] = Variable<int>(delta.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (iso.present) {
+      map['iso'] = Variable<String>(iso.value);
+    }
+    if (doseTimeId.present) {
+      map['dose_time_id'] = Variable<String>(doseTimeId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SupplyTransactionsCompanion(')
+          ..write('id: $id, ')
+          ..write('medId: $medId, ')
+          ..write('delta: $delta, ')
+          ..write('kind: $kind, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('iso: $iso, ')
+          ..write('doseTimeId: $doseTimeId')
           ..write(')'))
         .toString();
   }
@@ -2439,6 +2849,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $MedicinesTable medicines = $MedicinesTable(this);
   late final $DoseTimesTable doseTimes = $DoseTimesTable(this);
   late final $DoseLogTable doseLog = $DoseLogTable(this);
+  late final $SupplyTransactionsTable supplyTransactions =
+      $SupplyTransactionsTable(this);
   late final $SettingsRowsTable settingsRows = $SettingsRowsTable(this);
   late final $NotifOffRowsTable notifOffRows = $NotifOffRowsTable(this);
   late final $MedicineRegistryEntriesTable medicineRegistryEntries =
@@ -2453,6 +2865,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     medicines,
     doseTimes,
     doseLog,
+    supplyTransactions,
     settingsRows,
     notifOffRows,
     medicineRegistryEntries,
@@ -2470,7 +2883,6 @@ typedef $$MedicinesTableCreateCompanionBuilder =
       required int c1,
       Value<int?> c2,
       required int soft,
-      required int supply,
       required int cap,
       Value<int> rowid,
     });
@@ -2484,7 +2896,6 @@ typedef $$MedicinesTableUpdateCompanionBuilder =
       Value<int> c1,
       Value<int?> c2,
       Value<int> soft,
-      Value<int> supply,
       Value<int> cap,
       Value<int> rowid,
     });
@@ -2535,11 +2946,6 @@ class $$MedicinesTableFilterComposer
 
   ColumnFilters<int> get soft => $composableBuilder(
     column: $table.soft,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get supply => $composableBuilder(
-    column: $table.supply,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2598,11 +3004,6 @@ class $$MedicinesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get supply => $composableBuilder(
-    column: $table.supply,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<int> get cap => $composableBuilder(
     column: $table.cap,
     builder: (column) => ColumnOrderings(column),
@@ -2641,9 +3042,6 @@ class $$MedicinesTableAnnotationComposer
 
   GeneratedColumn<int> get soft =>
       $composableBuilder(column: $table.soft, builder: (column) => column);
-
-  GeneratedColumn<int> get supply =>
-      $composableBuilder(column: $table.supply, builder: (column) => column);
 
   GeneratedColumn<int> get cap =>
       $composableBuilder(column: $table.cap, builder: (column) => column);
@@ -2688,7 +3086,6 @@ class $$MedicinesTableTableManager
                 Value<int> c1 = const Value.absent(),
                 Value<int?> c2 = const Value.absent(),
                 Value<int> soft = const Value.absent(),
-                Value<int> supply = const Value.absent(),
                 Value<int> cap = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MedicinesCompanion(
@@ -2700,7 +3097,6 @@ class $$MedicinesTableTableManager
                 c1: c1,
                 c2: c2,
                 soft: soft,
-                supply: supply,
                 cap: cap,
                 rowid: rowid,
               ),
@@ -2714,7 +3110,6 @@ class $$MedicinesTableTableManager
                 required int c1,
                 Value<int?> c2 = const Value.absent(),
                 required int soft,
-                required int supply,
                 required int cap,
                 Value<int> rowid = const Value.absent(),
               }) => MedicinesCompanion.insert(
@@ -2726,7 +3121,6 @@ class $$MedicinesTableTableManager
                 c1: c1,
                 c2: c2,
                 soft: soft,
-                supply: supply,
                 cap: cap,
                 rowid: rowid,
               ),
@@ -2960,7 +3354,7 @@ typedef $$DoseLogTableCreateCompanionBuilder =
       required String iso,
       required String medId,
       Value<String> doseTimeId,
-      Value<bool> taken,
+      Value<String> status,
       Value<int> rowid,
     });
 typedef $$DoseLogTableUpdateCompanionBuilder =
@@ -2968,7 +3362,7 @@ typedef $$DoseLogTableUpdateCompanionBuilder =
       Value<String> iso,
       Value<String> medId,
       Value<String> doseTimeId,
-      Value<bool> taken,
+      Value<String> status,
       Value<int> rowid,
     });
 
@@ -2996,8 +3390,8 @@ class $$DoseLogTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<bool> get taken => $composableBuilder(
-    column: $table.taken,
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3026,8 +3420,8 @@ class $$DoseLogTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get taken => $composableBuilder(
-    column: $table.taken,
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -3052,8 +3446,8 @@ class $$DoseLogTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<bool> get taken =>
-      $composableBuilder(column: $table.taken, builder: (column) => column);
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
 }
 
 class $$DoseLogTableTableManager
@@ -3087,13 +3481,13 @@ class $$DoseLogTableTableManager
                 Value<String> iso = const Value.absent(),
                 Value<String> medId = const Value.absent(),
                 Value<String> doseTimeId = const Value.absent(),
-                Value<bool> taken = const Value.absent(),
+                Value<String> status = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DoseLogCompanion(
                 iso: iso,
                 medId: medId,
                 doseTimeId: doseTimeId,
-                taken: taken,
+                status: status,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3101,13 +3495,13 @@ class $$DoseLogTableTableManager
                 required String iso,
                 required String medId,
                 Value<String> doseTimeId = const Value.absent(),
-                Value<bool> taken = const Value.absent(),
+                Value<String> status = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DoseLogCompanion.insert(
                 iso: iso,
                 medId: medId,
                 doseTimeId: doseTimeId,
-                taken: taken,
+                status: status,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -3130,6 +3524,253 @@ typedef $$DoseLogTableProcessedTableManager =
       $$DoseLogTableUpdateCompanionBuilder,
       (DoseRow, BaseReferences<_$AppDatabase, $DoseLogTable, DoseRow>),
       DoseRow,
+      PrefetchHooks Function()
+    >;
+typedef $$SupplyTransactionsTableCreateCompanionBuilder =
+    SupplyTransactionsCompanion Function({
+      Value<int> id,
+      required String medId,
+      required int delta,
+      required String kind,
+      required DateTime createdAt,
+      Value<String?> iso,
+      Value<String?> doseTimeId,
+    });
+typedef $$SupplyTransactionsTableUpdateCompanionBuilder =
+    SupplyTransactionsCompanion Function({
+      Value<int> id,
+      Value<String> medId,
+      Value<int> delta,
+      Value<String> kind,
+      Value<DateTime> createdAt,
+      Value<String?> iso,
+      Value<String?> doseTimeId,
+    });
+
+class $$SupplyTransactionsTableFilterComposer
+    extends Composer<_$AppDatabase, $SupplyTransactionsTable> {
+  $$SupplyTransactionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get medId => $composableBuilder(
+    column: $table.medId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get delta => $composableBuilder(
+    column: $table.delta,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get iso => $composableBuilder(
+    column: $table.iso,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get doseTimeId => $composableBuilder(
+    column: $table.doseTimeId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SupplyTransactionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SupplyTransactionsTable> {
+  $$SupplyTransactionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get medId => $composableBuilder(
+    column: $table.medId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get delta => $composableBuilder(
+    column: $table.delta,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get iso => $composableBuilder(
+    column: $table.iso,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get doseTimeId => $composableBuilder(
+    column: $table.doseTimeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SupplyTransactionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SupplyTransactionsTable> {
+  $$SupplyTransactionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get medId =>
+      $composableBuilder(column: $table.medId, builder: (column) => column);
+
+  GeneratedColumn<int> get delta =>
+      $composableBuilder(column: $table.delta, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get iso =>
+      $composableBuilder(column: $table.iso, builder: (column) => column);
+
+  GeneratedColumn<String> get doseTimeId => $composableBuilder(
+    column: $table.doseTimeId,
+    builder: (column) => column,
+  );
+}
+
+class $$SupplyTransactionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SupplyTransactionsTable,
+          SupplyTransactionRow,
+          $$SupplyTransactionsTableFilterComposer,
+          $$SupplyTransactionsTableOrderingComposer,
+          $$SupplyTransactionsTableAnnotationComposer,
+          $$SupplyTransactionsTableCreateCompanionBuilder,
+          $$SupplyTransactionsTableUpdateCompanionBuilder,
+          (
+            SupplyTransactionRow,
+            BaseReferences<
+              _$AppDatabase,
+              $SupplyTransactionsTable,
+              SupplyTransactionRow
+            >,
+          ),
+          SupplyTransactionRow,
+          PrefetchHooks Function()
+        > {
+  $$SupplyTransactionsTableTableManager(
+    _$AppDatabase db,
+    $SupplyTransactionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SupplyTransactionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SupplyTransactionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SupplyTransactionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> medId = const Value.absent(),
+                Value<int> delta = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> iso = const Value.absent(),
+                Value<String?> doseTimeId = const Value.absent(),
+              }) => SupplyTransactionsCompanion(
+                id: id,
+                medId: medId,
+                delta: delta,
+                kind: kind,
+                createdAt: createdAt,
+                iso: iso,
+                doseTimeId: doseTimeId,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String medId,
+                required int delta,
+                required String kind,
+                required DateTime createdAt,
+                Value<String?> iso = const Value.absent(),
+                Value<String?> doseTimeId = const Value.absent(),
+              }) => SupplyTransactionsCompanion.insert(
+                id: id,
+                medId: medId,
+                delta: delta,
+                kind: kind,
+                createdAt: createdAt,
+                iso: iso,
+                doseTimeId: doseTimeId,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SupplyTransactionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SupplyTransactionsTable,
+      SupplyTransactionRow,
+      $$SupplyTransactionsTableFilterComposer,
+      $$SupplyTransactionsTableOrderingComposer,
+      $$SupplyTransactionsTableAnnotationComposer,
+      $$SupplyTransactionsTableCreateCompanionBuilder,
+      $$SupplyTransactionsTableUpdateCompanionBuilder,
+      (
+        SupplyTransactionRow,
+        BaseReferences<
+          _$AppDatabase,
+          $SupplyTransactionsTable,
+          SupplyTransactionRow
+        >,
+      ),
+      SupplyTransactionRow,
       PrefetchHooks Function()
     >;
 typedef $$SettingsRowsTableCreateCompanionBuilder =
@@ -3864,6 +4505,8 @@ class $AppDatabaseManager {
       $$DoseTimesTableTableManager(_db, _db.doseTimes);
   $$DoseLogTableTableManager get doseLog =>
       $$DoseLogTableTableManager(_db, _db.doseLog);
+  $$SupplyTransactionsTableTableManager get supplyTransactions =>
+      $$SupplyTransactionsTableTableManager(_db, _db.supplyTransactions);
   $$SettingsRowsTableTableManager get settingsRows =>
       $$SettingsRowsTableTableManager(_db, _db.settingsRows);
   $$NotifOffRowsTableTableManager get notifOffRows =>

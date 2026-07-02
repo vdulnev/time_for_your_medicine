@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/models/dose_status.dart';
 import '../../../core/models/dose_time.dart';
 import '../../../core/models/medicine.dart';
 import '../../../core/theme/app_colors.dart';
@@ -7,7 +8,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/pill_shape.dart';
 import '../../../l10n/l10n_extensions.dart';
 
-/// A single medicine row on the Home list, with a tap-to-toggle check.
+/// A single medicine row on the Home list, with a tap-to-confirm check.
 /// One row per scheduled [doseTime] — a medicine taken several times a day
 /// appears once per slot.
 class MedicineTile extends StatelessWidget {
@@ -16,9 +17,9 @@ class MedicineTile extends StatelessWidget {
     required this.med,
     required this.doseTime,
     required this.showTime,
-    required this.taken,
+    required this.status,
     required this.onOpen,
-    required this.onToggle,
+    required this.onTap,
   });
 
   final Medicine med;
@@ -27,9 +28,9 @@ class MedicineTile extends StatelessWidget {
   /// Whether to show this slot's time next to the name, to disambiguate
   /// medicines with more than one dose slot per day.
   final bool showTime;
-  final bool taken;
+  final DoseStatus status;
   final VoidCallback onOpen;
-  final VoidCallback onToggle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -111,8 +112,8 @@ class MedicineTile extends StatelessWidget {
           const SizedBox(width: 8),
           _CheckButton(
             key: ValueKey('toggle-${med.id}-${doseTime.id}'),
-            taken: taken,
-            onTap: onToggle,
+            status: status,
+            onTap: onTap,
           ),
         ],
       ),
@@ -121,13 +122,30 @@ class MedicineTile extends StatelessWidget {
 }
 
 class _CheckButton extends StatelessWidget {
-  const _CheckButton({super.key, required this.taken, required this.onTap});
+  const _CheckButton({super.key, required this.status, required this.onTap});
 
-  final bool taken;
+  final DoseStatus status;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final Color bg;
+    final Border? border;
+    final IconData? icon;
+    switch (status) {
+      case DoseStatus.pending:
+        bg = Colors.transparent;
+        border = Border.all(color: AppColors.checkBorder, width: 2);
+        icon = null;
+      case DoseStatus.taken:
+        bg = AppColors.primary;
+        border = null;
+        icon = Icons.check_rounded;
+      case DoseStatus.rejected:
+        bg = AppColors.danger;
+        border = null;
+        icon = Icons.close_rounded;
+    }
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -135,14 +153,10 @@ class _CheckButton extends StatelessWidget {
         height: 28,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: taken ? AppColors.primary : Colors.transparent,
-          border: taken
-              ? null
-              : Border.all(color: AppColors.checkBorder, width: 2),
+          color: bg,
+          border: border,
         ),
-        child: taken
-            ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
-            : null,
+        child: icon == null ? null : Icon(icon, size: 16, color: Colors.white),
       ),
     );
   }

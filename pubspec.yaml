@@ -52,6 +52,10 @@ dev_dependencies:
   freezed: ^3.2.3
   json_serializable: ^6.9.0
 
+  # Used directly in test/dose_log_migration_test.dart to hand-build a
+  # broken pre-migration schema fixture.
+  sqlite3: ^2.9.4
+
 flutter:
   uses-material-design: true
   generate: true

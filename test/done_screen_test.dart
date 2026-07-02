@@ -34,12 +34,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // The test fixture has m1 already taken; tap the remaining three.
+      // The test fixture has m1 already taken; tap the remaining three,
+      // confirming "Mark as taken" in the sheet each opens.
       for (final id in ['m2', 'm3', 'm4']) {
         final finder = find.byKey(ValueKey('toggle-$id-t1'));
         await tester.ensureVisible(finder);
         await tester.pumpAndSettle();
         await tester.tap(finder);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Mark as taken'));
         await tester.pumpAndSettle();
       }
 

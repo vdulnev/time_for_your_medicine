@@ -1,11 +1,15 @@
+import 'package:fpdart/fpdart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../error/app_exception.dart';
 import '../models/add_draft.dart';
+import '../models/dose_status.dart';
 import '../models/dose_time.dart';
 import '../models/medicine.dart';
 import '../models/period.dart';
 import '../models/pill_kind.dart';
 import 'data_state.dart';
+import 'error_notifier.dart';
 import 'providers.dart';
 
 /// Fallback display time for a dose slot the user picked a time-of-day for
@@ -27,28 +31,121 @@ class DataNotifier extends AsyncNotifier<DataState> {
 
   DataState? get _current => state.valueOrNull;
 
-  /// Toggles a single dose slot; returns whether the day *just* became
-  /// fully taken (every scheduled dose of every medicine).
-  Future<bool> toggleTaken(String iso, String medId, String doseTimeId) async {
+  /// Surfaces a failed background write via [errorNotifierProvider] so a
+  /// listener can show it (e.g. a snackbar) — otherwise a write failure
+  /// is invisible: the optimistic UI update already applied, and nothing
+  /// else indicates the persist never reached disk.
+  void _reportIfFailed<T>(Either<AppException, T> result) {
+    result.fold(
+      (failure) => ref.read(errorNotifierProvider.notifier).report(failure),
+      (_) {},
+    );
+  }
+
+  /// [meds] with [medId]'s supply shifted by [delta], clamped to
+  /// `0..cap`. Mirrors what the repository does in the same call, so the
+  /// UI updates immediately rather than waiting on the DB round-trip.
+  List<Medicine> _creditSupply(List<Medicine> meds, String medId, int delta) {
+    return [
+      for (final m in meds)
+        if (m.id == medId)
+          m.copyWith(supply: (m.supply + delta).clamp(0, m.cap))
+        else
+          m,
+    ];
+  }
+
+  /// Marks a dose taken, consuming one pill. Returns whether the day
+  /// *just* became fully taken (every scheduled dose of every medicine).
+  Future<bool> markTaken(String iso, String medId, String doseTimeId) async {
     final current = _current;
     if (current == null) return false;
+    if (current.statusOf(iso, medId, doseTimeId) == DoseStatus.taken) {
+      return false;
+    }
+
+    Medicine? med;
+    for (final m in current.meds) {
+      if (m.id == medId) {
+        med = m;
+        break;
+      }
+    }
+    if (med == null || med.supply < 1) return false;
 
     final wasAll = current.allTaken(iso);
-    final next = !current.isTaken(iso, medId, doseTimeId);
-    final taken = {...current.taken, '$iso|$medId|$doseTimeId': next};
-    final updated = current.copyWith(taken: taken);
+    final key = '$iso|$medId|$doseTimeId';
+    final doseStatus = {...current.doseStatus, key: DoseStatus.taken};
+    final meds = _creditSupply(current.meds, medId, -1);
+    final updated = current.copyWith(doseStatus: doseStatus, meds: meds);
     state = AsyncData(updated);
 
-    await ref
-        .read(medicineRepositoryProvider)
-        .setTaken(iso, medId, doseTimeId, next);
+    final repo = ref.read(medicineRepositoryProvider);
+    _reportIfFailed(
+      await repo.setDoseStatus(iso, medId, doseTimeId, DoseStatus.taken),
+    );
+    _reportIfFailed(
+      await repo.recordTake(medId, iso: iso, doseTimeId: doseTimeId),
+    );
 
     return updated.allTaken(iso) && !wasAll;
   }
 
+  /// Marks a dose rejected (deliberately skipped). Doesn't touch supply —
+  /// no pill was taken.
+  Future<void> markRejected(String iso, String medId, String doseTimeId) async {
+    final current = _current;
+    if (current == null) return;
+    if (current.statusOf(iso, medId, doseTimeId) == DoseStatus.rejected) {
+      return;
+    }
+
+    final key = '$iso|$medId|$doseTimeId';
+    final doseStatus = {...current.doseStatus, key: DoseStatus.rejected};
+    state = AsyncData(current.copyWith(doseStatus: doseStatus));
+
+    _reportIfFailed(
+      await ref
+          .read(medicineRepositoryProvider)
+          .setDoseStatus(iso, medId, doseTimeId, DoseStatus.rejected),
+    );
+  }
+
+  /// Reverts a taken or rejected dose back to not-touched. If it had been
+  /// taken, credits the pill back to supply.
+  Future<void> revertDose(String iso, String medId, String doseTimeId) async {
+    final current = _current;
+    if (current == null) return;
+    final prev = current.statusOf(iso, medId, doseTimeId);
+    if (prev == DoseStatus.pending) return;
+
+    final key = '$iso|$medId|$doseTimeId';
+    final doseStatus = {...current.doseStatus}..remove(key);
+    final meds = prev == DoseStatus.taken
+        ? _creditSupply(current.meds, medId, 1)
+        : current.meds;
+    state = AsyncData(current.copyWith(doseStatus: doseStatus, meds: meds));
+
+    final repo = ref.read(medicineRepositoryProvider);
+    _reportIfFailed(
+      await repo.setDoseStatus(iso, medId, doseTimeId, DoseStatus.pending),
+    );
+    if (prev == DoseStatus.taken) {
+      _reportIfFailed(
+        await repo.recordRevertTake(medId, iso: iso, doseTimeId: doseTimeId),
+      );
+    }
+  }
+
   Future<void> addMedicine(AddDraft draft) async {
     final current = _current;
-    if (current == null || draft.name.trim().isEmpty) return;
+    final supply = int.tryParse(draft.supply.trim());
+    if (current == null ||
+        draft.name.trim().isEmpty ||
+        supply == null ||
+        supply <= 0) {
+      return;
+    }
 
     final slots = draft.times.isEmpty
         ? const [DraftTime(time: '8:00 AM')]
@@ -72,11 +169,31 @@ class DataNotifier extends AsyncNotifier<DataState> {
       kind: PillKind.round,
       c1: 0xFF5566D6,
       soft: 0xFFE7E8FB,
-      supply: 30,
-      cap: 30,
+      supply: supply,
+      cap: supply,
     );
     state = AsyncData(current.copyWith(meds: [...current.meds, med]));
-    await ref.read(medicineRepositoryProvider).addMedicine(med);
+    _reportIfFailed(
+      await ref.read(medicineRepositoryProvider).addMedicine(med),
+    );
+  }
+
+  /// Records a refill: the medicine now has [newSupply] pills, and that
+  /// also becomes its new "full pack" size for future refill %/alerts.
+  Future<void> refillMedicine(String medId, int newSupply) async {
+    final current = _current;
+    if (current == null || newSupply <= 0) return;
+
+    final meds = [
+      for (final m in current.meds)
+        if (m.id == medId) m.copyWith(supply: newSupply, cap: newSupply) else m,
+    ];
+    state = AsyncData(current.copyWith(meds: meds));
+    _reportIfFailed(
+      await ref
+          .read(medicineRepositoryProvider)
+          .refillMedicine(medId, newSupply),
+    );
   }
 
   Future<void> deleteMedicine(String id) async {
@@ -84,13 +201,15 @@ class DataNotifier extends AsyncNotifier<DataState> {
     if (current == null) return;
 
     final meds = current.meds.where((m) => m.id != id).toList();
-    final taken = {...current.taken}
+    final doseStatus = {...current.doseStatus}
       ..removeWhere((k, _) => k.split('|')[1] == id);
     final notifOff = {...current.notifOff}..remove(id);
     state = AsyncData(
-      current.copyWith(meds: meds, taken: taken, notifOff: notifOff),
+      current.copyWith(meds: meds, doseStatus: doseStatus, notifOff: notifOff),
     );
-    await ref.read(medicineRepositoryProvider).deleteMedicine(id);
+    _reportIfFailed(
+      await ref.read(medicineRepositoryProvider).deleteMedicine(id),
+    );
   }
 
   Future<void> toggleSetting(String key) async {
@@ -105,7 +224,9 @@ class DataNotifier extends AsyncNotifier<DataState> {
       _ => s,
     };
     state = AsyncData(current.copyWith(settings: next));
-    await ref.read(medicineRepositoryProvider).saveSettings(next);
+    _reportIfFailed(
+      await ref.read(medicineRepositoryProvider).saveSettings(next),
+    );
   }
 
   /// Sets the user's language override ("en" / "uk"), or `null` to follow
@@ -116,7 +237,9 @@ class DataNotifier extends AsyncNotifier<DataState> {
 
     final next = current.settings.copyWith(localeOverride: code);
     state = AsyncData(current.copyWith(settings: next));
-    await ref.read(medicineRepositoryProvider).saveSettings(next);
+    _reportIfFailed(
+      await ref.read(medicineRepositoryProvider).saveSettings(next),
+    );
   }
 
   Future<void> toggleNotif(String id) async {
@@ -131,6 +254,8 @@ class DataNotifier extends AsyncNotifier<DataState> {
       notifOff.remove(id);
     }
     state = AsyncData(current.copyWith(notifOff: notifOff));
-    await ref.read(medicineRepositoryProvider).setNotifOff(id, off);
+    _reportIfFailed(
+      await ref.read(medicineRepositoryProvider).setNotifOff(id, off),
+    );
   }
 }

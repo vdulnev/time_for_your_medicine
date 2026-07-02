@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/models/dose_status.dart';
 import '../../core/models/dose_time.dart';
 import '../../core/models/medicine.dart';
 import '../../core/models/pill_kind.dart';
@@ -13,6 +14,7 @@ import '../../core/state/selectors.dart';
 import '../../core/state/ui_providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/widgets/dose_action_sheet.dart';
 import '../../core/widgets/pill_shape.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../shell/delete_sheet.dart';
@@ -25,17 +27,34 @@ class MedicineDetailPage extends ConsumerWidget {
 
   final String medId;
 
-  Future<void> _toggle(
+  Future<void> _handleTap(
     BuildContext context,
     WidgetRef ref,
+    String medName,
     String iso,
     String doseTimeId,
+    DoseStatus current,
+    bool canTake,
   ) async {
-    final completed = await ref
-        .read(dataProvider.notifier)
-        .toggleTaken(iso, medId, doseTimeId);
-    if (completed && context.mounted) {
-      context.router.push(const DoneRoute());
+    final action = await showDoseActionSheet(
+      context,
+      medName: medName,
+      current: current,
+      canTake: canTake,
+    );
+    if (action == null || !context.mounted) return;
+
+    final notifier = ref.read(dataProvider.notifier);
+    switch (action) {
+      case DoseStatus.taken:
+        final completed = await notifier.markTaken(iso, medId, doseTimeId);
+        if (completed && context.mounted) {
+          context.router.push(const DoneRoute());
+        }
+      case DoseStatus.rejected:
+        await notifier.markRejected(iso, medId, doseTimeId);
+      case DoseStatus.pending:
+        await notifier.revertDose(iso, medId, doseTimeId);
     }
   }
 
@@ -115,9 +134,16 @@ class MedicineDetailPage extends ConsumerWidget {
                       _ToggleButton(
                         doseTime: dose.doseTime,
                         showTime: med.times.length > 1,
-                        taken: dose.taken,
-                        onTap: () =>
-                            _toggle(context, ref, iso, dose.doseTime.id),
+                        status: dose.status,
+                        onTap: () => _handleTap(
+                          context,
+                          ref,
+                          med.name,
+                          iso,
+                          dose.doseTime.id,
+                          dose.status,
+                          med.supply >= 1,
+                        ),
                       ),
                       const SizedBox(height: 9),
                     ],
@@ -321,35 +347,47 @@ class _ToggleButton extends StatelessWidget {
   const _ToggleButton({
     required this.doseTime,
     required this.showTime,
-    required this.taken,
+    required this.status,
     required this.onTap,
   });
 
   final DoseTime doseTime;
   final bool showTime;
-  final bool taken;
+  final DoseStatus status;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final label = taken
-        ? context.l10n.detailTakenToday
-        : context.l10n.detailMarkAsTaken;
+    final l10n = context.l10n;
+    final Color bg;
+    final Color fg;
+    final String label;
+    switch (status) {
+      case DoseStatus.pending:
+        bg = AppColors.ink;
+        fg = Colors.white;
+        label = l10n.detailMarkAsTaken;
+      case DoseStatus.taken:
+        bg = AppColors.successBg;
+        fg = AppColors.success;
+        label = l10n.detailTakenToday;
+      case DoseStatus.rejected:
+        bg = AppColors.deleteBg;
+        fg = AppColors.danger;
+        label = l10n.detailRejectedToday;
+    }
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 50,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: taken ? AppColors.successBg : AppColors.ink,
+          color: bg,
           borderRadius: BorderRadius.circular(15),
         ),
         child: Text(
           showTime ? '${doseTime.time} · $label' : label,
-          style: AppText.bricolage(
-            size: 14,
-            color: taken ? AppColors.success : Colors.white,
-          ),
+          style: AppText.bricolage(size: 14, color: fg),
         ),
       ),
     );

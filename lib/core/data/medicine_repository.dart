@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:clock/clock.dart';
 import 'package:drift/drift.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -8,6 +9,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../db/app_database.dart';
 import '../error/app_exception.dart';
 import '../models/app_settings.dart';
+import '../models/dose_status.dart';
 import '../models/dose_time.dart';
 import '../models/medicine.dart';
 import '../models/medicine_registry.dart';
@@ -58,9 +60,9 @@ class MedicineRepository {
       for (final t in doseTimeRows) {
         timesByMed.putIfAbsent(t.medId, () => []).add(t);
       }
-      final taken = <String, bool>{
+      final doseStatus = <String, DoseStatus>{
         for (final d in doseRows)
-          if (d.taken) '${d.iso}|${d.medId}|${d.doseTimeId}': true,
+          '${d.iso}|${d.medId}|${d.doseTimeId}': DoseStatus.fromName(d.status),
       };
       final notifOff = <String, bool>{for (final n in notifRows) n.medId: true};
       final settings = settingsRow == null
@@ -71,53 +73,163 @@ class MedicineRepository {
               refill: settingsRow.refill,
               localeOverride: settingsRow.localeOverride,
             );
+      final supplyTotals = await _supplyTotals();
 
       return DataState(
         meds: [
-          for (final r in medRows) _toMedicine(r, timesByMed[r.id] ?? const []),
+          for (final r in medRows)
+            _toMedicine(
+              r,
+              timesByMed[r.id] ?? const [],
+              supplyTotals[r.id] ?? 0,
+            ),
         ],
-        taken: taken,
+        doseStatus: doseStatus,
         settings: settings,
         notifOff: notifOff,
       );
     });
   }
 
-  Future<Either<AppException, Unit>> setTaken(
+  /// Every medicine's current pill count, derived from the sum of its
+  /// [SupplyTransactions] deltas — nothing stores a running total.
+  Future<Map<String, int>> _supplyTotals() async {
+    final rows = await _db.select(_db.supplyTransactions).get();
+    final totals = <String, int>{};
+    for (final r in rows) {
+      totals[r.medId] = (totals[r.medId] ?? 0) + r.delta;
+    }
+    return totals;
+  }
+
+  Future<int> _currentSupply(String medId) async {
+    final rows = await (_db.select(
+      _db.supplyTransactions,
+    )..where((t) => t.medId.equals(medId))).get();
+    return rows.fold<int>(0, (sum, r) => sum + r.delta);
+  }
+
+  /// Sets a dose's status. [DoseStatus.pending] deletes the row (absence
+  /// means pending); [DoseStatus.taken] / [DoseStatus.rejected] upsert it.
+  /// Does not touch pill supply — see [recordTake]/[recordRevertTake].
+  Future<Either<AppException, Unit>> setDoseStatus(
     String iso,
     String medId,
     String doseTimeId,
-    bool taken,
+    DoseStatus status,
   ) {
-    return _guard('setTaken', () async {
-      await _db
-          .into(_db.doseLog)
-          .insertOnConflictUpdate(
-            DoseLogCompanion(
-              iso: Value(iso),
-              medId: Value(medId),
-              doseTimeId: Value(doseTimeId),
-              taken: Value(taken),
-            ),
-          );
+    return _guard('setDoseStatus', () async {
+      if (status == DoseStatus.pending) {
+        await (_db.delete(_db.doseLog)..where(
+              (t) =>
+                  t.iso.equals(iso) &
+                  t.medId.equals(medId) &
+                  t.doseTimeId.equals(doseTimeId),
+            ))
+            .go();
+      } else {
+        await _db
+            .into(_db.doseLog)
+            .insertOnConflictUpdate(
+              DoseLogCompanion(
+                iso: Value(iso),
+                medId: Value(medId),
+                doseTimeId: Value(doseTimeId),
+                status: Value(status.name),
+              ),
+            );
+      }
       return unit;
     });
   }
 
+  /// Records a dose being marked taken: consumes one pill and logs a
+  /// 'take' transaction.
+  Future<Either<AppException, Unit>> recordTake(
+    String medId, {
+    required String iso,
+    required String doseTimeId,
+  }) {
+    return _guard('recordTake', () async {
+      await _logSupplyTransaction(
+        medId,
+        -1,
+        'take',
+        iso: iso,
+        doseTimeId: doseTimeId,
+      );
+      return unit;
+    });
+  }
+
+  /// Records a taken dose being reverted: restores the pill and logs a
+  /// 'revertTake' transaction.
+  Future<Either<AppException, Unit>> recordRevertTake(
+    String medId, {
+    required String iso,
+    required String doseTimeId,
+  }) {
+    return _guard('recordRevertTake', () async {
+      await _logSupplyTransaction(
+        medId,
+        1,
+        'revertTake',
+        iso: iso,
+        doseTimeId: doseTimeId,
+      );
+      return unit;
+    });
+  }
+
+  Future<void> _logSupplyTransaction(
+    String medId,
+    int delta,
+    String kind, {
+    String? iso,
+    String? doseTimeId,
+  }) async {
+    await _db
+        .into(_db.supplyTransactions)
+        .insert(
+          SupplyTransactionsCompanion.insert(
+            medId: medId,
+            delta: delta,
+            kind: kind,
+            createdAt: clock.now(),
+            iso: Value(iso),
+            doseTimeId: Value(doseTimeId),
+          ),
+        );
+  }
+
   Future<Either<AppException, Unit>> addMedicine(Medicine med) {
     return _guard('addMedicine', () async {
-      await _db.into(_db.medicines).insert(_toCompanion(med));
-      await _db.batch((batch) {
-        batch.insertAll(_db.doseTimes, [
-          for (var i = 0; i < med.times.length; i++)
-            DoseTimesCompanion.insert(
-              medId: med.id,
-              id: med.times[i].id,
-              time: med.times[i].time,
-              period: med.times[i].period.name,
-              sortOrder: Value(i),
-            ),
-        ]);
+      await _db.transaction(() async {
+        await _db.into(_db.medicines).insert(_toCompanion(med));
+        await _db.batch((batch) {
+          batch.insertAll(_db.doseTimes, [
+            for (var i = 0; i < med.times.length; i++)
+              DoseTimesCompanion.insert(
+                medId: med.id,
+                id: med.times[i].id,
+                time: med.times[i].time,
+                period: med.times[i].period.name,
+                sortOrder: Value(i),
+              ),
+          ]);
+        });
+        if (med.supply > 0) {
+          await _db
+              .into(_db.supplyTransactions)
+              .insert(
+                SupplyTransactionsCompanion.insert(
+                  medId: med.id,
+                  delta: med.supply,
+                  kind: 'initial',
+                  createdAt: clock.now(),
+                ),
+              );
+        }
       });
       return unit;
     });
@@ -129,8 +241,40 @@ class MedicineRepository {
       await (_db.delete(_db.doseTimes)..where((t) => t.medId.equals(id))).go();
       await (_db.delete(_db.doseLog)..where((t) => t.medId.equals(id))).go();
       await (_db.delete(
+        _db.supplyTransactions,
+      )..where((t) => t.medId.equals(id))).go();
+      await (_db.delete(
         _db.notifOffRows,
       )..where((t) => t.medId.equals(id))).go();
+      return unit;
+    });
+  }
+
+  /// Sets a medicine's pill count to [newTotal] (both the running supply
+  /// and the "full pack" cap), logging the signed difference as a 'refill'
+  /// transaction. A total lower than the current supply logs a negative
+  /// delta — this doubles as the error-correction path.
+  Future<Either<AppException, Unit>> refillMedicine(
+    String medId,
+    int newTotal,
+  ) {
+    return _guard('refillMedicine', () async {
+      await _db.transaction(() async {
+        final currentSupply = await _currentSupply(medId);
+        final delta = newTotal - currentSupply;
+        await (_db.update(_db.medicines)..where((t) => t.id.equals(medId)))
+            .write(MedicinesCompanion(cap: Value(newTotal)));
+        await _db
+            .into(_db.supplyTransactions)
+            .insert(
+              SupplyTransactionsCompanion.insert(
+                medId: medId,
+                delta: delta,
+                kind: 'refill',
+                createdAt: clock.now(),
+              ),
+            );
+      });
       return unit;
     });
   }
@@ -275,22 +419,25 @@ class MedicineRepository {
     return '${item.name} ${item.genericName} ${item.form}'.toLowerCase();
   }
 
-  Medicine _toMedicine(MedicineRow r, List<DoseTimeRow> times) => Medicine(
-    id: r.id,
-    name: r.name,
-    dose: r.dose,
-    times: [
-      for (final t in times)
-        DoseTime(id: t.id, time: t.time, period: Period.fromName(t.period)),
-    ],
-    withFood: r.withFood,
-    kind: PillKind.fromName(r.kind),
-    c1: r.c1,
-    c2: r.c2,
-    soft: r.soft,
-    supply: r.supply,
-    cap: r.cap,
-  );
+  /// [rawSupply] is the ledger sum for this medicine, clamped to
+  /// `0..cap` for display (the ledger itself is never clamped).
+  Medicine _toMedicine(MedicineRow r, List<DoseTimeRow> times, int rawSupply) =>
+      Medicine(
+        id: r.id,
+        name: r.name,
+        dose: r.dose,
+        times: [
+          for (final t in times)
+            DoseTime(id: t.id, time: t.time, period: Period.fromName(t.period)),
+        ],
+        withFood: r.withFood,
+        kind: PillKind.fromName(r.kind),
+        c1: r.c1,
+        c2: r.c2,
+        soft: r.soft,
+        supply: rawSupply.clamp(0, r.cap),
+        cap: r.cap,
+      );
 
   MedicinesCompanion _toCompanion(Medicine m) => MedicinesCompanion(
     id: Value(m.id),
@@ -301,7 +448,6 @@ class MedicineRepository {
     c1: Value(m.c1),
     c2: Value(m.c2),
     soft: Value(m.soft),
-    supply: Value(m.supply),
     cap: Value(m.cap),
   );
 }

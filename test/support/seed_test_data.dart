@@ -1,6 +1,12 @@
+import 'package:clock/clock.dart';
 import 'package:drift/drift.dart';
 import 'package:time_for_your_medicine/core/db/app_database.dart';
 import 'package:time_for_your_medicine/core/util/day_utils.dart';
+
+/// Opening pill counts for the seeded medicines, seeded as 'initial'
+/// [SupplyTransactions] rows rather than a stored column (see
+/// `MedicineRepository._currentSupply`).
+const _initialSupply = {'m1': 12, 'm2': 30, 'm3': 20, 'm4': 6};
 
 Future<void> seedTestMedicines(AppDatabase db) async {
   const medicines = <MedicinesCompanion>[
@@ -13,7 +19,6 @@ Future<void> seedTestMedicines(AppDatabase db) async {
       c1: Value(0xFF5566D6),
       c2: Value(0xFFA6B0EE),
       soft: Value(0xFFE7E8FB),
-      supply: Value(12),
       cap: Value(60),
     ),
     MedicinesCompanion(
@@ -24,7 +29,6 @@ Future<void> seedTestMedicines(AppDatabase db) async {
       kind: Value('round'),
       c1: Value(0xFFD69A5A),
       soft: Value(0xFFFBF0DF),
-      supply: Value(30),
       cap: Value(60),
     ),
     MedicinesCompanion(
@@ -35,7 +39,6 @@ Future<void> seedTestMedicines(AppDatabase db) async {
       kind: Value('round'),
       c1: Value(0xFF5AA0D6),
       soft: Value(0xFFE2F0F8),
-      supply: Value(20),
       cap: Value(30),
     ),
     MedicinesCompanion(
@@ -47,7 +50,6 @@ Future<void> seedTestMedicines(AppDatabase db) async {
       c1: Value(0xFFA77FD0),
       c2: Value(0xFFCDB6E6),
       soft: Value(0xFFF1ECF9),
-      supply: Value(6),
       cap: Value(30),
     ),
   ];
@@ -82,6 +84,15 @@ Future<void> seedTestMedicines(AppDatabase db) async {
   await db.batch((batch) {
     batch.insertAll(db.medicines, medicines);
     batch.insertAll(db.doseTimes, doseTimes);
+    batch.insertAll(db.supplyTransactions, [
+      for (final medicine in medicines)
+        SupplyTransactionsCompanion.insert(
+          medId: medicine.id.value,
+          delta: _initialSupply[medicine.id.value] ?? 0,
+          kind: 'initial',
+          createdAt: clock.now(),
+        ),
+    ]);
     final logs = <DoseLogCompanion>[];
     for (var offset = -6; offset <= -1; offset++) {
       final iso = DayUtils.iso(DayUtils.addDays(kToday, offset));
@@ -91,7 +102,7 @@ Future<void> seedTestMedicines(AppDatabase db) async {
             iso: Value(iso),
             medId: Value(medicine.id.value),
             doseTimeId: const Value('t1'),
-            taken: const Value(true),
+            status: const Value('taken'),
           ),
         );
       }
@@ -101,7 +112,7 @@ Future<void> seedTestMedicines(AppDatabase db) async {
         iso: Value(DayUtils.iso(kToday)),
         medId: const Value('m1'),
         doseTimeId: const Value('t1'),
-        taken: const Value(true),
+        status: const Value('taken'),
       ),
     );
     batch.insertAll(db.doseLog, logs);
