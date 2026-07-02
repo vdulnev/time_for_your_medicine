@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../db/app_database.dart' show kToday;
+import '../db/app_database.dart' show SupplyTransactionRow, kToday;
 import '../models/dose_status.dart';
 import '../models/dose_time.dart';
 import '../models/medicine.dart';
@@ -154,6 +154,31 @@ class MedDoseStatus {
   const MedDoseStatus({required this.doseTime, required this.status});
   final DoseTime doseTime;
   final DoseStatus status;
+}
+
+/// Trailing-window presets for the transactions screen's interval filter.
+enum TransactionInterval {
+  all,
+  last7Days,
+  last30Days,
+  last90Days;
+
+  /// Inclusive cutoff: a transaction at or after this instant matches.
+  /// `null` for [all] (no lower bound).
+  DateTime? cutoff(DateTime today) => switch (this) {
+    TransactionInterval.all => null,
+    TransactionInterval.last7Days => DayUtils.addDays(today, -6),
+    TransactionInterval.last30Days => DayUtils.addDays(today, -29),
+    TransactionInterval.last90Days => DayUtils.addDays(today, -89),
+  };
+}
+
+/// A ledger row paired with its medicine's display name (`null` if the
+/// medicine was since deleted — the ledger keeps its rows regardless).
+class TransactionEntry {
+  const TransactionEntry({required this.row, required this.medName});
+  final SupplyTransactionRow row;
+  final String? medName;
 }
 
 abstract final class Selectors {
@@ -389,5 +414,24 @@ abstract final class Selectors {
       if (m.isLowSupply) return m.name;
     }
     return '';
+  }
+
+  /// [rows] joined with each medicine's name and narrowed to [medId] (when
+  /// set) and [interval], newest first (the input order, since callers
+  /// already load the ledger sorted by `createdAt desc`).
+  static List<TransactionEntry> transactions(
+    List<SupplyTransactionRow> rows,
+    DataState data, {
+    String? medId,
+    TransactionInterval interval = TransactionInterval.all,
+  }) {
+    final namesById = {for (final m in data.meds) m.id: m.name};
+    final cutoff = interval.cutoff(kToday);
+    return [
+      for (final r in rows)
+        if ((medId == null || r.medId == medId) &&
+            (cutoff == null || !r.createdAt.isBefore(cutoff)))
+          TransactionEntry(row: r, medName: namesById[r.medId]),
+    ];
   }
 }

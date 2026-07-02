@@ -200,3 +200,19 @@ class SettingsRoute extends PageRouteInfo<void> {
     },
   );
 }
+
+/// generated route for
+/// [TransactionsPage]
+class TransactionsRoute extends PageRouteInfo<void> {
+  const TransactionsRoute({List<PageRouteInfo>? children})
+    : super(TransactionsRoute.name, initialChildren: children);
+
+  static const String name = 'TransactionsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const TransactionsPage();
+    },
+  );
+}

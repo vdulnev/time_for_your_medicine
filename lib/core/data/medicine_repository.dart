@@ -109,6 +109,18 @@ class MedicineRepository {
     return rows.fold<int>(0, (sum, r) => sum + r.delta);
   }
 
+  /// The full supply-transaction ledger, newest first. Filtering (by
+  /// medicine, date range) happens client-side in `Selectors` — the app's
+  /// data volume is small enough that loading it all is simpler than
+  /// threading filter params through the query.
+  Future<Either<AppException, List<SupplyTransactionRow>>> loadTransactions() {
+    return _guard('loadTransactions', () async {
+      return (_db.select(
+        _db.supplyTransactions,
+      )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
+    });
+  }
+
   /// Sets a dose's status. [DoseStatus.pending] deletes the row (absence
   /// means pending); [DoseStatus.taken] / [DoseStatus.rejected] upsert it.
   /// Does not touch pill supply — see [recordTake]/[recordRevertTake].

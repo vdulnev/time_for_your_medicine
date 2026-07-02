@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/router/app_router.dart';
 import '../../core/state/providers.dart';
 import '../../core/state/selectors.dart';
 import '../../core/state/ui_providers.dart';
@@ -88,12 +89,53 @@ class HistoryPage extends ConsumerWidget {
                         label: l10n.historyBestTime,
                         value: l10n.periodMorning,
                       ),
+                      const SizedBox(height: 14),
+                      _TransactionsNavRow(
+                        onTap: () =>
+                            context.router.push(const TransactionsRoute()),
+                      ),
                     ],
                   ),
                 ),
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _TransactionsNavRow extends StatelessWidget {
+  const _TransactionsNavRow({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              context.l10n.historyViewTransactions,
+              style: AppText.jakarta(size: 13, weight: FontWeight.w700),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: AppColors.muted3,
+            ),
+          ],
         ),
       ),
     );

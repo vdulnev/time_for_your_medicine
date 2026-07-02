@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -361,6 +362,23 @@ void main() {
       expect(correction.delta, -10);
     },
   );
+
+  test('loadTransactions returns the ledger newest first', () async {
+    final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
+    // Pinned, distinct timestamps so ordering is deterministic rather than
+    // relying on both calls landing in different clock ticks.
+    await withClock(Clock.fixed(DateTime(2026, 6, 1)), () async {
+      await repo.addMedicine(med); // logs an 'initial' transaction
+    });
+    await withClock(Clock.fixed(DateTime(2026, 6, 15)), () async {
+      await repo.refillMedicine(med.id, 40); // logs a 'refill' transaction
+    });
+
+    final result = await repo.loadTransactions();
+    final rows = result.getOrElse((_) => throw StateError('load failed'));
+
+    expect(rows.map((r) => r.kind), ['refill', 'initial']);
+  });
 }
 
 Medicine _draftToMed(AddDraft draft) => Medicine(

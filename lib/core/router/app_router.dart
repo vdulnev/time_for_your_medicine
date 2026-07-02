@@ -11,6 +11,7 @@ import '../../features/refills/refills_page.dart';
 import '../../features/reminders/notifications_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../../features/shell/dashboard_page.dart';
+import '../../features/transactions/transactions_page.dart';
 
 part 'app_router.gr.dart';
 
@@ -34,5 +35,6 @@ class AppRouter extends RootStackRouter {
     AutoRoute(page: DoneRoute.page),
     AutoRoute(page: HistoryRoute.page),
     AutoRoute(page: NotificationsRoute.page),
+    AutoRoute(page: TransactionsRoute.page),
   ];
 }
