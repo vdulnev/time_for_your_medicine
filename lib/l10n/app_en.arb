@@ -78,12 +78,15 @@
   "registrySearchFailed": "Couldn’t search the medicine registry",
   "addDoseLabel": "DOSE",
   "addDoseHint": "500 mg",
+  "addPillsLabel": "PILLS",
+  "addPillsHint": "30",
   "addTimeLabel": "TIME",
   "addTimeHint": "8:00 AM",
   "addTimeOfDayLabel": "TIME OF DAY",
   "addAnotherTime": "Add another time",
   "addFoodLabel": "FOOD",
   "addSaveButton": "Save medicine",
+  "addSaveRequirementsHint": "Enter a medicine name and at least 1 pill to save.",
 
   "detailNext": "NEXT",
   "detailFood": "FOOD",
@@ -92,6 +95,7 @@
   "detailTodaysDoses": "TODAY'S DOSES",
   "detailMarkAsTaken": "Mark as taken",
   "detailTakenToday": "Taken today ✓",
+  "detailRejectedToday": "Rejected today ✕",
   "detailDoseAndKind": "{dose} {kind}",
   "@detailDoseAndKind": {
     "placeholders": {
@@ -168,6 +172,21 @@
     }
   },
   "refillsOrder": "Order",
+  "refillSheetTitle": "Refill {name}?",
+  "@refillSheetTitle": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "refillSheetBody": "How many pills do you have now?",
+  "refillSheetConfirm": "Refill",
+
+  "doseSheetQuestion": "Did you take this dose?",
+  "doseSheetOutOfStock": "No pills left — refill before marking this dose taken.",
+  "doseSheetMarkRejected": "Mark as rejected",
+  "doseSheetTakenBody": "Marked as taken.",
+  "doseSheetRejectedBody": "Marked as rejected.",
+  "doseSheetUndo": "Undo",
 
   "remindersTitle": "Reminders",
   "remindersToday": "Today · {date}",

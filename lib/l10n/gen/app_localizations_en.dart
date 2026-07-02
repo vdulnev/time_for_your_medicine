@@ -151,6 +151,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addDoseHint => '500 mg';
 
   @override
+  String get addPillsLabel => 'PILLS';
+
+  @override
+  String get addPillsHint => '30';
+
+  @override
   String get addTimeLabel => 'TIME';
 
   @override
@@ -167,6 +173,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addSaveButton => 'Save medicine';
+
+  @override
+  String get addSaveRequirementsHint =>
+      'Enter a medicine name and at least 1 pill to save.';
 
   @override
   String get detailNext => 'NEXT';
@@ -188,6 +198,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailTakenToday => 'Taken today ✓';
+
+  @override
+  String get detailRejectedToday => 'Rejected today ✕';
 
   @override
   String detailDoseAndKind(String dose, String kind) {
@@ -302,6 +315,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get refillsOrder => 'Order';
+
+  @override
+  String refillSheetTitle(String name) {
+    return 'Refill $name?';
+  }
+
+  @override
+  String get refillSheetBody => 'How many pills do you have now?';
+
+  @override
+  String get refillSheetConfirm => 'Refill';
+
+  @override
+  String get doseSheetQuestion => 'Did you take this dose?';
+
+  @override
+  String get doseSheetOutOfStock =>
+      'No pills left — refill before marking this dose taken.';
+
+  @override
+  String get doseSheetMarkRejected => 'Mark as rejected';
+
+  @override
+  String get doseSheetTakenBody => 'Marked as taken.';
+
+  @override
+  String get doseSheetRejectedBody => 'Marked as rejected.';
+
+  @override
+  String get doseSheetUndo => 'Undo';
 
   @override
   String get remindersTitle => 'Reminders';

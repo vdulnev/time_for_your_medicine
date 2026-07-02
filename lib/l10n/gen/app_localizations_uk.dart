@@ -155,6 +155,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get addDoseHint => '500 мг';
 
   @override
+  String get addPillsLabel => 'ТАБЛЕТОК';
+
+  @override
+  String get addPillsHint => '30';
+
+  @override
   String get addTimeLabel => 'ЧАС';
 
   @override
@@ -171,6 +177,10 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get addSaveButton => 'Зберегти ліки';
+
+  @override
+  String get addSaveRequirementsHint =>
+      'Введіть назву ліків і принаймні 1 таблетку, щоб зберегти.';
 
   @override
   String get detailNext => 'НАСТУПНИЙ';
@@ -192,6 +202,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get detailTakenToday => 'Прийнято сьогодні ✓';
+
+  @override
+  String get detailRejectedToday => 'Відхилено сьогодні ✕';
 
   @override
   String detailDoseAndKind(String dose, String kind) {
@@ -312,6 +325,36 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get refillsOrder => 'Замовити';
+
+  @override
+  String refillSheetTitle(String name) {
+    return 'Поповнити $name?';
+  }
+
+  @override
+  String get refillSheetBody => 'Скільки таблеток у вас зараз?';
+
+  @override
+  String get refillSheetConfirm => 'Поповнити';
+
+  @override
+  String get doseSheetQuestion => 'Ви прийняли цей прийом ліків?';
+
+  @override
+  String get doseSheetOutOfStock =>
+      'Таблеток не залишилось — поповніть запас, перш ніж позначати прийом.';
+
+  @override
+  String get doseSheetMarkRejected => 'Позначити як відхилено';
+
+  @override
+  String get doseSheetTakenBody => 'Позначено як прийнято.';
+
+  @override
+  String get doseSheetRejectedBody => 'Позначено як відхилено.';
+
+  @override
+  String get doseSheetUndo => 'Скасувати';
 
   @override
   String get remindersTitle => 'Нагадування';

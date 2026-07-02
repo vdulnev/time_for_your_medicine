@@ -338,6 +338,18 @@ abstract class AppLocalizations {
   /// **'500 mg'**
   String get addDoseHint;
 
+  /// No description provided for @addPillsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PILLS'**
+  String get addPillsLabel;
+
+  /// No description provided for @addPillsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'30'**
+  String get addPillsHint;
+
   /// No description provided for @addTimeLabel.
   ///
   /// In en, this message translates to:
@@ -373,6 +385,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save medicine'**
   String get addSaveButton;
+
+  /// No description provided for @addSaveRequirementsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a medicine name and at least 1 pill to save.'**
+  String get addSaveRequirementsHint;
 
   /// No description provided for @detailNext.
   ///
@@ -415,6 +433,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Taken today ✓'**
   String get detailTakenToday;
+
+  /// No description provided for @detailRejectedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected today ✕'**
+  String get detailRejectedToday;
 
   /// No description provided for @detailDoseAndKind.
   ///
@@ -571,6 +595,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Order'**
   String get refillsOrder;
+
+  /// No description provided for @refillSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Refill {name}?'**
+  String refillSheetTitle(String name);
+
+  /// No description provided for @refillSheetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'How many pills do you have now?'**
+  String get refillSheetBody;
+
+  /// No description provided for @refillSheetConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Refill'**
+  String get refillSheetConfirm;
+
+  /// No description provided for @doseSheetQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Did you take this dose?'**
+  String get doseSheetQuestion;
+
+  /// No description provided for @doseSheetOutOfStock.
+  ///
+  /// In en, this message translates to:
+  /// **'No pills left — refill before marking this dose taken.'**
+  String get doseSheetOutOfStock;
+
+  /// No description provided for @doseSheetMarkRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as rejected'**
+  String get doseSheetMarkRejected;
+
+  /// No description provided for @doseSheetTakenBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as taken.'**
+  String get doseSheetTakenBody;
+
+  /// No description provided for @doseSheetRejectedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as rejected.'**
+  String get doseSheetRejectedBody;
+
+  /// No description provided for @doseSheetUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get doseSheetUndo;
 
   /// No description provided for @remindersTitle.
   ///
