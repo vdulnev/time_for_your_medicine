@@ -284,6 +284,45 @@ class AppLocalizationsUk extends AppLocalizations {
   String get historyBestTime => 'Найкращий час';
 
   @override
+  String get historyViewTransactions => 'Переглянути транзакції';
+
+  @override
+  String get transactionsTitle => 'Транзакції';
+
+  @override
+  String get transactionsAllMedicines => 'Усі ліки';
+
+  @override
+  String get transactionsIntervalAll => 'Увесь час';
+
+  @override
+  String get transactionsInterval7Days => '7 днів';
+
+  @override
+  String get transactionsInterval30Days => '30 днів';
+
+  @override
+  String get transactionsInterval90Days => '90 днів';
+
+  @override
+  String get transactionsKindInitial => 'Початковий запас';
+
+  @override
+  String get transactionsKindRefill => 'Поповнення';
+
+  @override
+  String get transactionsKindTake => 'Прийнято';
+
+  @override
+  String get transactionsKindRevertTake => 'Скасовано';
+
+  @override
+  String get transactionsDeletedMedicine => 'Видалені ліки';
+
+  @override
+  String get transactionsEmpty => 'Немає транзакцій за цими фільтрами.';
+
+  @override
   String get refillsTitle => 'Поповнення';
 
   @override

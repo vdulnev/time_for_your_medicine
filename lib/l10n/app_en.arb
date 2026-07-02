@@ -149,6 +149,20 @@
     }
   },
   "historyBestTime": "Best time",
+  "historyViewTransactions": "View transactions",
+
+  "transactionsTitle": "Transactions",
+  "transactionsAllMedicines": "All medicines",
+  "transactionsIntervalAll": "All time",
+  "transactionsInterval7Days": "7 days",
+  "transactionsInterval30Days": "30 days",
+  "transactionsInterval90Days": "90 days",
+  "transactionsKindInitial": "Initial stock",
+  "transactionsKindRefill": "Refill",
+  "transactionsKindTake": "Taken",
+  "transactionsKindRevertTake": "Reverted",
+  "transactionsDeletedMedicine": "Deleted medicine",
+  "transactionsEmpty": "No transactions match these filters.",
 
   "refillsTitle": "Refills",
   "refillsMedicineIsLow": "{name} is low",

@@ -278,6 +278,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyBestTime => 'Best time';
 
   @override
+  String get historyViewTransactions => 'View transactions';
+
+  @override
+  String get transactionsTitle => 'Transactions';
+
+  @override
+  String get transactionsAllMedicines => 'All medicines';
+
+  @override
+  String get transactionsIntervalAll => 'All time';
+
+  @override
+  String get transactionsInterval7Days => '7 days';
+
+  @override
+  String get transactionsInterval30Days => '30 days';
+
+  @override
+  String get transactionsInterval90Days => '90 days';
+
+  @override
+  String get transactionsKindInitial => 'Initial stock';
+
+  @override
+  String get transactionsKindRefill => 'Refill';
+
+  @override
+  String get transactionsKindTake => 'Taken';
+
+  @override
+  String get transactionsKindRevertTake => 'Reverted';
+
+  @override
+  String get transactionsDeletedMedicine => 'Deleted medicine';
+
+  @override
+  String get transactionsEmpty => 'No transactions match these filters.';
+
+  @override
   String get refillsTitle => 'Refills';
 
   @override

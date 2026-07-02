@@ -554,6 +554,84 @@ abstract class AppLocalizations {
   /// **'Best time'**
   String get historyBestTime;
 
+  /// No description provided for @historyViewTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'View transactions'**
+  String get historyViewTransactions;
+
+  /// No description provided for @transactionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get transactionsTitle;
+
+  /// No description provided for @transactionsAllMedicines.
+  ///
+  /// In en, this message translates to:
+  /// **'All medicines'**
+  String get transactionsAllMedicines;
+
+  /// No description provided for @transactionsIntervalAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get transactionsIntervalAll;
+
+  /// No description provided for @transactionsInterval7Days.
+  ///
+  /// In en, this message translates to:
+  /// **'7 days'**
+  String get transactionsInterval7Days;
+
+  /// No description provided for @transactionsInterval30Days.
+  ///
+  /// In en, this message translates to:
+  /// **'30 days'**
+  String get transactionsInterval30Days;
+
+  /// No description provided for @transactionsInterval90Days.
+  ///
+  /// In en, this message translates to:
+  /// **'90 days'**
+  String get transactionsInterval90Days;
+
+  /// No description provided for @transactionsKindInitial.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial stock'**
+  String get transactionsKindInitial;
+
+  /// No description provided for @transactionsKindRefill.
+  ///
+  /// In en, this message translates to:
+  /// **'Refill'**
+  String get transactionsKindRefill;
+
+  /// No description provided for @transactionsKindTake.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken'**
+  String get transactionsKindTake;
+
+  /// No description provided for @transactionsKindRevertTake.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverted'**
+  String get transactionsKindRevertTake;
+
+  /// No description provided for @transactionsDeletedMedicine.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted medicine'**
+  String get transactionsDeletedMedicine;
+
+  /// No description provided for @transactionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions match these filters.'**
+  String get transactionsEmpty;
+
   /// No description provided for @refillsTitle.
   ///
   /// In en, this message translates to:
