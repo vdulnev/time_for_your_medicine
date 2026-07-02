@@ -29,9 +29,13 @@ abstract class DataState with _$DataState {
   bool isTaken(String iso, String medId, String doseTimeId) =>
       statusOf(iso, medId, doseTimeId) == DoseStatus.taken;
 
-  /// True when every scheduled dose of every medicine is taken for [iso].
-  bool allTaken(String iso) =>
-      meds.every((m) => m.times.every((t) => isTaken(iso, m.id, t.id)));
+  /// True when every scheduled dose of every *reminder-enabled* medicine
+  /// is taken for [iso]. A medicine with its reminder off doesn't
+  /// participate in today's tracking, so it can't block the "all taken"
+  /// celebration.
+  bool allTaken(String iso) => meds
+      .where((m) => reminderOn(m.id))
+      .every((m) => m.times.every((t) => isTaken(iso, m.id, t.id)));
 
   bool reminderOn(String id) => !(notifOff[id] ?? false);
 }

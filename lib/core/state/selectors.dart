@@ -187,14 +187,25 @@ abstract final class Selectors {
   static String _stripMeridiem(String t) =>
       t.replaceAll(' AM', '').replaceAll(' PM', '');
 
-  /// Every (medicine, doseTime) occurrence, flattened across all medicines.
+  /// Every (medicine, doseTime) occurrence, flattened across all medicines
+  /// — including ones with their reminder switched off. Only [history]
+  /// uses this directly, since past adherence shouldn't change just
+  /// because a reminder was toggled today; everything else uses
+  /// [_activeOccurrences].
   static List<DoseOccurrence> _occurrences(DataState data) => [
     for (final m in data.meds)
       for (final t in m.times) DoseOccurrence(med: m, doseTime: t),
   ];
 
+  /// [_occurrences], narrowed to medicines with their reminder on. A
+  /// medicine with its reminder off doesn't appear in today's dose list,
+  /// progress count, or agenda — see `DataState.allTaken` for the
+  /// matching "all taken" exclusion.
+  static List<DoseOccurrence> _activeOccurrences(DataState data) =>
+      _occurrences(data).where((o) => data.reminderOn(o.med.id)).toList();
+
   static List<PeriodSection> periods(DataState data) {
-    final all = _occurrences(data);
+    final all = _activeOccurrences(data);
     final out = <PeriodSection>[];
     for (final k in kPeriodOrder) {
       final list = all.where((o) => o.period == k).toList();
@@ -207,7 +218,7 @@ abstract final class Selectors {
   }
 
   static DoseProgress progress(DataState data, String iso) {
-    final occurrences = _occurrences(data);
+    final occurrences = _activeOccurrences(data);
     final total = occurrences.length;
     final taken = occurrences
         .where((o) => data.isTaken(iso, o.med.id, o.doseTime.id))
@@ -262,7 +273,7 @@ abstract final class Selectors {
 
   static List<AgendaEntry> dayAgenda(DataState data) {
     final byTime = <String, List<DoseOccurrence>>{};
-    for (final o in _occurrences(data)) {
+    for (final o in _activeOccurrences(data)) {
       byTime.putIfAbsent(o.time, () => []).add(o);
     }
     const order = ['8:00 AM', '1:00 PM', '9:00 PM'];
