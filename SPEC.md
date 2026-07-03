@@ -1,6 +1,6 @@
-# Pillpal — Medicine Reminder · Flutter Implementation Spec
+# Pillnote — Medicine Reminder · Flutter Implementation Spec
 
-Flutter implementation of the **Pillpal** medicine-reminder app, recreated
+Flutter implementation of the **Pillnote** medicine-reminder app, recreated
 pixel-faithfully from the Claude Design handoff
 (`medicine-reminder-app-design/project/Medicine Reminder.dc.html`).
 
@@ -119,7 +119,7 @@ of reimplementing it.
 - User-entered free text (medicine `name`, `dose`, `time` fields) is
   **not** translated — it's user data, not app chrome.
 
-There is **no network layer** (no Dio/Retrofit) — Pillpal is local-only.
+There is **no network layer** (no Dio/Retrofit) — Pillnote is local-only.
 
 ### Target platforms
 iOS, Android (single portrait phone layout — the design is phone-only).
@@ -603,7 +603,7 @@ override, so nothing in production code needs to know it exists.
   `Either` was simply discarded, so a thrown exception was caught and
   logged by `MedicineRepository._guard` and then vanished — this is
   exactly how the v7→v8 `DoseLog` primary-key bug (§7) went unnoticed
-  for as long as it did. `_PillpalAppState.build()`
+  for as long as it did. `_PillnoteAppState.build()`
   (`lib/app.dart`) calls `ref.listen<AppException?>(errorNotifierProvider, ...)`
   and, on a non-null value, shows a `SnackBar` via a
   `GlobalKey<ScaffoldMessengerState>` passed to
@@ -1354,3 +1354,37 @@ Tracked as a future phase.
       on a freshly booted Android emulator (API 37) and confirmed the
       same via the system App Info screen (the adaptive icon, masked
       to a circle by that launcher, rendered correctly).
+  - **Renamed the app from Pillpal to Pillnote**, after evaluating
+    naming options against the app's actual positioning (medicine
+    reminder + usage/supply manager, not just an alarm) and checking
+    the shortlist against existing medicine apps to avoid collisions.
+    Updated every user-facing surface: `appTitle` (en/uk ARB — this
+    alone updates both `SplashPage`'s title and
+    `MaterialApp.router`'s `onGenerateTitle` window/task title),
+    Android's `AndroidManifest.xml` `android:label`, and iOS's
+    `Info.plist` `CFBundleDisplayName`/`CFBundleName`. The root widget
+    was renamed `PillpalApp` → `PillnoteApp` (and
+    `_PillpalAppState` → `_PillnoteAppState`) across `lib/app.dart`,
+    `lib/main.dart`, and all 9 widget tests that reference it, plus
+    doc-comment mentions in `app_theme.dart`/`app_colors.dart` and
+    `pubspec.yaml`'s `description`.
+
+    Deliberately **not** changed: the Dart package name
+    (`time_for_your_medicine` in `pubspec.yaml`, which every file's
+    `package:` import depends on) and the Android/iOS bundle
+    identifiers (`com.example.time_for_your_medicine`) — both are
+    internal/technical identifiers, not user-facing branding, and
+    renaming either is a much larger, riskier change (thousands of
+    import statements; on iOS/Android a bundle-ID change is
+    effectively a new app for signing/store-listing purposes) that
+    wasn't asked for. The app icon artwork itself was also left
+    unchanged, by explicit choice — the capsule-in-circle mark never
+    referenced "Pillpal" and works equally well under the new name.
+    Old changelog entries above that mention "Pillpal" or `PillpalApp`
+    describe those specific historical commits and were left as-is,
+    per this file's append-only changelog convention.
+    - No behavior changes; `flutter analyze`/`flutter test` green (44
+      tests, all now instantiating `PillnoteApp`).
+    - Verified live on both platforms that the new name appears
+      correctly: the splash screen's title, the iOS Springboard label,
+      and the Android launcher label all read "Pillnote".
