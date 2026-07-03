@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Theme applied to the Android Window while the process is starting when the OS's Dark Mode setting is off -->
-    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
-        <!-- Show a splash screen on the activity. Automatically removed when
-             the Flutter engine draws its first frame -->
+    <!-- Theme applied to the Android Window while the process is starting when the OS's Dark Mode setting is off.
+         Extends AndroidX's core-splashscreen compat theme (works down to
+         the app's minSdk, not just API 31+) so the pre-Flutter-engine
+         splash shows our brand mark instead of the default app icon —
+         see MainActivity.kt's installSplashScreen() call. -->
+    <style name="LaunchTheme" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splashBackground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_pill</item>
+        <item name="postSplashScreenTheme">@style/NormalTheme</item>
+        <!-- Once the splash-screen API's own icon/background are gone,
+             this keeps the window on-brand until Flutter's first frame
+             (Dart's own SplashPage) takes over, instead of flashing white. -->
         <item name="android:windowBackground">@drawable/launch_background</item>
     </style>
     <!-- Theme applied to the Android Window as soon as the process has started.

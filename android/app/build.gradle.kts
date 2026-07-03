@@ -39,6 +39,13 @@ android {
     }
 }
 
+dependencies {
+    // Branded Android 12+ splash screen (and pre-12 compat) — see
+    // MainActivity.kt's installSplashScreen() call and values/styles.xml's
+    // LaunchTheme.
+    implementation("androidx.core:core-splashscreen:1.0.1")
+}
+
 flutter {
     source = "../.."
 }

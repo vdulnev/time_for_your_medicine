@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mirrors AppColors in lib/core/theme/app_colors.dart — keep in sync. -->
+<resources>
+    <color name="splashBackground">#FF5566D6</color>
+    <color name="splashCapsulePrimary">#FF5566D6</color>
+    <color name="splashCapsuleSoft">#FFA6B0EE</color>
+</resources>

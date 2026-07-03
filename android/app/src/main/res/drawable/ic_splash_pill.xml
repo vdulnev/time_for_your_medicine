@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The brand mark shown by the Android 12+ splash screen (and the
+  core-splashscreen compat path on older APIs) before the Flutter engine
+  draws its first frame. Mirrors PillShape's two-tone capsule glyph
+  (lib/core/widgets/pill_shape.dart) rotated -28°, on a white backdrop —
+  the same shape Dart's own SplashPage animates in, so the transition
+  from native to Flutter is visually seamless.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M20,120 A100,100 0 1,1 220,120 A100,100 0 1,1 20,120 Z" />
+
+    <group
+        android:pivotX="120"
+        android:pivotY="120"
+        android:rotation="-28">
+        <path
+            android:fillColor="@color/splashCapsulePrimary"
+            android:pathData="M60,105 L120,105 L120,135 L60,135 A15,15 0 0 1 45,120 A15,15 0 0 1 60,105 Z" />
+        <path
+            android:fillColor="@color/splashCapsuleSoft"
+            android:pathData="M120,105 L180,105 A15,15 0 0 1 195,120 A15,15 0 0 1 180,135 L120,135 Z" />
+    </group>
+</vector>
