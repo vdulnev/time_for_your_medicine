@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Adaptive icon foreground (API 26+) — the same white-circle + two-tone
+  capsule mark as ic_splash_pill.xml, but sized to Android's 108dp
+  adaptive-icon canvas with content kept inside the ~66dp "safe zone"
+  circle that every launcher mask (circle, squircle, rounded square...)
+  is guaranteed not to clip.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M22,54 A32,32 0 1,1 86,54 A32,32 0 1,1 22,54 Z" />
+
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:rotation="-28">
+        <path
+            android:fillColor="@color/splashCapsulePrimary"
+            android:pathData="M35,49 L54,49 L54,59 L35,59 A5,5 0 0 1 30,54 A5,5 0 0 1 35,49 Z" />
+        <path
+            android:fillColor="@color/splashCapsuleSoft"
+            android:pathData="M54,49 L73,49 A5,5 0 0 1 78,54 A5,5 0 0 1 73,59 L54,59 Z" />
+    </group>
+</vector>
