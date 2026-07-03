@@ -275,6 +275,9 @@ rows.
 
 `AppRouter` (`@AutoRouterConfig`) with `MaterialApp.router`.
 
+- `SplashRoute` is the actual `initial: true` route (see §6) — it
+  replaces itself with `DashboardRoute` once bootstrapping finishes, so
+  it never sits in the back stack.
 - `DashboardRoute` wraps the four bottom-nav tabs in an
   `AutoTabsScaffold`: **Home**, **Calendar**, **Refills**, **Settings**,
   with the floating center **+** FAB pushing `AddRoute`.
@@ -286,12 +289,61 @@ rows.
 - Delete confirmation is shown via `showModalBottomSheet` /
   `DeleteDialog` from the detail page.
 - Status-bar tint is set per-page with `AnnotatedRegion` (indigo on
-  detail/done).
+  detail/done/splash).
 
 ---
 
 ## 6. Screens
 
+0. **Splash** (`lib/features/splash/splash_page.dart`) — the app's
+   `initial: true` route. Full-bleed `AppColors.primary` background
+   (styled after `DonePage`'s "moment" screens), a white-on-white pop-in
+   badge holding a two-tone capsule (`PillShape`), the app name, a
+   tagline, and three wave-pulsing dots — all staggered off one
+   `AnimationController` via `Interval`-based `CurvedAnimation`s, plus a
+   separate looping controller for a subtle breathing scale on the badge.
+   In parallel it awaits `dataProvider.future` and
+   `medicineRegistryProvider.future` (each wrapped in its own try/catch
+   so a failure doesn't strand the splash — the destination screen shows
+   its own `ErrorView`) alongside a 1400ms minimum-display timer, then
+   `context.router.replace(const DashboardRoute())`. The minimum timer
+   exists so the animation always plays out even when the DB responds
+   instantly on a warm launch; it doesn't block on anything beyond that.
+
+   **Native pre-engine splash (Android).** Dart's `SplashPage` only
+   exists once the Flutter engine has drawn its first frame — before
+   that, Android's own process-start splash was showing the unmodified
+   `flutter create` template (default Flutter mascot icon on black),
+   since nothing had ever branded it. `android/app/src/main/res/values*/
+   styles.xml`'s `LaunchTheme` now extends `Theme.SplashScreen` (from
+   `androidx.core:core-splashscreen`, added in
+   `android/app/build.gradle.kts` so the same theme name resolves
+   consistently pre- and post-API-31) with
+   `windowSplashScreenBackground` = `@color/splashBackground` and
+   `windowSplashScreenAnimatedIcon` = `@drawable/ic_splash_pill` — a
+   hand-written vector mirroring `PillShape`'s two-tone capsule on a
+   white circle, so the native splash and Dart's `SplashPage` show the
+   *same* mark. `MainActivity.onCreate` calls `installSplashScreen()`
+   before `super.onCreate()`, which is required for the compat path on
+   pre-31 devices. `launch_background.xml` (both density variants) was
+   also repointed from white/`colorBackground` to `@color/splashBackground`
+   so there's no white flash in the gap between the system splash
+   dismissing and Flutter's first frame.
+
+   **Native pre-engine splash (iOS).** Same problem, different
+   mechanism: `ios/Runner/Base.lproj/LaunchScreen.storyboard` was still
+   the unmodified `flutter create` template — a plain white background
+   behind an invisible 1×1 transparent placeholder image
+   (`Assets.xcassets/LaunchImage.imageset`). Its `backgroundColor` is
+   now `AppColors.primary` (0.3333, 0.4, 0.8392 sRGB = `0xFF5566D6`),
+   and `Info.plist` sets `UIStatusBarStyle` to
+   `UIStatusBarStyleLightContent` so the status bar stays readable
+   against it. The placeholder image itself was left alone (still
+   invisible, harmless) rather than adding real icon artwork —
+   storyboards can't host a hand-written vector the way Android's
+   `VectorDrawable` can, and generating raster assets was judged
+   disproportionate to the actual complaint (a white flash, not a
+   wrong icon).
 1. **Home** — day header + prev/next, notifications & calendar buttons,
    week strip, progress ring card (→ history), dose-occurrence list grouped
    by period (a medicine with several daily doses appears once per slot,
@@ -1187,3 +1239,69 @@ Tracked as a future phase.
       turning off "Zinc"'s reminder dropped it from the Home list and
       the doses-left count (9 → 8) immediately; turning it back on
       restored both; no overflow or exceptions in the run log.
+  - **Animated splash screen** (§5, §6): `SplashPage` is now the app's
+    `initial` route, replacing `DashboardRoute` as the very first thing
+    shown. A staggered pop-in/fade/slide sequence (brand badge → title →
+    tagline → loading dots) plays over `AppColors.primary`, styled to
+    match `DonePage`'s existing "moment" screens; it hands off to the
+    dashboard once `dataProvider` and `medicineRegistryProvider` have
+    both settled (success or failure — each load is wrapped so a
+    failure doesn't strand the splash) and a 1400ms minimum has
+    elapsed, via `context.router.replace`.
+    - Added `test/splash_test.dart`: asserts the splash's title/tagline
+      render on the very first frame and Home hasn't rendered yet, then
+      asserts the reverse after `pumpAndSettle`.
+    - 44 tests green, `flutter analyze` clean, `dart format .` clean.
+    - Verified live on the simulator, including a true kill + relaunch
+      of the installed binary (`xcrun simctl terminate` +
+      `simctl launch`, not just `flutter run`'s first attach): the
+      badge, title, tagline, and pulsing dots all rendered correctly on
+      the primary background with white status-bar icons, and it handed
+      off cleanly to Home; no overflow or exceptions in the run log.
+  - **Branded the Android native pre-engine splash** (§6), after a user
+    screenshot showed the unmodified `flutter create` template — the
+    default Flutter mascot icon on a black background — appearing
+    before Dart's own `SplashPage` ever got a chance to render on
+    Android 12+. Added `androidx.core:core-splashscreen`, a hand-written
+    `ic_splash_pill.xml` vector (mirrors `PillShape`'s capsule), and
+    reworked `LaunchTheme` (both `values/` and `values-night/`) to
+    extend `Theme.SplashScreen` with the app's brand color/icon;
+    `MainActivity.onCreate` now calls `installSplashScreen()` for the
+    pre-31 compat path; `launch_background.xml` was repointed from
+    white to the same brand color to close the gap before Flutter's
+    first frame.
+    - `flutter build apk --debug` succeeds; `flutter analyze`/
+      `flutter test` unaffected (44 tests green) since this is
+      Android-only native configuration, no Dart changes.
+    - Verified live: created a throwaway AVD from an already-cached
+      `android-37.0/google_apis_playstore_ps16k` system image (API 37,
+      well past the Android 12/API 31 threshold for the new Splash
+      Screen API), ran the app, and captured the launch sequence via
+      `adb exec-out screencap` (the emulator's raw QEMU window isn't
+      addressable through the usual screenshot tooling). Multiple
+      frames during a forced cold start
+      (`am force-stop` + `am start`) showed the branded indigo
+      background with the two-tone capsule icon — not the old mascot —
+      before handing off to Home.
+  - **Branded the iOS native pre-engine splash too** (§6), after the
+    user pointed out a white screen preceded the Dart splash there as
+    well — same root cause as Android, different mechanism (a
+    still-default `LaunchScreen.storyboard`). Changed its
+    `backgroundColor` from white to `AppColors.primary` and added
+    `UIStatusBarStyle: UIStatusBarStyleLightContent` to `Info.plist` so
+    the status bar reads against the new dark background. Left the
+    storyboard's placeholder image alone (kept invisible) rather than
+    adding raster icon artwork — out of proportion to a "white flash"
+    complaint, unlike Android where the wrong *icon* was actually
+    showing.
+    - No Dart changes; `flutter analyze`/`flutter test` unaffected (44
+      tests green).
+    - Verified live: force-relaunched the app on the iOS Simulator
+      (`xcrun simctl terminate` + `launch`) while capturing rapid
+      `xcrun simctl io screenshot` frames — every captured frame showed
+      the indigo background (never white), transitioning cleanly into
+      Dart's `SplashPage` entrance animation with white status-bar
+      icons throughout (aside from a brief few-frame black-icon flicker
+      during the native-to-Flutter handoff, which is a pre-existing
+      Flutter/iOS quirk unrelated to this change — it happened against
+      white before too, just wasn't visible).
