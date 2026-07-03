@@ -11,6 +11,7 @@ import '../../features/refills/refills_page.dart';
 import '../../features/reminders/notifications_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../../features/shell/dashboard_page.dart';
+import '../../features/splash/splash_page.dart';
 import '../../features/transactions/transactions_page.dart';
 
 part 'app_router.gr.dart';
@@ -20,9 +21,9 @@ part 'app_router.gr.dart';
 class AppRouter extends RootStackRouter {
   @override
   List<AutoRoute> get routes => [
+    AutoRoute(page: SplashRoute.page, initial: true),
     AutoRoute(
       page: DashboardRoute.page,
-      initial: true,
       children: [
         AutoRoute(page: HomeRoute.page, initial: true),
         AutoRoute(page: CalendarRoute.page),
