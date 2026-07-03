@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
 
-  "appTitle": "Pillpal",
+  "appTitle": "Pillnote",
   "@appTitle": {"description": "Application title"},
 
   "splashTagline": "Time to take your medicine",

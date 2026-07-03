@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Pillpal';
+  String get appTitle => 'Pillnote';
 
   @override
   String get splashTagline => 'Time to take your medicine';

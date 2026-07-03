@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
-/// Global Material 3 theme for Pillpal.
+/// Global Material 3 theme for Pillnote.
 ThemeData buildAppTheme() {
   final base = ThemeData(
     useMaterial3: true,

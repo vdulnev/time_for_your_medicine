@@ -23,14 +23,14 @@ void main() {
           talkerProvider.overrideWithValue(Talker()),
           databaseProvider.overrideWithValue(db),
         ],
-        child: const PillpalApp(),
+        child: const PillnoteApp(),
       ),
     );
 
     // Right after the first frame, the splash brand mark is up and
     // Home hasn't rendered yet — the router hasn't handed off.
     await tester.pump();
-    expect(find.text('Pillpal'), findsOneWidget);
+    expect(find.text('Pillnote'), findsOneWidget);
     expect(find.text('Time to take your medicine'), findsOneWidget);
     expect(find.text('No medicines yet.\nTap + to add one.'), findsNothing);
 

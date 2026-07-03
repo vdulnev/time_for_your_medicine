@@ -12,14 +12,14 @@ import 'l10n/l10n_extensions.dart';
 import 'l10n/locale_resolution.dart';
 
 /// Root application widget wiring auto_route into `MaterialApp.router`.
-class PillpalApp extends ConsumerStatefulWidget {
-  const PillpalApp({super.key});
+class PillnoteApp extends ConsumerStatefulWidget {
+  const PillnoteApp({super.key});
 
   @override
-  ConsumerState<PillpalApp> createState() => _PillpalAppState();
+  ConsumerState<PillnoteApp> createState() => _PillnoteAppState();
 }
 
-class _PillpalAppState extends ConsumerState<PillpalApp> {
+class _PillnoteAppState extends ConsumerState<PillnoteApp> {
   final AppRouter _router = AppRouter();
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();

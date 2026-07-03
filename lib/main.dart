@@ -31,7 +31,7 @@ void main() {
         talkerProvider.overrideWithValue(talker),
         databaseProvider.overrideWithValue(database),
       ],
-      child: const PillpalApp(),
+      child: const PillnoteApp(),
     ),
   );
 }

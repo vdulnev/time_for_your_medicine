@@ -34,7 +34,7 @@ void main() {
               talkerProvider.overrideWithValue(Talker()),
               databaseProvider.overrideWithValue(db),
             ],
-            child: const PillpalApp(),
+            child: const PillnoteApp(),
           ),
         );
         await tester.pumpAndSettle();

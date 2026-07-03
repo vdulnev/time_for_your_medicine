@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Design tokens (colors) extracted from the Pillpal design handoff.
+/// Design tokens (colors) extracted from the Pillnote design handoff.
 ///
 /// Keep these in sync with SPEC.md §3.
 abstract final class AppColors {
