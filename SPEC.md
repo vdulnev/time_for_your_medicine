@@ -209,6 +209,38 @@ med name 14/w700 Jakarta, section label 13/w700 Bricolage).
 ### Card shadow
 `0 4px 14px -5px rgba(60,55,90,.12)` → approximated with `BoxShadow`.
 
+### App icon
+
+The launcher icon on both platforms is the same brand mark as the
+splash screens: a white circle holding the two-tone capsule
+(`PillShape` / `ic_splash_pill.xml`) on an `AppColors.primary`
+background, replacing the default `flutter create` template icon
+(previously the generic Flutter mascot on both platforms).
+
+Neither platform's icon pipeline accepts a single vector source across
+the board — iOS's asset catalog is PNG-only, and even Android's
+vector-capable adaptive icon (API 26+) still needs flat raster PNGs as
+a fallback for older devices — so a master 1024×1024 PNG was rendered
+once with CoreGraphics (`swift` script using `CGContext`, matching the
+splash's exact geometry: circle radius 320, capsule 480×96 rotated
+-28°) and downscaled per platform with `sips`, rather than reaching
+for a third-party asset-generation package for a one-off image.
+
+- **iOS** (`ios/Runner/Assets.xcassets/AppIcon.appiconset/`): all 15
+  sizes listed in `Contents.json` (20–1024px) generated from the
+  master PNG; verified each has no alpha channel (a flat, fully
+  opaque background is required for the App Store).
+- **Android legacy** (`mipmap-mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi/ic_launcher.png`,
+  48–192px): same master PNG downscaled, for pre-API-26 devices that
+  don't understand adaptive icons.
+- **Android adaptive icon** (API 26+): pure vector, no raster needed —
+  `mipmap-anydpi-v26/ic_launcher.xml` composites a
+  `@color/splashBackground` background with
+  `drawable/ic_launcher_foreground.xml` (the same circle+capsule mark,
+  re-derived at a 108dp viewport with content kept inside the 66dp
+  safe-zone circle so it survives every launcher's mask shape —
+  circle, squircle, rounded square).
+
 ---
 
 ## 4. Data Model
@@ -1305,3 +1337,20 @@ Tracked as a future phase.
       during the native-to-Flutter handoff, which is a pre-existing
       Flutter/iOS quirk unrelated to this change — it happened against
       white before too, just wasn't visible).
+  - **Replaced the default Flutter template app icon on both
+    platforms** (§3, "App icon") with the brand mark used by the
+    splash screens. Generated a master 1024×1024 PNG via a CoreGraphics
+    (`swift`) script and derived every platform-specific size with
+    `sips`, rather than pulling in an icon-generation package for a
+    one-off image; Android's API 26+ adaptive icon uses a pure vector
+    foreground instead (no raster needed there).
+    - `flutter build apk --debug` and
+      `flutter build ios --debug --simulator --no-codesign` both
+      succeed; no Dart changes, so `flutter analyze`/`flutter test` are
+      unaffected (44 tests green).
+    - Verified live on both platforms: installed the freshly built iOS
+      app onto the Simulator and confirmed the Springboard icon shows
+      the capsule mark instead of the Flutter logo; installed the APK
+      on a freshly booted Android emulator (API 37) and confirmed the
+      same via the system App Info screen (the adaptive icon, masked
+      to a circle by that launcher, rendered correctly).
