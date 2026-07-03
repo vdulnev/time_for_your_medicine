@@ -104,6 +104,12 @@ abstract class AppLocalizations {
   /// **'Pillpal'**
   String get appTitle;
 
+  /// No description provided for @splashTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Time to take your medicine'**
+  String get splashTagline;
+
   /// No description provided for @retry.
   ///
   /// In en, this message translates to:

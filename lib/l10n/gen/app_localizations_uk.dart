@@ -12,6 +12,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get appTitle => 'Pillpal';
 
   @override
+  String get splashTagline => 'Час приймати ліки';
+
+  @override
   String get retry => 'Повторити';
 
   @override

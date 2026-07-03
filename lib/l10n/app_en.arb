@@ -4,6 +4,8 @@
   "appTitle": "Pillpal",
   "@appTitle": {"description": "Application title"},
 
+  "splashTagline": "Time to take your medicine",
+
   "retry": "Retry",
   "cancel": "Cancel",
   "delete": "Delete",
