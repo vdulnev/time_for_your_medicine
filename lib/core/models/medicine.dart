@@ -29,16 +29,10 @@ abstract class Medicine with _$Medicine {
     /// Soft background tint behind the pill thumbnail (ARGB int).
     required int soft,
 
-    /// Remaining supply and full capacity, for refills.
-    required int supply,
-    required int cap,
-
     /// Secondary pill color for capsules (ARGB int).
     int? c2,
   }) = _Medicine;
 
   factory Medicine.fromJson(Map<String, dynamic> json) =>
       _$MedicineFromJson(json);
-
-  bool get isLowSupply => supply <= 7;
 }

@@ -117,7 +117,7 @@ class PeriodSectionView extends ConsumerWidget {
               occ.med.id,
               occ.doseTime.id,
               data.statusOf(iso, occ.med.id, occ.doseTime.id),
-              occ.med.supply >= 1,
+              data.supplyOf(occ.med.id) >= 1,
             ),
           ),
           const SizedBox(height: 9),

@@ -17,8 +17,6 @@ _Medicine _$MedicineFromJson(Map<String, dynamic> json) => _Medicine(
   kind: $enumDecode(_$PillKindEnumMap, json['kind']),
   c1: (json['c1'] as num).toInt(),
   soft: (json['soft'] as num).toInt(),
-  supply: (json['supply'] as num).toInt(),
-  cap: (json['cap'] as num).toInt(),
   c2: (json['c2'] as num?)?.toInt(),
 );
 
@@ -31,8 +29,6 @@ Map<String, dynamic> _$MedicineToJson(_Medicine instance) => <String, dynamic>{
   'kind': _$PillKindEnumMap[instance.kind]!,
   'c1': instance.c1,
   'soft': instance.soft,
-  'supply': instance.supply,
-  'cap': instance.cap,
   'c2': instance.c2,
 };
 

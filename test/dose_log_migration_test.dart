@@ -38,7 +38,7 @@ void main() {
         in await template
             .customSelect(
               "SELECT name, sql FROM sqlite_master WHERE type = 'table' "
-              "AND name NOT IN ('dose_log', 'sqlite_sequence')",
+              "AND name NOT IN ('dose_log', 'medicines', 'sqlite_sequence')",
             )
             .get()) {
       ddl[row.data['name'] as String] = row.data['sql'] as String;
@@ -47,13 +47,29 @@ void main() {
 
     // Hand-build the exact broken schema a real migrated device ends
     // up with: every other table matches the current schema, but
-    // `dose_log` still carries the old 2-column primary key —
-    // verified directly against a live simulator's on-disk
-    // `pillpal.sqlite` before this fix.
+    // `dose_log` still carries the old 2-column primary key — verified
+    // directly against a live simulator's on-disk `pillpal.sqlite`
+    // before this fix. `medicines` is also hand-written (rather than
+    // copied from the template like the other untouched tables)
+    // because it still had its `cap` column at schema v7 — the
+    // template reflects *today's* schema, which dropped it in v9.
     final raw = sqlite3.sqlite3.open(file.path);
     for (final createTable in ddl.values) {
       raw.execute(createTable);
     }
+    raw.execute('''
+        CREATE TABLE medicines (
+          id TEXT NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL,
+          dose TEXT NOT NULL,
+          with_food INTEGER NOT NULL,
+          kind TEXT NOT NULL,
+          c1 INTEGER NOT NULL,
+          c2 INTEGER,
+          soft INTEGER NOT NULL,
+          cap INTEGER NOT NULL
+        );
+      ''');
     raw.execute('''
         CREATE TABLE dose_log (
           iso TEXT NOT NULL,

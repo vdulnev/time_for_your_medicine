@@ -17,7 +17,11 @@ mixin _$DataState {
  List<Medicine> get meds;/// Dose status keyed by `"iso|medId|doseTimeId"`. Absence means
 /// [DoseStatus.pending] (not yet touched).
  Map<String, DoseStatus> get doseStatus; AppSettings get settings;/// Per-medicine reminder-off flags (true == reminder disabled).
- Map<String, bool> get notifOff;
+ Map<String, bool> get notifOff;/// Each medicine's current pill count, derived from the
+/// `SupplyTransactions` ledger (see
+/// `MedicineRepository._supplyTotals`) — never stored on [Medicine]
+/// itself, since it changes with every take/refill.
+ Map<String, int> get supplyByMedId;
 /// Create a copy of DataState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +32,16 @@ $DataStateCopyWith<DataState> get copyWith => _$DataStateCopyWithImpl<DataState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DataState&&const DeepCollectionEquality().equals(other.meds, meds)&&const DeepCollectionEquality().equals(other.doseStatus, doseStatus)&&(identical(other.settings, settings) || other.settings == settings)&&const DeepCollectionEquality().equals(other.notifOff, notifOff));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DataState&&const DeepCollectionEquality().equals(other.meds, meds)&&const DeepCollectionEquality().equals(other.doseStatus, doseStatus)&&(identical(other.settings, settings) || other.settings == settings)&&const DeepCollectionEquality().equals(other.notifOff, notifOff)&&const DeepCollectionEquality().equals(other.supplyByMedId, supplyByMedId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(meds),const DeepCollectionEquality().hash(doseStatus),settings,const DeepCollectionEquality().hash(notifOff));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(meds),const DeepCollectionEquality().hash(doseStatus),settings,const DeepCollectionEquality().hash(notifOff),const DeepCollectionEquality().hash(supplyByMedId));
 
 @override
 String toString() {
-  return 'DataState(meds: $meds, doseStatus: $doseStatus, settings: $settings, notifOff: $notifOff)';
+  return 'DataState(meds: $meds, doseStatus: $doseStatus, settings: $settings, notifOff: $notifOff, supplyByMedId: $supplyByMedId)';
 }
 
 
@@ -48,7 +52,7 @@ abstract mixin class $DataStateCopyWith<$Res>  {
   factory $DataStateCopyWith(DataState value, $Res Function(DataState) _then) = _$DataStateCopyWithImpl;
 @useResult
 $Res call({
- List<Medicine> meds, Map<String, DoseStatus> doseStatus, AppSettings settings, Map<String, bool> notifOff
+ List<Medicine> meds, Map<String, DoseStatus> doseStatus, AppSettings settings, Map<String, bool> notifOff, Map<String, int> supplyByMedId
 });
 
 
@@ -65,13 +69,14 @@ class _$DataStateCopyWithImpl<$Res>
 
 /// Create a copy of DataState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? meds = null,Object? doseStatus = null,Object? settings = null,Object? notifOff = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? meds = null,Object? doseStatus = null,Object? settings = null,Object? notifOff = null,Object? supplyByMedId = null,}) {
   return _then(_self.copyWith(
 meds: null == meds ? _self.meds : meds // ignore: cast_nullable_to_non_nullable
 as List<Medicine>,doseStatus: null == doseStatus ? _self.doseStatus : doseStatus // ignore: cast_nullable_to_non_nullable
 as Map<String, DoseStatus>,settings: null == settings ? _self.settings : settings // ignore: cast_nullable_to_non_nullable
 as AppSettings,notifOff: null == notifOff ? _self.notifOff : notifOff // ignore: cast_nullable_to_non_nullable
-as Map<String, bool>,
+as Map<String, bool>,supplyByMedId: null == supplyByMedId ? _self.supplyByMedId : supplyByMedId // ignore: cast_nullable_to_non_nullable
+as Map<String, int>,
   ));
 }
 /// Create a copy of DataState
@@ -165,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Medicine> meds,  Map<String, DoseStatus> doseStatus,  AppSettings settings,  Map<String, bool> notifOff)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Medicine> meds,  Map<String, DoseStatus> doseStatus,  AppSettings settings,  Map<String, bool> notifOff,  Map<String, int> supplyByMedId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DataState() when $default != null:
-return $default(_that.meds,_that.doseStatus,_that.settings,_that.notifOff);case _:
+return $default(_that.meds,_that.doseStatus,_that.settings,_that.notifOff,_that.supplyByMedId);case _:
   return orElse();
 
 }
@@ -186,10 +191,10 @@ return $default(_that.meds,_that.doseStatus,_that.settings,_that.notifOff);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Medicine> meds,  Map<String, DoseStatus> doseStatus,  AppSettings settings,  Map<String, bool> notifOff)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Medicine> meds,  Map<String, DoseStatus> doseStatus,  AppSettings settings,  Map<String, bool> notifOff,  Map<String, int> supplyByMedId)  $default,) {final _that = this;
 switch (_that) {
 case _DataState():
-return $default(_that.meds,_that.doseStatus,_that.settings,_that.notifOff);case _:
+return $default(_that.meds,_that.doseStatus,_that.settings,_that.notifOff,_that.supplyByMedId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -206,10 +211,10 @@ return $default(_that.meds,_that.doseStatus,_that.settings,_that.notifOff);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Medicine> meds,  Map<String, DoseStatus> doseStatus,  AppSettings settings,  Map<String, bool> notifOff)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Medicine> meds,  Map<String, DoseStatus> doseStatus,  AppSettings settings,  Map<String, bool> notifOff,  Map<String, int> supplyByMedId)?  $default,) {final _that = this;
 switch (_that) {
 case _DataState() when $default != null:
-return $default(_that.meds,_that.doseStatus,_that.settings,_that.notifOff);case _:
+return $default(_that.meds,_that.doseStatus,_that.settings,_that.notifOff,_that.supplyByMedId);case _:
   return null;
 
 }
@@ -221,7 +226,7 @@ return $default(_that.meds,_that.doseStatus,_that.settings,_that.notifOff);case 
 
 
 class _DataState extends DataState {
-  const _DataState({required final  List<Medicine> meds, required final  Map<String, DoseStatus> doseStatus, required this.settings, required final  Map<String, bool> notifOff}): _meds = meds,_doseStatus = doseStatus,_notifOff = notifOff,super._();
+  const _DataState({required final  List<Medicine> meds, required final  Map<String, DoseStatus> doseStatus, required this.settings, required final  Map<String, bool> notifOff, required final  Map<String, int> supplyByMedId}): _meds = meds,_doseStatus = doseStatus,_notifOff = notifOff,_supplyByMedId = supplyByMedId,super._();
   
 
  final  List<Medicine> _meds;
@@ -252,6 +257,21 @@ class _DataState extends DataState {
   return EqualUnmodifiableMapView(_notifOff);
 }
 
+/// Each medicine's current pill count, derived from the
+/// `SupplyTransactions` ledger (see
+/// `MedicineRepository._supplyTotals`) — never stored on [Medicine]
+/// itself, since it changes with every take/refill.
+ final  Map<String, int> _supplyByMedId;
+/// Each medicine's current pill count, derived from the
+/// `SupplyTransactions` ledger (see
+/// `MedicineRepository._supplyTotals`) — never stored on [Medicine]
+/// itself, since it changes with every take/refill.
+@override Map<String, int> get supplyByMedId {
+  if (_supplyByMedId is EqualUnmodifiableMapView) return _supplyByMedId;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_supplyByMedId);
+}
+
 
 /// Create a copy of DataState
 /// with the given fields replaced by the non-null parameter values.
@@ -263,16 +283,16 @@ _$DataStateCopyWith<_DataState> get copyWith => __$DataStateCopyWithImpl<_DataSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DataState&&const DeepCollectionEquality().equals(other._meds, _meds)&&const DeepCollectionEquality().equals(other._doseStatus, _doseStatus)&&(identical(other.settings, settings) || other.settings == settings)&&const DeepCollectionEquality().equals(other._notifOff, _notifOff));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DataState&&const DeepCollectionEquality().equals(other._meds, _meds)&&const DeepCollectionEquality().equals(other._doseStatus, _doseStatus)&&(identical(other.settings, settings) || other.settings == settings)&&const DeepCollectionEquality().equals(other._notifOff, _notifOff)&&const DeepCollectionEquality().equals(other._supplyByMedId, _supplyByMedId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_meds),const DeepCollectionEquality().hash(_doseStatus),settings,const DeepCollectionEquality().hash(_notifOff));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_meds),const DeepCollectionEquality().hash(_doseStatus),settings,const DeepCollectionEquality().hash(_notifOff),const DeepCollectionEquality().hash(_supplyByMedId));
 
 @override
 String toString() {
-  return 'DataState(meds: $meds, doseStatus: $doseStatus, settings: $settings, notifOff: $notifOff)';
+  return 'DataState(meds: $meds, doseStatus: $doseStatus, settings: $settings, notifOff: $notifOff, supplyByMedId: $supplyByMedId)';
 }
 
 
@@ -283,7 +303,7 @@ abstract mixin class _$DataStateCopyWith<$Res> implements $DataStateCopyWith<$Re
   factory _$DataStateCopyWith(_DataState value, $Res Function(_DataState) _then) = __$DataStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Medicine> meds, Map<String, DoseStatus> doseStatus, AppSettings settings, Map<String, bool> notifOff
+ List<Medicine> meds, Map<String, DoseStatus> doseStatus, AppSettings settings, Map<String, bool> notifOff, Map<String, int> supplyByMedId
 });
 
 
@@ -300,13 +320,14 @@ class __$DataStateCopyWithImpl<$Res>
 
 /// Create a copy of DataState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? meds = null,Object? doseStatus = null,Object? settings = null,Object? notifOff = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? meds = null,Object? doseStatus = null,Object? settings = null,Object? notifOff = null,Object? supplyByMedId = null,}) {
   return _then(_DataState(
 meds: null == meds ? _self._meds : meds // ignore: cast_nullable_to_non_nullable
 as List<Medicine>,doseStatus: null == doseStatus ? _self._doseStatus : doseStatus // ignore: cast_nullable_to_non_nullable
 as Map<String, DoseStatus>,settings: null == settings ? _self.settings : settings // ignore: cast_nullable_to_non_nullable
 as AppSettings,notifOff: null == notifOff ? _self._notifOff : notifOff // ignore: cast_nullable_to_non_nullable
-as Map<String, bool>,
+as Map<String, bool>,supplyByMedId: null == supplyByMedId ? _self._supplyByMedId : supplyByMedId // ignore: cast_nullable_to_non_nullable
+as Map<String, int>,
   ));
 }
 

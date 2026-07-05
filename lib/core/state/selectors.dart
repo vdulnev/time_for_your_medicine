@@ -143,10 +143,14 @@ class HistorySummary {
 }
 
 class RefillItem {
-  const RefillItem({required this.med, required this.low, required this.pct});
+  const RefillItem({
+    required this.med,
+    required this.low,
+    required this.supply,
+  });
   final Medicine med;
   final bool low;
-  final int pct;
+  final int supply;
 }
 
 /// One of a medicine's dose slots, with its status for a given day.
@@ -415,14 +419,14 @@ abstract final class Selectors {
     for (final m in data.meds)
       RefillItem(
         med: m,
-        low: m.isLowSupply,
-        pct: math.min(100, (m.supply / m.cap * 100).round()),
+        low: data.isLowSupply(m.id),
+        supply: data.supplyOf(m.id),
       ),
   ];
 
   static String lowSupplyName(DataState data) {
     for (final m in data.meds) {
-      if (m.isLowSupply) return m.name;
+      if (data.isLowSupply(m.id)) return m.name;
     }
     return '';
   }

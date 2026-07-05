@@ -38,7 +38,7 @@ void main() {
 
   test('addMedicine persists a new row', () async {
     final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
-    await repo.addMedicine(med);
+    await repo.addMedicine(med, 30);
     final data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
     expect(data.meds.any((m) => m.name == 'Aspirin'), isTrue);
   });
@@ -46,7 +46,7 @@ void main() {
   test('deleteMedicine removes the med and its dose log', () async {
     await withFixedToday(() async {
       final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
-      await repo.addMedicine(med);
+      await repo.addMedicine(med, 30);
       await repo.setDoseStatus(
         DayUtils.iso(kToday),
         med.id,
@@ -80,10 +80,8 @@ void main() {
         kind: PillKind.round,
         c1: 0xFF5566D6,
         soft: 0xFFE7E8FB,
-        supply: 30,
-        cap: 30,
       );
-      await repo.addMedicine(med);
+      await repo.addMedicine(med, 30);
       final data = (await repo.loadAll()).getOrElse(
         (_) => throw StateError('x'),
       );
@@ -192,17 +190,16 @@ void main() {
 
     final data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
     final withCount = data.meds.singleWhere((m) => m.name == 'Lisinopril');
-    expect(withCount.supply, 60);
-    expect(withCount.cap, 60);
+    expect(data.supplyOf(withCount.id), 60);
 
     // Blank/invalid input is not silently defaulted — the medicine isn't
     // added at all, same as an empty name.
     expect(data.meds.any((m) => m.name == 'Metoprolol'), isFalse);
   });
 
-  test('refillMedicine updates supply and cap together', () async {
+  test('refillMedicine updates the ledger-derived supply', () async {
     final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
-    await repo.addMedicine(med);
+    await repo.addMedicine(med, 30);
 
     final container = ProviderContainer(
       overrides: [
@@ -218,9 +215,7 @@ void main() {
     await notifier.refillMedicine(med.id, 45);
 
     final data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
-    final refilled = data.meds.singleWhere((m) => m.id == med.id);
-    expect(refilled.supply, 45);
-    expect(refilled.cap, 45);
+    expect(data.supplyOf(med.id), 45);
   });
 
   test('markTaken completing the day returns true', () async {
@@ -264,12 +259,12 @@ void main() {
       // m2 starts with supply 30 and no dose taken yet today.
       await notifier.markTaken(iso, 'm2', 't1');
       var data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
-      expect(data.meds.singleWhere((m) => m.id == 'm2').supply, 29);
+      expect(data.supplyOf('m2'), 29);
       expect(data.isTaken(iso, 'm2', 't1'), isTrue);
 
       await notifier.revertDose(iso, 'm2', 't1');
       data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
-      expect(data.meds.singleWhere((m) => m.id == 'm2').supply, 30);
+      expect(data.supplyOf('m2'), 30);
       expect(data.statusOf(iso, 'm2', 't1'), DoseStatus.pending);
     });
   });
@@ -287,10 +282,8 @@ void main() {
         kind: PillKind.round,
         c1: 0xFF5566D6,
         soft: 0xFFE7E8FB,
-        supply: 0,
-        cap: 30,
       );
-      await repo.addMedicine(med);
+      await repo.addMedicine(med, 0);
 
       final container = ProviderContainer(
         overrides: [
@@ -309,7 +302,7 @@ void main() {
         (_) => throw StateError('x'),
       );
       expect(data.statusOf(iso, med.id, 't1'), DoseStatus.pending);
-      expect(data.meds.singleWhere((m) => m.id == med.id).supply, 0);
+      expect(data.supplyOf(med.id), 0);
     });
   });
 
@@ -332,7 +325,7 @@ void main() {
       final data = (await repo.loadAll()).getOrElse(
         (_) => throw StateError('x'),
       );
-      expect(data.meds.singleWhere((m) => m.id == 'm3').supply, 20);
+      expect(data.supplyOf('m3'), 20);
       expect(data.statusOf(iso, 'm3', 't1'), DoseStatus.rejected);
       expect(data.isTaken(iso, 'm3', 't1'), isFalse);
     });
@@ -342,7 +335,7 @@ void main() {
     'refillMedicine logs a negative delta when correcting downward',
     () async {
       final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
-      await repo.addMedicine(med); // supply/cap start at 30
+      await repo.addMedicine(med, 30); // supply starts at 30
 
       final container = ProviderContainer(
         overrides: [
@@ -368,7 +361,7 @@ void main() {
     // Pinned, distinct timestamps so ordering is deterministic rather than
     // relying on both calls landing in different clock ticks.
     await withClock(Clock.fixed(DateTime(2026, 6, 1)), () async {
-      await repo.addMedicine(med); // logs an 'initial' transaction
+      await repo.addMedicine(med, 30); // logs an 'initial' transaction
     });
     await withClock(Clock.fixed(DateTime(2026, 6, 15)), () async {
       await repo.refillMedicine(med.id, 40); // logs a 'refill' transaction
@@ -390,6 +383,4 @@ Medicine _draftToMed(AddDraft draft) => Medicine(
   kind: PillKind.round,
   c1: 0xFF5566D6,
   soft: 0xFFE7E8FB,
-  supply: 30,
-  cap: 30,
 );

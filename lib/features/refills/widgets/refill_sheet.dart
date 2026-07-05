@@ -8,20 +8,25 @@ import '../../../l10n/l10n_extensions.dart';
 
 /// Shows the "Refill {name}?" sheet. Resolves to the new pill count the
 /// user entered, or `null` if they cancelled / left it invalid.
-Future<int?> showRefillSheet(BuildContext context, Medicine med) {
+Future<int?> showRefillSheet(
+  BuildContext context,
+  Medicine med,
+  int currentSupply,
+) {
   return showModalBottomSheet<int>(
     context: context,
     backgroundColor: Colors.transparent,
     barrierColor: const Color(0x7328253D),
     isScrollControlled: true,
-    builder: (context) => _RefillSheet(med: med),
+    builder: (context) => _RefillSheet(med: med, currentSupply: currentSupply),
   );
 }
 
 class _RefillSheet extends StatefulWidget {
-  const _RefillSheet({required this.med});
+  const _RefillSheet({required this.med, required this.currentSupply});
 
   final Medicine med;
+  final int currentSupply;
 
   @override
   State<_RefillSheet> createState() => _RefillSheetState();
@@ -29,7 +34,7 @@ class _RefillSheet extends StatefulWidget {
 
 class _RefillSheetState extends State<_RefillSheet> {
   late final TextEditingController _controller = TextEditingController(
-    text: '${widget.med.supply}',
+    text: '${widget.currentSupply}',
   );
 
   @override

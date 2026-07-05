@@ -23,8 +23,6 @@ void main() {
     kind: PillKind.round,
     c1: 0xFF5566D6,
     soft: 0xFFE7E8FB,
-    supply: 30,
-    cap: 30,
   );
   final vitaminD = Medicine(
     id: 'm2',
@@ -35,8 +33,6 @@ void main() {
     kind: PillKind.round,
     c1: 0xFFD69A5A,
     soft: 0xFFFBF0DF,
-    supply: 60,
-    cap: 60,
   );
 
   DataState stateWith({required bool vitaminDReminderOff}) => DataState(
@@ -44,6 +40,7 @@ void main() {
     doseStatus: const {},
     settings: const AppSettings(),
     notifOff: vitaminDReminderOff ? const {'m2': true} : const {},
+    supplyByMedId: const {'m1': 30, 'm2': 60},
   );
 
   const iso = '2026-06-30';

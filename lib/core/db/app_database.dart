@@ -26,11 +26,6 @@ class Medicines extends Table {
   IntColumn get c2 => integer().nullable()();
   IntColumn get soft => integer()();
 
-  /// The "full pack" size, for refill %/alerts. The *current* pill count
-  /// is not stored here — it's derived from [SupplyTransactions], see
-  /// `MedicineRepository._currentSupply`.
-  IntColumn get cap => integer()();
-
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -143,7 +138,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'pillpal'));
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -264,6 +259,13 @@ class AppDatabase extends _$AppDatabase {
           SELECT iso, med_id, dose_time_id, status FROM dose_log_v7
         ''');
         await customStatement('DROP TABLE dose_log_v7');
+      }
+      if (from < 9) {
+        // `cap` (the "full pack" size, used only to size the Refills
+        // screen's progress bar) is gone — that bar is gone too, and
+        // `supply` was already ledger-derived, never stored. Nothing
+        // reads this column anymore.
+        await customStatement('ALTER TABLE medicines DROP COLUMN cap');
       }
     },
   );

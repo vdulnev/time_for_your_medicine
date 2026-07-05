@@ -21,10 +21,20 @@ abstract class DataState with _$DataState {
 
     /// Per-medicine reminder-off flags (true == reminder disabled).
     required Map<String, bool> notifOff,
+
+    /// Each medicine's current pill count, derived from the
+    /// `SupplyTransactions` ledger (see
+    /// `MedicineRepository._supplyTotals`) — never stored on [Medicine]
+    /// itself, since it changes with every take/refill.
+    required Map<String, int> supplyByMedId,
   }) = _DataState;
 
   DoseStatus statusOf(String iso, String medId, String doseTimeId) =>
       doseStatus['$iso|$medId|$doseTimeId'] ?? DoseStatus.pending;
+
+  int supplyOf(String medId) => supplyByMedId[medId] ?? 0;
+
+  bool isLowSupply(String medId) => supplyOf(medId) <= 7;
 
   bool isTaken(String iso, String medId, String doseTimeId) =>
       statusOf(iso, medId, doseTimeId) == DoseStatus.taken;

@@ -142,7 +142,7 @@ class MedicineDetailPage extends ConsumerWidget {
                           iso,
                           dose.doseTime.id,
                           dose.status,
-                          med.supply >= 1,
+                          data.supplyOf(med.id) >= 1,
                         ),
                       ),
                       const SizedBox(height: 9),
@@ -294,8 +294,8 @@ class _StatsRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             label: l10n.detailLeft,
-            value: '${med.supply}',
-            danger: med.isLowSupply,
+            value: '${data.supplyOf(med.id)}',
+            danger: data.isLowSupply(med.id),
           ),
         ),
       ],

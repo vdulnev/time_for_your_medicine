@@ -77,16 +77,15 @@ class MedicineRepository {
 
       return DataState(
         meds: [
-          for (final r in medRows)
-            _toMedicine(
-              r,
-              timesByMed[r.id] ?? const [],
-              supplyTotals[r.id] ?? 0,
-            ),
+          for (final r in medRows) _toMedicine(r, timesByMed[r.id] ?? const []),
         ],
         doseStatus: doseStatus,
         settings: settings,
         notifOff: notifOff,
+        supplyByMedId: {
+          for (final entry in supplyTotals.entries)
+            entry.key: entry.value < 0 ? 0 : entry.value,
+        },
       );
     });
   }
@@ -214,7 +213,13 @@ class MedicineRepository {
         );
   }
 
-  Future<Either<AppException, Unit>> addMedicine(Medicine med) {
+  /// [initialSupply] is logged as the opening 'initial' ledger entry —
+  /// it's not part of [Medicine] itself, since pill counts only ever
+  /// live in the ledger (see [DataState.supplyByMedId]).
+  Future<Either<AppException, Unit>> addMedicine(
+    Medicine med,
+    int initialSupply,
+  ) {
     return _guard('addMedicine', () async {
       await _db.transaction(() async {
         await _db.into(_db.medicines).insert(_toCompanion(med));
@@ -230,13 +235,13 @@ class MedicineRepository {
               ),
           ]);
         });
-        if (med.supply > 0) {
+        if (initialSupply > 0) {
           await _db
               .into(_db.supplyTransactions)
               .insert(
                 SupplyTransactionsCompanion.insert(
                   medId: med.id,
-                  delta: med.supply,
+                  delta: initialSupply,
                   kind: 'initial',
                   createdAt: clock.now(),
                 ),
@@ -262,31 +267,27 @@ class MedicineRepository {
     });
   }
 
-  /// Sets a medicine's pill count to [newTotal] (both the running supply
-  /// and the "full pack" cap), logging the signed difference as a 'refill'
-  /// transaction. A total lower than the current supply logs a negative
-  /// delta — this doubles as the error-correction path.
+  /// Sets a medicine's pill count to [newTotal], logging the signed
+  /// difference as a 'refill' transaction. A total lower than the
+  /// current supply logs a negative delta — this doubles as the
+  /// error-correction path.
   Future<Either<AppException, Unit>> refillMedicine(
     String medId,
     int newTotal,
   ) {
     return _guard('refillMedicine', () async {
-      await _db.transaction(() async {
-        final currentSupply = await _currentSupply(medId);
-        final delta = newTotal - currentSupply;
-        await (_db.update(_db.medicines)..where((t) => t.id.equals(medId)))
-            .write(MedicinesCompanion(cap: Value(newTotal)));
-        await _db
-            .into(_db.supplyTransactions)
-            .insert(
-              SupplyTransactionsCompanion.insert(
-                medId: medId,
-                delta: delta,
-                kind: 'refill',
-                createdAt: clock.now(),
-              ),
-            );
-      });
+      final currentSupply = await _currentSupply(medId);
+      final delta = newTotal - currentSupply;
+      await _db
+          .into(_db.supplyTransactions)
+          .insert(
+            SupplyTransactionsCompanion.insert(
+              medId: medId,
+              delta: delta,
+              kind: 'refill',
+              createdAt: clock.now(),
+            ),
+          );
       return unit;
     });
   }
@@ -431,25 +432,20 @@ class MedicineRepository {
     return '${item.name} ${item.genericName} ${item.form}'.toLowerCase();
   }
 
-  /// [rawSupply] is the ledger sum for this medicine, clamped to
-  /// `0..cap` for display (the ledger itself is never clamped).
-  Medicine _toMedicine(MedicineRow r, List<DoseTimeRow> times, int rawSupply) =>
-      Medicine(
-        id: r.id,
-        name: r.name,
-        dose: r.dose,
-        times: [
-          for (final t in times)
-            DoseTime(id: t.id, time: t.time, period: Period.fromName(t.period)),
-        ],
-        withFood: r.withFood,
-        kind: PillKind.fromName(r.kind),
-        c1: r.c1,
-        c2: r.c2,
-        soft: r.soft,
-        supply: rawSupply.clamp(0, r.cap),
-        cap: r.cap,
-      );
+  Medicine _toMedicine(MedicineRow r, List<DoseTimeRow> times) => Medicine(
+    id: r.id,
+    name: r.name,
+    dose: r.dose,
+    times: [
+      for (final t in times)
+        DoseTime(id: t.id, time: t.time, period: Period.fromName(t.period)),
+    ],
+    withFood: r.withFood,
+    kind: PillKind.fromName(r.kind),
+    c1: r.c1,
+    c2: r.c2,
+    soft: r.soft,
+  );
 
   MedicinesCompanion _toCompanion(Medicine m) => MedicinesCompanion(
     id: Value(m.id),
@@ -460,6 +456,5 @@ class MedicineRepository {
     c1: Value(m.c1),
     c2: Value(m.c2),
     soft: Value(m.soft),
-    cap: Value(m.cap),
   );
 }

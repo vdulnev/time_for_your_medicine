@@ -42,17 +42,16 @@ class DataNotifier extends AsyncNotifier<DataState> {
     );
   }
 
-  /// [meds] with [medId]'s supply shifted by [delta], clamped to
-  /// `0..cap`. Mirrors what the repository does in the same call, so the
-  /// UI updates immediately rather than waiting on the DB round-trip.
-  List<Medicine> _creditSupply(List<Medicine> meds, String medId, int delta) {
-    return [
-      for (final m in meds)
-        if (m.id == medId)
-          m.copyWith(supply: (m.supply + delta).clamp(0, m.cap))
-        else
-          m,
-    ];
+  /// [supplyByMedId] with [medId]'s supply shifted by [delta], floored at
+  /// 0. Mirrors what the repository does in the same call, so the UI
+  /// updates immediately rather than waiting on the DB round-trip.
+  Map<String, int> _creditSupply(
+    Map<String, int> supplyByMedId,
+    String medId,
+    int delta,
+  ) {
+    final next = (supplyByMedId[medId] ?? 0) + delta;
+    return {...supplyByMedId, medId: next < 0 ? 0 : next};
   }
 
   /// Marks a dose taken, consuming one pill. Returns whether the day
@@ -64,20 +63,17 @@ class DataNotifier extends AsyncNotifier<DataState> {
       return false;
     }
 
-    Medicine? med;
-    for (final m in current.meds) {
-      if (m.id == medId) {
-        med = m;
-        break;
-      }
-    }
-    if (med == null || med.supply < 1) return false;
+    final hasMed = current.meds.any((m) => m.id == medId);
+    if (!hasMed || current.supplyOf(medId) < 1) return false;
 
     final wasAll = current.allTaken(iso);
     final key = '$iso|$medId|$doseTimeId';
     final doseStatus = {...current.doseStatus, key: DoseStatus.taken};
-    final meds = _creditSupply(current.meds, medId, -1);
-    final updated = current.copyWith(doseStatus: doseStatus, meds: meds);
+    final supplyByMedId = _creditSupply(current.supplyByMedId, medId, -1);
+    final updated = current.copyWith(
+      doseStatus: doseStatus,
+      supplyByMedId: supplyByMedId,
+    );
     state = AsyncData(updated);
 
     final repo = ref.read(medicineRepositoryProvider);
@@ -121,10 +117,12 @@ class DataNotifier extends AsyncNotifier<DataState> {
 
     final key = '$iso|$medId|$doseTimeId';
     final doseStatus = {...current.doseStatus}..remove(key);
-    final meds = prev == DoseStatus.taken
-        ? _creditSupply(current.meds, medId, 1)
-        : current.meds;
-    state = AsyncData(current.copyWith(doseStatus: doseStatus, meds: meds));
+    final supplyByMedId = prev == DoseStatus.taken
+        ? _creditSupply(current.supplyByMedId, medId, 1)
+        : current.supplyByMedId;
+    state = AsyncData(
+      current.copyWith(doseStatus: doseStatus, supplyByMedId: supplyByMedId),
+    );
 
     final repo = ref.read(medicineRepositoryProvider);
     _reportIfFailed(
@@ -169,26 +167,28 @@ class DataNotifier extends AsyncNotifier<DataState> {
       kind: PillKind.round,
       c1: 0xFF5566D6,
       soft: 0xFFE7E8FB,
-      supply: supply,
-      cap: supply,
     );
-    state = AsyncData(current.copyWith(meds: [...current.meds, med]));
+    state = AsyncData(
+      current.copyWith(
+        meds: [...current.meds, med],
+        supplyByMedId: {...current.supplyByMedId, med.id: supply},
+      ),
+    );
     _reportIfFailed(
-      await ref.read(medicineRepositoryProvider).addMedicine(med),
+      await ref.read(medicineRepositoryProvider).addMedicine(med, supply),
     );
   }
 
-  /// Records a refill: the medicine now has [newSupply] pills, and that
-  /// also becomes its new "full pack" size for future refill %/alerts.
+  /// Records a refill: the medicine now has [newSupply] pills.
   Future<void> refillMedicine(String medId, int newSupply) async {
     final current = _current;
     if (current == null || newSupply <= 0) return;
 
-    final meds = [
-      for (final m in current.meds)
-        if (m.id == medId) m.copyWith(supply: newSupply, cap: newSupply) else m,
-    ];
-    state = AsyncData(current.copyWith(meds: meds));
+    state = AsyncData(
+      current.copyWith(
+        supplyByMedId: {...current.supplyByMedId, medId: newSupply},
+      ),
+    );
     _reportIfFailed(
       await ref
           .read(medicineRepositoryProvider)
@@ -204,8 +204,14 @@ class DataNotifier extends AsyncNotifier<DataState> {
     final doseStatus = {...current.doseStatus}
       ..removeWhere((k, _) => k.split('|')[1] == id);
     final notifOff = {...current.notifOff}..remove(id);
+    final supplyByMedId = {...current.supplyByMedId}..remove(id);
     state = AsyncData(
-      current.copyWith(meds: meds, doseStatus: doseStatus, notifOff: notifOff),
+      current.copyWith(
+        meds: meds,
+        doseStatus: doseStatus,
+        notifOff: notifOff,
+        supplyByMedId: supplyByMedId,
+      ),
     );
     _reportIfFailed(
       await ref.read(medicineRepositoryProvider).deleteMedicine(id),

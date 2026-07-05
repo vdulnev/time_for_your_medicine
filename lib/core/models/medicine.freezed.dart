@@ -19,8 +19,7 @@ mixin _$Medicine {
 /// Always non-empty.
  List<DoseTime> get times; bool get withFood; PillKind get kind;/// Primary pill color (ARGB int).
  int get c1;/// Soft background tint behind the pill thumbnail (ARGB int).
- int get soft;/// Remaining supply and full capacity, for refills.
- int get supply; int get cap;/// Secondary pill color for capsules (ARGB int).
+ int get soft;/// Secondary pill color for capsules (ARGB int).
  int? get c2;
 /// Create a copy of Medicine
 /// with the given fields replaced by the non-null parameter values.
@@ -34,16 +33,16 @@ $MedicineCopyWith<Medicine> get copyWith => _$MedicineCopyWithImpl<Medicine>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Medicine&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.dose, dose) || other.dose == dose)&&const DeepCollectionEquality().equals(other.times, times)&&(identical(other.withFood, withFood) || other.withFood == withFood)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.c1, c1) || other.c1 == c1)&&(identical(other.soft, soft) || other.soft == soft)&&(identical(other.supply, supply) || other.supply == supply)&&(identical(other.cap, cap) || other.cap == cap)&&(identical(other.c2, c2) || other.c2 == c2));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Medicine&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.dose, dose) || other.dose == dose)&&const DeepCollectionEquality().equals(other.times, times)&&(identical(other.withFood, withFood) || other.withFood == withFood)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.c1, c1) || other.c1 == c1)&&(identical(other.soft, soft) || other.soft == soft)&&(identical(other.c2, c2) || other.c2 == c2));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,dose,const DeepCollectionEquality().hash(times),withFood,kind,c1,soft,supply,cap,c2);
+int get hashCode => Object.hash(runtimeType,id,name,dose,const DeepCollectionEquality().hash(times),withFood,kind,c1,soft,c2);
 
 @override
 String toString() {
-  return 'Medicine(id: $id, name: $name, dose: $dose, times: $times, withFood: $withFood, kind: $kind, c1: $c1, soft: $soft, supply: $supply, cap: $cap, c2: $c2)';
+  return 'Medicine(id: $id, name: $name, dose: $dose, times: $times, withFood: $withFood, kind: $kind, c1: $c1, soft: $soft, c2: $c2)';
 }
 
 
@@ -54,7 +53,7 @@ abstract mixin class $MedicineCopyWith<$Res>  {
   factory $MedicineCopyWith(Medicine value, $Res Function(Medicine) _then) = _$MedicineCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String dose, List<DoseTime> times, bool withFood, PillKind kind, int c1, int soft, int supply, int cap, int? c2
+ String id, String name, String dose, List<DoseTime> times, bool withFood, PillKind kind, int c1, int soft, int? c2
 });
 
 
@@ -71,7 +70,7 @@ class _$MedicineCopyWithImpl<$Res>
 
 /// Create a copy of Medicine
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? dose = null,Object? times = null,Object? withFood = null,Object? kind = null,Object? c1 = null,Object? soft = null,Object? supply = null,Object? cap = null,Object? c2 = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? dose = null,Object? times = null,Object? withFood = null,Object? kind = null,Object? c1 = null,Object? soft = null,Object? c2 = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -81,8 +80,6 @@ as List<DoseTime>,withFood: null == withFood ? _self.withFood : withFood // igno
 as bool,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as PillKind,c1: null == c1 ? _self.c1 : c1 // ignore: cast_nullable_to_non_nullable
 as int,soft: null == soft ? _self.soft : soft // ignore: cast_nullable_to_non_nullable
-as int,supply: null == supply ? _self.supply : supply // ignore: cast_nullable_to_non_nullable
-as int,cap: null == cap ? _self.cap : cap // ignore: cast_nullable_to_non_nullable
 as int,c2: freezed == c2 ? _self.c2 : c2 // ignore: cast_nullable_to_non_nullable
 as int?,
   ));
@@ -169,10 +166,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String dose,  List<DoseTime> times,  bool withFood,  PillKind kind,  int c1,  int soft,  int supply,  int cap,  int? c2)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String dose,  List<DoseTime> times,  bool withFood,  PillKind kind,  int c1,  int soft,  int? c2)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Medicine() when $default != null:
-return $default(_that.id,_that.name,_that.dose,_that.times,_that.withFood,_that.kind,_that.c1,_that.soft,_that.supply,_that.cap,_that.c2);case _:
+return $default(_that.id,_that.name,_that.dose,_that.times,_that.withFood,_that.kind,_that.c1,_that.soft,_that.c2);case _:
   return orElse();
 
 }
@@ -190,10 +187,10 @@ return $default(_that.id,_that.name,_that.dose,_that.times,_that.withFood,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String dose,  List<DoseTime> times,  bool withFood,  PillKind kind,  int c1,  int soft,  int supply,  int cap,  int? c2)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String dose,  List<DoseTime> times,  bool withFood,  PillKind kind,  int c1,  int soft,  int? c2)  $default,) {final _that = this;
 switch (_that) {
 case _Medicine():
-return $default(_that.id,_that.name,_that.dose,_that.times,_that.withFood,_that.kind,_that.c1,_that.soft,_that.supply,_that.cap,_that.c2);case _:
+return $default(_that.id,_that.name,_that.dose,_that.times,_that.withFood,_that.kind,_that.c1,_that.soft,_that.c2);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -210,10 +207,10 @@ return $default(_that.id,_that.name,_that.dose,_that.times,_that.withFood,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String dose,  List<DoseTime> times,  bool withFood,  PillKind kind,  int c1,  int soft,  int supply,  int cap,  int? c2)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String dose,  List<DoseTime> times,  bool withFood,  PillKind kind,  int c1,  int soft,  int? c2)?  $default,) {final _that = this;
 switch (_that) {
 case _Medicine() when $default != null:
-return $default(_that.id,_that.name,_that.dose,_that.times,_that.withFood,_that.kind,_that.c1,_that.soft,_that.supply,_that.cap,_that.c2);case _:
+return $default(_that.id,_that.name,_that.dose,_that.times,_that.withFood,_that.kind,_that.c1,_that.soft,_that.c2);case _:
   return null;
 
 }
@@ -225,7 +222,7 @@ return $default(_that.id,_that.name,_that.dose,_that.times,_that.withFood,_that.
 @JsonSerializable()
 
 class _Medicine extends Medicine {
-  const _Medicine({required this.id, required this.name, required this.dose, required final  List<DoseTime> times, required this.withFood, required this.kind, required this.c1, required this.soft, required this.supply, required this.cap, this.c2}): _times = times,super._();
+  const _Medicine({required this.id, required this.name, required this.dose, required final  List<DoseTime> times, required this.withFood, required this.kind, required this.c1, required this.soft, this.c2}): _times = times,super._();
   factory _Medicine.fromJson(Map<String, dynamic> json) => _$MedicineFromJson(json);
 
 @override final  String id;
@@ -248,9 +245,6 @@ class _Medicine extends Medicine {
 @override final  int c1;
 /// Soft background tint behind the pill thumbnail (ARGB int).
 @override final  int soft;
-/// Remaining supply and full capacity, for refills.
-@override final  int supply;
-@override final  int cap;
 /// Secondary pill color for capsules (ARGB int).
 @override final  int? c2;
 
@@ -267,16 +261,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Medicine&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.dose, dose) || other.dose == dose)&&const DeepCollectionEquality().equals(other._times, _times)&&(identical(other.withFood, withFood) || other.withFood == withFood)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.c1, c1) || other.c1 == c1)&&(identical(other.soft, soft) || other.soft == soft)&&(identical(other.supply, supply) || other.supply == supply)&&(identical(other.cap, cap) || other.cap == cap)&&(identical(other.c2, c2) || other.c2 == c2));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Medicine&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.dose, dose) || other.dose == dose)&&const DeepCollectionEquality().equals(other._times, _times)&&(identical(other.withFood, withFood) || other.withFood == withFood)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.c1, c1) || other.c1 == c1)&&(identical(other.soft, soft) || other.soft == soft)&&(identical(other.c2, c2) || other.c2 == c2));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,dose,const DeepCollectionEquality().hash(_times),withFood,kind,c1,soft,supply,cap,c2);
+int get hashCode => Object.hash(runtimeType,id,name,dose,const DeepCollectionEquality().hash(_times),withFood,kind,c1,soft,c2);
 
 @override
 String toString() {
-  return 'Medicine(id: $id, name: $name, dose: $dose, times: $times, withFood: $withFood, kind: $kind, c1: $c1, soft: $soft, supply: $supply, cap: $cap, c2: $c2)';
+  return 'Medicine(id: $id, name: $name, dose: $dose, times: $times, withFood: $withFood, kind: $kind, c1: $c1, soft: $soft, c2: $c2)';
 }
 
 
@@ -287,7 +281,7 @@ abstract mixin class _$MedicineCopyWith<$Res> implements $MedicineCopyWith<$Res>
   factory _$MedicineCopyWith(_Medicine value, $Res Function(_Medicine) _then) = __$MedicineCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String dose, List<DoseTime> times, bool withFood, PillKind kind, int c1, int soft, int supply, int cap, int? c2
+ String id, String name, String dose, List<DoseTime> times, bool withFood, PillKind kind, int c1, int soft, int? c2
 });
 
 
@@ -304,7 +298,7 @@ class __$MedicineCopyWithImpl<$Res>
 
 /// Create a copy of Medicine
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? dose = null,Object? times = null,Object? withFood = null,Object? kind = null,Object? c1 = null,Object? soft = null,Object? supply = null,Object? cap = null,Object? c2 = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? dose = null,Object? times = null,Object? withFood = null,Object? kind = null,Object? c1 = null,Object? soft = null,Object? c2 = freezed,}) {
   return _then(_Medicine(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -314,8 +308,6 @@ as List<DoseTime>,withFood: null == withFood ? _self.withFood : withFood // igno
 as bool,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as PillKind,c1: null == c1 ? _self.c1 : c1 // ignore: cast_nullable_to_non_nullable
 as int,soft: null == soft ? _self.soft : soft // ignore: cast_nullable_to_non_nullable
-as int,supply: null == supply ? _self.supply : supply // ignore: cast_nullable_to_non_nullable
-as int,cap: null == cap ? _self.cap : cap // ignore: cast_nullable_to_non_nullable
 as int,c2: freezed == c2 ? _self.c2 : c2 // ignore: cast_nullable_to_non_nullable
 as int?,
   ));

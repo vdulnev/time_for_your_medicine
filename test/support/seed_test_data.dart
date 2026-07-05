@@ -19,7 +19,6 @@ Future<void> seedTestMedicines(AppDatabase db) async {
       c1: Value(0xFF5566D6),
       c2: Value(0xFFA6B0EE),
       soft: Value(0xFFE7E8FB),
-      cap: Value(60),
     ),
     MedicinesCompanion(
       id: Value('m2'),
@@ -29,7 +28,6 @@ Future<void> seedTestMedicines(AppDatabase db) async {
       kind: Value('round'),
       c1: Value(0xFFD69A5A),
       soft: Value(0xFFFBF0DF),
-      cap: Value(60),
     ),
     MedicinesCompanion(
       id: Value('m3'),
@@ -39,7 +37,6 @@ Future<void> seedTestMedicines(AppDatabase db) async {
       kind: Value('round'),
       c1: Value(0xFF5AA0D6),
       soft: Value(0xFFE2F0F8),
-      cap: Value(30),
     ),
     MedicinesCompanion(
       id: Value('m4'),
@@ -50,7 +47,6 @@ Future<void> seedTestMedicines(AppDatabase db) async {
       c1: Value(0xFFA77FD0),
       c2: Value(0xFFCDB6E6),
       soft: Value(0xFFF1ECF9),
-      cap: Value(30),
     ),
   ];
 

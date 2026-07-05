@@ -86,15 +86,6 @@ class $MedicinesTable extends Medicines
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _capMeta = const VerificationMeta('cap');
-  @override
-  late final GeneratedColumn<int> cap = GeneratedColumn<int>(
-    'cap',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -105,7 +96,6 @@ class $MedicinesTable extends Medicines
     c1,
     c2,
     soft,
-    cap,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -172,14 +162,6 @@ class $MedicinesTable extends Medicines
     } else if (isInserting) {
       context.missing(_softMeta);
     }
-    if (data.containsKey('cap')) {
-      context.handle(
-        _capMeta,
-        cap.isAcceptableOrUnknown(data['cap']!, _capMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_capMeta);
-    }
     return context;
   }
 
@@ -221,10 +203,6 @@ class $MedicinesTable extends Medicines
         DriftSqlType.int,
         data['${effectivePrefix}soft'],
       )!,
-      cap: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}cap'],
-      )!,
     );
   }
 
@@ -243,11 +221,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
   final int c1;
   final int? c2;
   final int soft;
-
-  /// The "full pack" size, for refill %/alerts. The *current* pill count
-  /// is not stored here — it's derived from [SupplyTransactions], see
-  /// `MedicineRepository._currentSupply`.
-  final int cap;
   const MedicineRow({
     required this.id,
     required this.name,
@@ -257,7 +230,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
     required this.c1,
     this.c2,
     required this.soft,
-    required this.cap,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -272,7 +244,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       map['c2'] = Variable<int>(c2);
     }
     map['soft'] = Variable<int>(soft);
-    map['cap'] = Variable<int>(cap);
     return map;
   }
 
@@ -286,7 +257,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       c1: Value(c1),
       c2: c2 == null && nullToAbsent ? const Value.absent() : Value(c2),
       soft: Value(soft),
-      cap: Value(cap),
     );
   }
 
@@ -304,7 +274,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       c1: serializer.fromJson<int>(json['c1']),
       c2: serializer.fromJson<int?>(json['c2']),
       soft: serializer.fromJson<int>(json['soft']),
-      cap: serializer.fromJson<int>(json['cap']),
     );
   }
   @override
@@ -319,7 +288,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       'c1': serializer.toJson<int>(c1),
       'c2': serializer.toJson<int?>(c2),
       'soft': serializer.toJson<int>(soft),
-      'cap': serializer.toJson<int>(cap),
     };
   }
 
@@ -332,7 +300,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
     int? c1,
     Value<int?> c2 = const Value.absent(),
     int? soft,
-    int? cap,
   }) => MedicineRow(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -342,7 +309,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
     c1: c1 ?? this.c1,
     c2: c2.present ? c2.value : this.c2,
     soft: soft ?? this.soft,
-    cap: cap ?? this.cap,
   );
   MedicineRow copyWithCompanion(MedicinesCompanion data) {
     return MedicineRow(
@@ -354,7 +320,6 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
       c1: data.c1.present ? data.c1.value : this.c1,
       c2: data.c2.present ? data.c2.value : this.c2,
       soft: data.soft.present ? data.soft.value : this.soft,
-      cap: data.cap.present ? data.cap.value : this.cap,
     );
   }
 
@@ -368,15 +333,13 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
           ..write('kind: $kind, ')
           ..write('c1: $c1, ')
           ..write('c2: $c2, ')
-          ..write('soft: $soft, ')
-          ..write('cap: $cap')
+          ..write('soft: $soft')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, dose, withFood, kind, c1, c2, soft, cap);
+  int get hashCode => Object.hash(id, name, dose, withFood, kind, c1, c2, soft);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -388,8 +351,7 @@ class MedicineRow extends DataClass implements Insertable<MedicineRow> {
           other.kind == this.kind &&
           other.c1 == this.c1 &&
           other.c2 == this.c2 &&
-          other.soft == this.soft &&
-          other.cap == this.cap);
+          other.soft == this.soft);
 }
 
 class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
@@ -401,7 +363,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
   final Value<int> c1;
   final Value<int?> c2;
   final Value<int> soft;
-  final Value<int> cap;
   final Value<int> rowid;
   const MedicinesCompanion({
     this.id = const Value.absent(),
@@ -412,7 +373,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     this.c1 = const Value.absent(),
     this.c2 = const Value.absent(),
     this.soft = const Value.absent(),
-    this.cap = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MedicinesCompanion.insert({
@@ -424,7 +384,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     required int c1,
     this.c2 = const Value.absent(),
     required int soft,
-    required int cap,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
@@ -432,8 +391,7 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
        withFood = Value(withFood),
        kind = Value(kind),
        c1 = Value(c1),
-       soft = Value(soft),
-       cap = Value(cap);
+       soft = Value(soft);
   static Insertable<MedicineRow> custom({
     Expression<String>? id,
     Expression<String>? name,
@@ -443,7 +401,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     Expression<int>? c1,
     Expression<int>? c2,
     Expression<int>? soft,
-    Expression<int>? cap,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -455,7 +412,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
       if (c1 != null) 'c1': c1,
       if (c2 != null) 'c2': c2,
       if (soft != null) 'soft': soft,
-      if (cap != null) 'cap': cap,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -469,7 +425,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     Value<int>? c1,
     Value<int?>? c2,
     Value<int>? soft,
-    Value<int>? cap,
     Value<int>? rowid,
   }) {
     return MedicinesCompanion(
@@ -481,7 +436,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
       c1: c1 ?? this.c1,
       c2: c2 ?? this.c2,
       soft: soft ?? this.soft,
-      cap: cap ?? this.cap,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -513,9 +467,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
     if (soft.present) {
       map['soft'] = Variable<int>(soft.value);
     }
-    if (cap.present) {
-      map['cap'] = Variable<int>(cap.value);
-    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -533,7 +484,6 @@ class MedicinesCompanion extends UpdateCompanion<MedicineRow> {
           ..write('c1: $c1, ')
           ..write('c2: $c2, ')
           ..write('soft: $soft, ')
-          ..write('cap: $cap, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2883,7 +2833,6 @@ typedef $$MedicinesTableCreateCompanionBuilder =
       required int c1,
       Value<int?> c2,
       required int soft,
-      required int cap,
       Value<int> rowid,
     });
 typedef $$MedicinesTableUpdateCompanionBuilder =
@@ -2896,7 +2845,6 @@ typedef $$MedicinesTableUpdateCompanionBuilder =
       Value<int> c1,
       Value<int?> c2,
       Value<int> soft,
-      Value<int> cap,
       Value<int> rowid,
     });
 
@@ -2946,11 +2894,6 @@ class $$MedicinesTableFilterComposer
 
   ColumnFilters<int> get soft => $composableBuilder(
     column: $table.soft,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get cap => $composableBuilder(
-    column: $table.cap,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3003,11 +2946,6 @@ class $$MedicinesTableOrderingComposer
     column: $table.soft,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<int> get cap => $composableBuilder(
-    column: $table.cap,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$MedicinesTableAnnotationComposer
@@ -3042,9 +2980,6 @@ class $$MedicinesTableAnnotationComposer
 
   GeneratedColumn<int> get soft =>
       $composableBuilder(column: $table.soft, builder: (column) => column);
-
-  GeneratedColumn<int> get cap =>
-      $composableBuilder(column: $table.cap, builder: (column) => column);
 }
 
 class $$MedicinesTableTableManager
@@ -3086,7 +3021,6 @@ class $$MedicinesTableTableManager
                 Value<int> c1 = const Value.absent(),
                 Value<int?> c2 = const Value.absent(),
                 Value<int> soft = const Value.absent(),
-                Value<int> cap = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MedicinesCompanion(
                 id: id,
@@ -3097,7 +3031,6 @@ class $$MedicinesTableTableManager
                 c1: c1,
                 c2: c2,
                 soft: soft,
-                cap: cap,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3110,7 +3043,6 @@ class $$MedicinesTableTableManager
                 required int c1,
                 Value<int?> c2 = const Value.absent(),
                 required int soft,
-                required int cap,
                 Value<int> rowid = const Value.absent(),
               }) => MedicinesCompanion.insert(
                 id: id,
@@ -3121,7 +3053,6 @@ class $$MedicinesTableTableManager
                 c1: c1,
                 c2: c2,
                 soft: soft,
-                cap: cap,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
