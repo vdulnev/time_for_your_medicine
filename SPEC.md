@@ -272,7 +272,10 @@ screen's progress bar, which was removed along with it (see §6a).
 A medicine can be scheduled **several times a day** — `Medicine.times` is a
 non-empty, ordered list of `DoseTime`, each with its own display time and
 `Period`. The Add form lets the user add/remove time slots freely (min 1);
-empty slots are dropped on save.
+empty slots are dropped on save. After creation, the Edit Reminder screen
+(§6 item 4a) lets the user append further time slots — existing slots are
+read-only there (see §6a for why `DoseTime.id` assignment differs between
+the two paths).
 
 `taken` is keyed `"iso|medId|doseTimeId"` — each dose slot is tracked and
 toggled independently, so a 3x/day medicine contributes 3 separate,
@@ -299,8 +302,10 @@ exist exclusively as explicit fixtures under `test/support/`.
 ### Notifier actions (`dataProvider`)
 `toggleTaken(iso,medId,doseTimeId) → bool` (returns whether the day just
 completed, so the caller can route to Done), `addMed(draft)`,
-`deleteMed(id)`, `toggleSetting(key)`, `toggleNotif(id)`. Each writes
-through the repository, logs via Talker, and updates `DataState`.
+`addReminderTimes(medId, List<DraftTime>)` (appends new dose slots to an
+existing medicine; see §6a), `deleteMed(id)`, `toggleSetting(key)`,
+`toggleNotif(id)`. Each writes through the repository, logs via Talker, and
+updates `DataState`.
 
 ### Derived (selectors, computed outside widgets)
 periods-for-day (as dose occurrences), week strip (Mon–Sun), progress %
@@ -322,8 +327,8 @@ rows.
   `AutoTabsScaffold`: **Home**, **Calendar**, **Refills**, **Settings**,
   with the floating center **+** FAB pushing `AddRoute`.
 - Pushed full-screen routes (no bottom nav): `AddRoute`,
-  `DetailRoute(medId)`, `DoneRoute`, `HistoryRoute`, `NotificationsRoute`,
-  `TransactionsRoute`.
+  `DetailRoute(medId)`, `EditReminderRoute(medId)`, `DoneRoute`,
+  `HistoryRoute`, `NotificationsRoute`, `TransactionsRoute`.
 - The "all doses taken" celebration: after `toggleTaken` reports the day
   just completed, the calling widget `router.push(const DoneRoute())`.
 - Delete confirmation is shown via `showModalBottomSheet` /
@@ -392,18 +397,28 @@ rows.
 2. **Calendar** — month grid with today/selected/dots, day agenda (one row
    per dose occurrence), "Open this day" CTA.
 3. **Add medicine** — photo placeholder, name/dose/pills fields (pills =
-   how many you have now; becomes both `supply` and `cap`, since a newly
-   added medicine starts full), a repeatable list of time + time-of-day
-   slots ("+ Add another time" / remove per row, minimum 1) so a medicine
-   can be scheduled several times a day, food choice, Save. NAME and
-   PILLS are marked required (`*`); Save is disabled (greyed, no shadow,
+   how many you have now, logged as the ledger's opening 'initial'
+   transaction, see §6a), a repeatable list of time + time-of-day slots
+   ("+ Add another time" / remove per row, minimum 1, via the shared
+   `TimeSlotCard` widget also used by Edit Reminder) so a medicine can be
+   scheduled several times a day, food choice, Save. NAME and PILLS are
+   marked required (`*`); Save is disabled (greyed, no shadow,
    `onTap: null`) until both are filled in with a valid pill count
    (≥ 1), with a hint line above the button explaining why.
-4. **Detail** — indigo header, next/food/left stat cards (NEXT shows the
-   earliest untaken slot today, "+N" suffixed when there's more than one),
-   last-7-days row (a day counts as done only once every slot is taken),
-   a "today's doses" list with one independent dose-status button per slot
-   (opens the same dose action sheet as Home), delete.
+4. **Detail** — indigo header (back, edit-reminder pencil, delete),
+   next/food/left stat cards (NEXT shows the earliest untaken slot today,
+   "+N" suffixed when there's more than one), last-7-days row (a day
+   counts as done only once every slot is taken), a "today's doses" list
+   with one independent dose-status button per slot (opens the same dose
+   action sheet as Home).
+4a. **Edit Reminder** (`lib/features/edit_reminder/edit_reminder_page.dart`)
+   — reached via Detail's pencil button. Lists the medicine's current dose
+   times read-only (no edit/remove — see §6a for why), then a repeatable
+   list of staged new time + time-of-day slots (the same `TimeSlotCard`
+   widget and "+ Add another time" pattern as Add medicine), Save. Save is
+   disabled with a hint whenever a staged slot's resolved time duplicates
+   an existing time or another staged slot, since two identical reminder
+   times on one medicine would be indistinguishable to the user.
 5. **Done** — celebration (pop check + confetti dots), doses/streak stats,
    view-tomorrow / back-to-today.
 6. **History** — 7-day adherence card, bar chart, summary rows, a
@@ -510,6 +525,34 @@ numbers don't change retroactively when a reminder is toggled) and
 everything on Detail/Refills, which read `med.times` / `data.meds`
 directly rather than going through the occurrence helpers — a
 medicine stays fully manageable there even while muted.
+
+**Adding reminder times after creation.** `DataNotifier.addReminderTimes`
+(`lib/core/state/data_notifier.dart`) appends new `DoseTime` slots to an
+existing medicine; `MedicineRepository.addReminderTimes` is a pure
+`batch.insertAll` into `DoseTimes` (no delete, no transaction needed
+beyond the batch) sorted after whatever the medicine already has. Existing
+slots are never rewritten by this screen — only added.
+
+That constraint exists because of how `DoseTime.id` works: `addMedicine`
+assigns ids by array index (`t0`, `t1`, ...) at creation, which is safe
+only because a medicine's times never changed after that. `DoseLog` and
+`SupplyTransactions` key doses by `(iso, medId, doseTimeId)`, and
+`Selectors.detailWeek`/`_medDoseCount` look up *past* days' status using
+*today's current* `med.times` ids — so if editing ever reassigned an id
+by position (e.g. after removing a slot and adding a new one), the new
+slot could silently inherit an unrelated slot's history. `addReminderTimes`
+sidesteps this by only ever appending: each new slot gets a
+timestamp-based id (`'t${microsecondsSinceEpoch}_$i'`) that can never
+collide with anything the medicine has ever had, and existing slots'
+ids/time/period are left untouched.
+
+`addReminderTimes` also rejects (as a silent no-op, mirroring
+`addMedicine`'s existing name/supply validation) any new slot whose
+resolved time — after applying `Period.defaultDisplayTime` for a blank
+field — duplicates an existing time or another slot in the same call.
+Two identical reminder times on one medicine would be indistinguishable
+in the UI. The Edit Reminder page (§6 item 4a) runs the same check to
+disable Save with a hint before the user even taps it.
 
 ---
 
@@ -1446,3 +1489,64 @@ Tracked as a future phase.
       confirming), and confirmed Detail's "LEFT" stat read 50 — the
       full Add → Take → Refill → Detail loop working end-to-end on the
       new `supplyByMedId`-based state.
+  - **Edit Reminder — add new reminder times to an existing medicine:**
+    - New Detail-page entry point: a pencil `_GlassButton` in the header
+      (between back and delete) pushes `EditReminderRoute(medId)`.
+    - New **Edit Reminder** screen (`lib/features/edit_reminder/
+      edit_reminder_page.dart`) lists a medicine's current dose times
+      read-only, then lets the user stage and save one or more brand-new
+      time slots — per the chosen scope, existing times can't be edited
+      or removed from this screen, only added to.
+    - Extracted the Add-medicine form's private `_TimeSlotCard` into a
+      public, decoupled `TimeSlotCard` widget
+      (`lib/features/add/widgets/time_slot_card.dart`, taking plain
+      `time`/`period` values instead of a whole draft object) so both
+      screens share the identical time + time-of-day editing UI.
+      `AddMedicinePage` now just calls the shared widget; no visual
+      change to the existing Add flow.
+    - New `editReminderFormProvider` (`lib/features/edit_reminder/
+      edit_reminder_form_provider.dart`): an `AutoDisposeFamilyNotifier`
+      keyed by `medId` holding the screen's staged `List<DraftTime>` —
+      reuses `DraftTime` from `add_draft.dart` directly rather than a new
+      model, since a staged slot is exactly `{time, period}`.
+    - New `DataNotifier.addReminderTimes(medId, List<DraftTime>)` and
+      `MedicineRepository.addReminderTimes` (pure `batch.insertAll` into
+      `DoseTimes`, no delete). Why existing times are never
+      rewritten and how new slots get collision-proof ids
+      (timestamp-based, not the `t0`/`t1`-by-index scheme `addMedicine`
+      uses) is written up in §6a — reassigning ids by position would
+      have let a new slot silently inherit an unrelated slot's
+      `DoseLog`/`SupplyTransactions` history.
+    - Duplicate-time guard: `addReminderTimes` silently no-ops (mirroring
+      `addMedicine`'s existing validation style) if a staged slot's
+      resolved time matches an existing time or another staged slot: the
+      Edit Reminder page runs the identical check to disable Save with a
+      hint (`editReminderDuplicateHint`) before the user can even tap it.
+    - Moved the Add form's `_defaultTimeFor(Period)` helper onto `Period`
+      itself as `defaultDisplayTime`, so both the data layer and the new
+      page's duplicate check can resolve a blank field's fallback time
+      without duplicating the switch.
+    - New l10n keys (en + uk): `editReminderTitle`,
+      `editReminderCurrentTimesLabel`, `editReminderSaveButton`,
+      `editReminderDuplicateHint`. Reused `addTimeLabel`/`addTimeHint`/
+      `addTimeOfDayLabel`/`addAnotherTime` as-is (already
+      medicine-agnostic).
+    - New `EditReminderRoute` (auto_route).
+    - Added `addReminderTimes` cases to `test/data_layer_test.dart`
+      (fresh unique ids appended after existing slots, existing slots
+      untouched, blank-field default-time fallback, duplicate rejection
+      against both an existing time and another staged slot) and a new
+      `test/edit_reminder_test.dart` widget smoke test (existing times
+      render read-only with no remove control, staged slots can be
+      added/removed down to a minimum of 1, Save is disabled with the
+      duplicate hint, saving a distinct time returns to Detail with the
+      new dose visible).
+    - 51 tests green, `flutter analyze` clean, `dart format .` clean.
+    - Verified live: opened an existing medicine (zinc, one 8:00 AM
+      dose), confirmed the default staged slot's default resolved time
+      duplicated the existing one and Save was correctly disabled with
+      the hint, switched the staged slot to Evening (9:00 PM, no longer
+      a duplicate) which re-enabled Save, saved, and confirmed Detail
+      now showed both doses independently (8:00 AM already taken, 9:00
+      PM pending) and Home's period sections correctly split the
+      medicine across its new Morning and Evening slots.
