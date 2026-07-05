@@ -253,13 +253,21 @@ Freezed models (`@freezed`, with `json_serializable`):
 ```
 @freezed DoseTime   { id, time, period }               // one scheduled slot
 @freezed Medicine   { id, name, dose, List<DoseTime> times, withFood, kind,
-                      c1, int? c2, soft, supply, cap }  // colors as ARGB ints
+                      c1, int? c2, soft }               // colors as ARGB ints
 @freezed AppSettings{ bool sound, vibrate, refill, String? localeOverride }
 @freezed DraftTime  { time, period }                    // one editable slot
 @freezed AddDraft   { name, dose, List<DraftTime> times, withFood }
-@freezed DataState  { List<Medicine> meds, Map<String,bool> taken,
-                      AppSettings settings, Map<String,bool> notifOff }
+@freezed DataState  { List<Medicine> meds, Map<String,DoseStatus> doseStatus,
+                      AppSettings settings, Map<String,bool> notifOff,
+                      Map<String,int> supplyByMedId }
 ```
+
+`Medicine` carries no pill-count field — `supply` (how many pills are
+left) is derived from the `SupplyTransactions` ledger and lives on
+`DataState.supplyByMedId` instead (see §6a), read via
+`DataState.supplyOf(medId)` / `.isLowSupply(medId)`. There's also no
+`cap` ("full pack" size) — it existed solely to size the Refills
+screen's progress bar, which was removed along with it (see §6a).
 
 A medicine can be scheduled **several times a day** — `Medicine.times` is a
 non-empty, ordered list of `DoseTime`, each with its own display time and
@@ -400,10 +408,11 @@ rows.
    view-tomorrow / back-to-today.
 6. **History** — 7-day adherence card, bar chart, summary rows, a
    "View transactions" nav row → **Transactions**.
-7. **Refills** — low-supply alert, per-med supply bars + a tappable
-   order/OK button that opens a "Refill {name}?" sheet (pre-filled with
-   the current pack size) and sets both `supply` and `cap` to the entered
-   count.
+7. **Refills** — low-supply alert, per-med pill-count rows (no
+   progress bar — there's no "full pack" size to measure against, see
+   §6a) + a tappable order/OK button that opens a "Refill {name}?"
+   sheet, pre-filled with the current count, and logs the entered
+   count as the medicine's new supply.
 8. **Reminders** — per-med reminder switches. Switching a medicine's
    reminder off excludes it from today's active dose-tracking surfaces
    (see §6a) — it disappears from the Home list, Calendar agenda, and
@@ -457,15 +466,20 @@ time by summing every row logged in `SupplyTransactions`
   tied back to the triggering dose via nullable `iso`/`doseTimeId`
   columns, logged by `MedicineRepository._logSupplyTransaction`.
 
-`MedicineRepository.loadAll` computes every medicine's supply in one
-pass (`_supplyTotals`: load all `SupplyTransactions` rows, fold by
-`medId`) and `_toMedicine` clamps the sum to `0..cap` before it ever
-reaches the domain `Medicine.supply` field — the ledger itself is
-never clamped or rewritten, only the derived display value is.
-`refillMedicine` needs the current balance for a single medicine to
-compute its delta; `_currentSupply(medId)` does that same fold scoped
-to one `medId`. `deleteMedicine` clears a medicine's rows along with
-its other data.
+**Where the derived supply lives.** `Medicine` itself carries no pill
+count — `MedicineRepository.loadAll` computes every medicine's supply
+in one pass (`_supplyTotals`: load all `SupplyTransactions` rows, fold
+by `medId`), floors each at 0 for display, and returns the result as
+`DataState.supplyByMedId` (read via `DataState.supplyOf(medId)` /
+`.isLowSupply(medId)`) — the ledger itself is never clamped or
+rewritten, only this derived map is. There used to also be a `cap`
+("full pack" size) column on `Medicines`, used only to size the
+Refills screen's progress bar; both the column and the bar are gone
+(see §7's schema-v9 migration) — `refillMedicine` is now a pure ledger
+insert with no `Medicines` table write at all. `refillMedicine` needs
+the current balance for a single medicine to compute its delta;
+`_currentSupply(medId)` does that same fold scoped to one `medId`.
+`deleteMedicine` clears a medicine's rows along with its other data.
 
 **Reading the ledger.** `MedicineRepository.loadTransactions()` returns
 every `SupplyTransactionRow`, newest first (`ORDER BY createdAt DESC`);
@@ -505,7 +519,7 @@ medicine stays fully manageable there even while muted.
 
 | Table | Columns |
 |---|---|
-| `Medicines` | id (PK text), name, dose, withFood, kind, c1, c2 (nullable), soft, cap. **No `supply` column** — the current pill count is derived from `SupplyTransactions`, never stored (see §6a). |
+| `Medicines` | id (PK text), name, dose, withFood, kind, c1, c2 (nullable), soft. **No `supply` or `cap` column** — the current pill count is derived from `SupplyTransactions`, never stored (see §6a); `cap` existed only to size the Refills screen's progress bar, which is gone too. |
 | `DoseTimes` | medId (text), id (text), time, period, sortOrder — PK (medId, id) |
 | `DoseLog` | iso (text), medId (text), doseTimeId (text), status (text, `DoseStatus` name) — PK (iso, medId, doseTimeId). A row only exists once a dose is touched; absence means pending. |
 | `SupplyTransactions` | id (PK autoincrement), medId, delta (signed int), kind ('initial'/'refill'/'take'/'revertTake'), createdAt, iso (nullable), doseTimeId (nullable) — append-only ledger, sole source of truth for pill counts, see §6a |
@@ -513,7 +527,7 @@ medicine stays fully manageable there even while muted.
 | `NotifOffRows` | medId (PK text) — presence means reminder disabled |
 | `MedicineRegistryEntries` / `MedicineRegistryMeta` | imported medicine-name lookup data (search, CSV import) |
 
-`schemaVersion = 8`. Migrations are **append-only** — never edit a past
+`schemaVersion = 9`. Migrations are **append-only** — never edit a past
 migration; add a new one and bump the version. On first open the database
 starts empty (see §4). The `MedicineRepository` is the only thing that
 talks to drift and returns `Either<AppException, T>`.
@@ -568,6 +582,10 @@ talks to drift and returns `Either<AppException, T>`.
   the renamed original — safe because the old 2-column key means there
   was at most one legacy row per `(iso, medId)`, so re-keying to the
   finer-grained triple can never collide.
+- **v8 → v9**: drops `Medicines.cap`. `cap` (the "full pack" size) had
+  exactly one reader — the Refills screen's progress bar — and both are
+  gone: nothing computes a percentage against a pack size anymore, so
+  this is a pure `ALTER TABLE ... DROP COLUMN` with no backfill.
 
 `kToday` (`lib/core/db/app_database.dart`) is the app's single notion of
 "today" — a `DateTime get` at local midnight, backed by `package:clock`.
@@ -1388,3 +1406,43 @@ Tracked as a future phase.
     - Verified live on both platforms that the new name appears
       correctly: the splash screen's title, the iOS Springboard label,
       and the Android launcher label all read "Pillnote".
+  - **Removed `Medicine.supply` and `Medicine.cap`** (§4, §6, §6a, §7),
+    per user feedback that `cap` "has no sense" (it existed solely to
+    size the Refills progress bar) and that `supply` should just be
+    computed from the ledger rather than duplicated onto `Medicine`.
+    `DataState` gained a `supplyByMedId` map (`supplyOf`/`isLowSupply`
+    helpers) alongside the existing `doseStatus` map, following the
+    same pattern; every call site that used to read `med.supply` /
+    `med.cap` / `med.isLowSupply` now reads through `DataState`
+    instead — `period_section.dart`, `medicine_detail_page.dart`,
+    `refill_sheet.dart` (now takes an explicit `currentSupply` param),
+    `refill_tile.dart`, and `Selectors.refills`/`lowSupplyName`.
+    `RefillItem` swapped its `pct` field for `supply`, and the Refills
+    screen's progress bar is gone entirely (per the chosen option —
+    just the pill count + existing low-supply red highlight remain).
+    `MedicineRepository.addMedicine` now takes an explicit
+    `initialSupply` parameter (Medicine itself carries no count to
+    read it from); `refillMedicine` no longer writes to `Medicines` at
+    all, since the only column it used to touch (`cap`) is gone — it's
+    a pure ledger insert now. Dropped `Medicines.cap` in a new
+    schema-v9 migration.
+    - Updated `test/support/seed_test_data.dart` (drop `cap:` from
+      fixture companions), `test/data_layer_test.dart` (drop
+      `supply`/`cap` from direct `Medicine(...)` construction, thread
+      `initialSupply` through every `addMedicine` call, assert via
+      `data.supplyOf(...)` instead of `med.supply`), and
+      `test/reminder_off_test.dart` (add `supplyByMedId` to its
+      hand-built `DataState` fixture). Also fixed
+      `test/dose_log_migration_test.dart`'s fixture: it used to copy
+      *every* other table's DDL verbatim from a freshly-created
+      current-schema database, which broke once `medicines`' shape
+      changed too (lost `cap`) — now `medicines` is hand-written for
+      its pre-v9 shape, the same way `dose_log` already was for its
+      pre-v8 shape.
+    - 44 tests green, `flutter analyze` clean, `dart format .` clean.
+    - Verified live: added a medicine (25 pills), marked its dose
+      taken (Refills correctly showed 24, no progress bar), refilled
+      it to 50 (Refills sheet pre-filled with 24, then showed 50 after
+      confirming), and confirmed Detail's "LEFT" stat read 50 — the
+      full Add → Take → Refill → Detail loop working end-to-end on the
+      new `supplyByMedId`-based state.
