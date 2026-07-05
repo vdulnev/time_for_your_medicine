@@ -6,19 +6,10 @@ import '../models/add_draft.dart';
 import '../models/dose_status.dart';
 import '../models/dose_time.dart';
 import '../models/medicine.dart';
-import '../models/period.dart';
 import '../models/pill_kind.dart';
 import 'data_state.dart';
 import 'error_notifier.dart';
 import 'providers.dart';
-
-/// Fallback display time for a dose slot the user picked a time-of-day for
-/// but never typed an explicit time into.
-String _defaultTimeFor(Period period) => switch (period) {
-  Period.morning => '8:00 AM',
-  Period.afternoon => '1:00 PM',
-  Period.evening => '9:00 PM',
-};
 
 /// Loads [DataState] from the repository and applies mutations, writing each
 /// change through to the database.
@@ -158,7 +149,7 @@ class DataNotifier extends AsyncNotifier<DataState> {
           DoseTime(
             id: 't$i',
             time: slots[i].time.trim().isEmpty
-                ? _defaultTimeFor(slots[i].period)
+                ? slots[i].period.defaultDisplayTime
                 : slots[i].time.trim(),
             period: slots[i].period,
           ),
@@ -176,6 +167,54 @@ class DataNotifier extends AsyncNotifier<DataState> {
     );
     _reportIfFailed(
       await ref.read(medicineRepositoryProvider).addMedicine(med, supply),
+    );
+  }
+
+  /// Appends one or more new reminder times to an existing medicine.
+  /// Existing times are never touched — this only ever inserts. A no-op if
+  /// any [newSlots] entry's resolved time duplicates an existing time or
+  /// another entry in the same call, since two identical reminder times on
+  /// one medicine would be indistinguishable to the user.
+  Future<void> addReminderTimes(String medId, List<DraftTime> newSlots) async {
+    final current = _current;
+    if (current == null || newSlots.isEmpty) return;
+    final medIndex = current.meds.indexWhere((m) => m.id == medId);
+    if (medIndex == -1) return;
+    final med = current.meds[medIndex];
+
+    String resolve(DraftTime s) =>
+        s.time.trim().isEmpty ? s.period.defaultDisplayTime : s.time.trim();
+    String norm(String t) => t.trim().toUpperCase();
+
+    final existing = med.times.map((t) => norm(t.time)).toSet();
+    final seen = <String>{};
+    for (final s in newSlots) {
+      final key = norm(resolve(s));
+      if (existing.contains(key) || !seen.add(key)) return;
+    }
+
+    // Timestamp-based: guaranteed to never collide with any id this
+    // medicine has ever had (unlike the `t0`/`t1`/... indices `addMedicine`
+    // assigns at creation), so a later addition can't accidentally inherit
+    // an unrelated slot's DoseLog/SupplyTransactions history.
+    final baseTs = DateTime.now().microsecondsSinceEpoch;
+    final added = [
+      for (var i = 0; i < newSlots.length; i++)
+        DoseTime(
+          id: 't${baseTs}_$i',
+          time: resolve(newSlots[i]),
+          period: newSlots[i].period,
+        ),
+    ];
+
+    final meds = [...current.meds];
+    meds[medIndex] = med.copyWith(times: [...med.times, ...added]);
+    state = AsyncData(current.copyWith(meds: meds));
+
+    _reportIfFailed(
+      await ref
+          .read(medicineRepositoryProvider)
+          .addReminderTimes(medId, added, startSortOrder: med.times.length),
     );
   }
 

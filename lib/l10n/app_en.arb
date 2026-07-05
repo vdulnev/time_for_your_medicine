@@ -90,6 +90,11 @@
   "addSaveButton": "Save medicine",
   "addSaveRequirementsHint": "Enter a medicine name and at least 1 pill to save.",
 
+  "editReminderTitle": "Edit Reminder",
+  "editReminderCurrentTimesLabel": "CURRENT TIMES",
+  "editReminderSaveButton": "Save changes",
+  "editReminderDuplicateHint": "That time is already used.",
+
   "detailNext": "NEXT",
   "detailFood": "FOOD",
   "detailLeft": "LEFT",

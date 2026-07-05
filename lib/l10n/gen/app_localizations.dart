@@ -398,6 +398,30 @@ abstract class AppLocalizations {
   /// **'Enter a medicine name and at least 1 pill to save.'**
   String get addSaveRequirementsHint;
 
+  /// No description provided for @editReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Reminder'**
+  String get editReminderTitle;
+
+  /// No description provided for @editReminderCurrentTimesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CURRENT TIMES'**
+  String get editReminderCurrentTimesLabel;
+
+  /// No description provided for @editReminderSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get editReminderSaveButton;
+
+  /// No description provided for @editReminderDuplicateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'That time is already used.'**
+  String get editReminderDuplicateHint;
+
   /// No description provided for @detailNext.
   ///
   /// In en, this message translates to:

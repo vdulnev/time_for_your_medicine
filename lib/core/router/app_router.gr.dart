@@ -75,6 +75,53 @@ class DoneRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [EditReminderPage]
+class EditReminderRoute extends PageRouteInfo<EditReminderRouteArgs> {
+  EditReminderRoute({
+    Key? key,
+    required String medId,
+    List<PageRouteInfo>? children,
+  }) : super(
+         EditReminderRoute.name,
+         args: EditReminderRouteArgs(key: key, medId: medId),
+         initialChildren: children,
+       );
+
+  static const String name = 'EditReminderRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<EditReminderRouteArgs>();
+      return EditReminderPage(key: args.key, medId: args.medId);
+    },
+  );
+}
+
+class EditReminderRouteArgs {
+  const EditReminderRouteArgs({this.key, required this.medId});
+
+  final Key? key;
+
+  final String medId;
+
+  @override
+  String toString() {
+    return 'EditReminderRouteArgs{key: $key, medId: $medId}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! EditReminderRouteArgs) return false;
+    return key == other.key && medId == other.medId;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ medId.hashCode;
+}
+
+/// generated route for
 /// [HistoryPage]
 class HistoryRoute extends PageRouteInfo<void> {
   const HistoryRoute({List<PageRouteInfo>? children})

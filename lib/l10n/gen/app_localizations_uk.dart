@@ -186,6 +186,18 @@ class AppLocalizationsUk extends AppLocalizations {
       'Введіть назву ліків і принаймні 1 таблетку, щоб зберегти.';
 
   @override
+  String get editReminderTitle => 'Редагувати нагадування';
+
+  @override
+  String get editReminderCurrentTimesLabel => 'ПОТОЧНІ ЧАСИ';
+
+  @override
+  String get editReminderSaveButton => 'Зберегти зміни';
+
+  @override
+  String get editReminderDuplicateHint => 'Цей час уже використовується.';
+
+  @override
   String get detailNext => 'НАСТУПНИЙ';
 
   @override

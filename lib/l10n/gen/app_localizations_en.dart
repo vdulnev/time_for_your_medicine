@@ -182,6 +182,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter a medicine name and at least 1 pill to save.';
 
   @override
+  String get editReminderTitle => 'Edit Reminder';
+
+  @override
+  String get editReminderCurrentTimesLabel => 'CURRENT TIMES';
+
+  @override
+  String get editReminderSaveButton => 'Save changes';
+
+  @override
+  String get editReminderDuplicateHint => 'That time is already used.';
+
+  @override
   String get detailNext => 'NEXT';
 
   @override

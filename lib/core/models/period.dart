@@ -14,6 +14,14 @@ enum Period {
   /// Soft background tint for the period icon.
   final Color bg;
 
+  /// Fallback display time for a dose slot the user picked a time-of-day
+  /// for but never typed an explicit time into.
+  String get defaultDisplayTime => switch (this) {
+    Period.morning => '8:00 AM',
+    Period.afternoon => '1:00 PM',
+    Period.evening => '9:00 PM',
+  };
+
   static Period fromName(String name) {
     return Period.values.firstWhere(
       (p) => p.name == name,

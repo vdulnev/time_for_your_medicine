@@ -252,6 +252,31 @@ class MedicineRepository {
     });
   }
 
+  /// Appends [newTimes] to an existing medicine's dose schedule, sorted
+  /// after everything it already has (`sortOrder` continuing from
+  /// [startSortOrder]). Never touches existing `DoseTimes` rows.
+  Future<Either<AppException, Unit>> addReminderTimes(
+    String medId,
+    List<DoseTime> newTimes, {
+    required int startSortOrder,
+  }) {
+    return _guard('addReminderTimes', () async {
+      await _db.batch((batch) {
+        batch.insertAll(_db.doseTimes, [
+          for (var i = 0; i < newTimes.length; i++)
+            DoseTimesCompanion.insert(
+              medId: medId,
+              id: newTimes[i].id,
+              time: newTimes[i].time,
+              period: newTimes[i].period.name,
+              sortOrder: Value(startSortOrder + i),
+            ),
+        ]);
+      });
+      return unit;
+    });
+  }
+
   Future<Either<AppException, Unit>> deleteMedicine(String id) {
     return _guard('deleteMedicine', () async {
       await (_db.delete(_db.medicines)..where((t) => t.id.equals(id))).go();

@@ -62,6 +62,11 @@
   "addSaveButton": "Зберегти ліки",
   "addSaveRequirementsHint": "Введіть назву ліків і принаймні 1 таблетку, щоб зберегти.",
 
+  "editReminderTitle": "Редагувати нагадування",
+  "editReminderCurrentTimesLabel": "ПОТОЧНІ ЧАСИ",
+  "editReminderSaveButton": "Зберегти зміни",
+  "editReminderDuplicateHint": "Цей час уже використовується.",
+
   "detailNext": "НАСТУПНИЙ",
   "detailFood": "ЇЖА",
   "detailLeft": "ЗАЛИШИЛОСЬ",

@@ -108,6 +108,123 @@ void main() {
     });
   });
 
+  test('addReminderTimes appends new slots with fresh unique ids after '
+      'existing ones, leaving the existing slot untouched', () async {
+    final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
+    await repo.addMedicine(med, 30);
+
+    final container = ProviderContainer(
+      overrides: [
+        databaseProvider.overrideWithValue(db),
+        talkerProvider.overrideWithValue(Talker()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(dataProvider.future);
+    final notifier = container.read(dataProvider.notifier);
+
+    await notifier.addReminderTimes(med.id, const [
+      DraftTime(time: '2:00 PM', period: Period.afternoon),
+      DraftTime(time: '9:00 PM', period: Period.evening),
+    ]);
+
+    final data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
+    final loaded = data.meds.singleWhere((m) => m.id == med.id);
+    expect(loaded.times, hasLength(3));
+    expect(loaded.times[0].id, 't1');
+    expect(loaded.times[0].time, '8:00 AM');
+    expect(loaded.times[1].time, '2:00 PM');
+    expect(loaded.times[2].time, '9:00 PM');
+    expect(loaded.times[1].id, isNot('t1'));
+    expect(loaded.times[2].id, isNot('t1'));
+    expect(loaded.times[1].id, isNot(loaded.times[2].id));
+  });
+
+  test('addReminderTimes falls back to the per-period default time when left '
+      'blank', () async {
+    final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
+    await repo.addMedicine(med, 30);
+
+    final container = ProviderContainer(
+      overrides: [
+        databaseProvider.overrideWithValue(db),
+        talkerProvider.overrideWithValue(Talker()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(dataProvider.future);
+    final notifier = container.read(dataProvider.notifier);
+
+    await notifier.addReminderTimes(med.id, const [
+      DraftTime(period: Period.evening),
+    ]);
+
+    final data = (await repo.loadAll()).getOrElse((_) => throw StateError('x'));
+    final loaded = data.meds.singleWhere((m) => m.id == med.id);
+    expect(loaded.times.last.time, Period.evening.defaultDisplayTime);
+  });
+
+  test(
+    'addReminderTimes rejects a slot duplicating an existing time',
+    () async {
+      final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
+      await repo.addMedicine(med, 30); // existing slot: 8:00 AM, morning
+
+      final container = ProviderContainer(
+        overrides: [
+          databaseProvider.overrideWithValue(db),
+          talkerProvider.overrideWithValue(Talker()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(dataProvider.future);
+      final notifier = container.read(dataProvider.notifier);
+
+      await notifier.addReminderTimes(med.id, const [
+        DraftTime(time: '8:00 AM', period: Period.morning),
+      ]);
+
+      final data = (await repo.loadAll()).getOrElse(
+        (_) => throw StateError('x'),
+      );
+      final loaded = data.meds.singleWhere((m) => m.id == med.id);
+      expect(loaded.times, hasLength(1));
+    },
+  );
+
+  test(
+    'addReminderTimes rejects two staged slots that duplicate each other',
+    () async {
+      final med = _draftToMed(const AddDraft(name: 'Aspirin', dose: '100 mg'));
+      await repo.addMedicine(med, 30);
+
+      final container = ProviderContainer(
+        overrides: [
+          databaseProvider.overrideWithValue(db),
+          talkerProvider.overrideWithValue(Talker()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(dataProvider.future);
+      final notifier = container.read(dataProvider.notifier);
+
+      await notifier.addReminderTimes(med.id, const [
+        DraftTime(time: '2:00 PM', period: Period.afternoon),
+        DraftTime(time: '2:00 PM', period: Period.afternoon),
+      ]);
+
+      final data = (await repo.loadAll()).getOrElse(
+        (_) => throw StateError('x'),
+      );
+      final loaded = data.meds.singleWhere((m) => m.id == med.id);
+      expect(loaded.times, hasLength(1));
+    },
+  );
+
   test('localeOverride persists across save/load', () async {
     final loaded = (await repo.loadAll()).getOrElse(
       (_) => throw StateError('x'),

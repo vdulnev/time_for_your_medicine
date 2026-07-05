@@ -87,6 +87,8 @@ class MedicineDetailPage extends ConsumerWidget {
             _Header(
               med: med,
               onBack: () => context.router.maybePop(),
+              onEdit: () =>
+                  context.router.push(EditReminderRoute(medId: med.id)),
               onDelete: () => _delete(context, ref, med.name),
             ),
             Expanded(
@@ -162,11 +164,13 @@ class _Header extends StatelessWidget {
   const _Header({
     required this.med,
     required this.onBack,
+    required this.onEdit,
     required this.onDelete,
   });
 
   final Medicine med;
   final VoidCallback onBack;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   @override
@@ -191,7 +195,16 @@ class _Header extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _GlassButton(icon: Icons.chevron_left_rounded, onTap: onBack),
-              _GlassButton(icon: Icons.delete_outline_rounded, onTap: onDelete),
+              Row(
+                children: [
+                  _GlassButton(icon: Icons.edit_outlined, onTap: onEdit),
+                  const SizedBox(width: 8),
+                  _GlassButton(
+                    icon: Icons.delete_outline_rounded,
+                    onTap: onDelete,
+                  ),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 14),
