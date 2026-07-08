@@ -328,7 +328,7 @@ rows.
   with the floating center **+** FAB pushing `AddRoute`.
 - Pushed full-screen routes (no bottom nav): `AddRoute`,
   `DetailRoute(medId)`, `EditReminderRoute(medId)`, `DoneRoute`,
-  `HistoryRoute`, `NotificationsRoute`, `TransactionsRoute`.
+  `HistoryRoute`, `NotificationsRoute`, `TransactionsRoute`, `LogsRoute`.
 - The "all doses taken" celebration: after `toggleTaken` reports the day
   just completed, the calling widget `router.push(const DoneRoute())`.
 - Delete confirmation is shown via `showModalBottomSheet` /
@@ -443,6 +443,12 @@ rows.
     shows the medicine name, a kind label + icon, the timestamp, and
     the signed pill delta (green for positive, ink for negative).
     Reached only from History, per the feature request.
+11. **Debug logs** (`lib/features/logs/logs_page.dart`) — `talker_flutter`'s
+    built-in `TalkerScreen`, wired to the app's single `Talker` instance
+    (`talkerProvider`, see §7b) as-is with no customization: every logged
+    DB read/write, error, and Riverpod provider transition, filterable and
+    searchable, for on-device troubleshooting. Reached from Settings →
+    More → "Debug logs".
 
 ---
 
@@ -1550,3 +1556,12 @@ Tracked as a future phase.
       now showed both doses independently (8:00 AM already taken, 9:00
       PM pending) and Home's period sections correctly split the
       medicine across its new Morning and Evening slots.
+  - **Debug logs screen:** new `LogsPage` (`lib/features/logs/logs_page.dart`)
+    wraps `talker_flutter`'s built-in `TalkerScreen` around the app's
+    existing single `Talker` instance (`talkerProvider`) with no
+    customization — new `LogsRoute`, reached from Settings' "More"
+    section via a new "Debug logs" nav row (`settingsDebugLogs` l10n key,
+    en + uk). `flutter analyze` clean, all 51 tests still green. Verified
+    live: opened Settings → Debug logs and confirmed the screen lists
+    real logged events (Riverpod provider transitions, DB
+    reads/writes) with working filter chips and search.
