@@ -108,8 +108,12 @@ class PeriodSectionView extends ConsumerWidget {
             doseTime: occ.doseTime,
             showTime: occ.med.times.length > 1,
             status: data.statusOf(iso, occ.med.id, occ.doseTime.id),
-            onOpen: () =>
-                context.router.push(MedicineDetailRoute(medId: occ.med.id)),
+            onOpen: () => context.router.push(
+              MedicineDetailRoute(
+                medId: occ.med.id,
+                heroTag: MedicineTile.pillHeroTag(occ.med, occ.doseTime),
+              ),
+            ),
             onTap: () => _handleTap(
               context,
               ref,

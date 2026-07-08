@@ -32,6 +32,11 @@ class MedicineTile extends StatelessWidget {
   final VoidCallback onOpen;
   final VoidCallback onTap;
 
+  /// Hero tag for the pill icon, unique per dose slot because a medicine
+  /// with several slots renders one tile per slot.
+  static String pillHeroTag(Medicine med, DoseTime doseTime) =>
+      'med-pill-${med.id}-${doseTime.id}';
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -45,20 +50,24 @@ class MedicineTile extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: onOpen,
-            child: Container(
-              width: 42,
-              height: 42,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Color(med.soft),
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: PillShape.forMedicine(
-                med,
-                capsuleWidth: 25,
-                capsuleHeight: 13,
-                capsuleRadius: 7,
-                roundSize: 18,
+            child: Hero(
+              tag: pillHeroTag(med, doseTime),
+              transitionOnUserGestures: true,
+              child: Container(
+                width: 42,
+                height: 42,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Color(med.soft),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: PillShape.forMedicine(
+                  med,
+                  capsuleWidth: 25,
+                  capsuleHeight: 13,
+                  capsuleRadius: 7,
+                  roundSize: 18,
+                ),
               ),
             ),
           ),

@@ -23,9 +23,13 @@ import 'widgets/detail_week_row.dart';
 /// Detail view for a single medicine.
 @RoutePage()
 class MedicineDetailPage extends ConsumerWidget {
-  const MedicineDetailPage({super.key, required this.medId});
+  const MedicineDetailPage({super.key, required this.medId, this.heroTag});
 
   final String medId;
+
+  /// Hero tag of the tile's pill icon that opened this page; null when
+  /// opened from a context with no matching hero (no flight then).
+  final String? heroTag;
 
   Future<void> _handleTap(
     BuildContext context,
@@ -86,6 +90,7 @@ class MedicineDetailPage extends ConsumerWidget {
           children: [
             _Header(
               med: med,
+              heroTag: heroTag,
               onBack: () => context.router.maybePop(),
               onEdit: () =>
                   context.router.push(EditReminderRoute(medId: med.id)),
@@ -163,12 +168,14 @@ class MedicineDetailPage extends ConsumerWidget {
 class _Header extends StatelessWidget {
   const _Header({
     required this.med,
+    required this.heroTag,
     required this.onBack,
     required this.onEdit,
     required this.onDelete,
   });
 
   final Medicine med;
+  final String? heroTag;
   final VoidCallback onBack;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -210,22 +217,26 @@ class _Header extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              Container(
-                width: 62,
-                height: 62,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: PillShape(
-                  kind: med.kind,
-                  c1: Colors.white,
-                  c2: AppColors.primaryFaint,
-                  capsuleWidth: 32,
-                  capsuleHeight: 16,
-                  capsuleRadius: 9,
-                  roundSize: 24,
+              Hero(
+                tag: heroTag ?? 'med-pill-${med.id}',
+                transitionOnUserGestures: true,
+                child: Container(
+                  width: 62,
+                  height: 62,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: PillShape(
+                    kind: med.kind,
+                    c1: Colors.white,
+                    c2: AppColors.primaryFaint,
+                    capsuleWidth: 32,
+                    capsuleHeight: 16,
+                    capsuleRadius: 9,
+                    roundSize: 24,
+                  ),
                 ),
               ),
               const SizedBox(width: 14),

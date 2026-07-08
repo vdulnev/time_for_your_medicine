@@ -175,10 +175,15 @@ class MedicineDetailRoute extends PageRouteInfo<MedicineDetailRouteArgs> {
   MedicineDetailRoute({
     Key? key,
     required String medId,
+    String? heroTag,
     List<PageRouteInfo>? children,
   }) : super(
          MedicineDetailRoute.name,
-         args: MedicineDetailRouteArgs(key: key, medId: medId),
+         args: MedicineDetailRouteArgs(
+           key: key,
+           medId: medId,
+           heroTag: heroTag,
+         ),
          initialChildren: children,
        );
 
@@ -188,32 +193,38 @@ class MedicineDetailRoute extends PageRouteInfo<MedicineDetailRouteArgs> {
     name,
     builder: (data) {
       final args = data.argsAs<MedicineDetailRouteArgs>();
-      return MedicineDetailPage(key: args.key, medId: args.medId);
+      return MedicineDetailPage(
+        key: args.key,
+        medId: args.medId,
+        heroTag: args.heroTag,
+      );
     },
   );
 }
 
 class MedicineDetailRouteArgs {
-  const MedicineDetailRouteArgs({this.key, required this.medId});
+  const MedicineDetailRouteArgs({this.key, required this.medId, this.heroTag});
 
   final Key? key;
 
   final String medId;
 
+  final String? heroTag;
+
   @override
   String toString() {
-    return 'MedicineDetailRouteArgs{key: $key, medId: $medId}';
+    return 'MedicineDetailRouteArgs{key: $key, medId: $medId, heroTag: $heroTag}';
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! MedicineDetailRouteArgs) return false;
-    return key == other.key && medId == other.medId;
+    return key == other.key && medId == other.medId && heroTag == other.heroTag;
   }
 
   @override
-  int get hashCode => key.hashCode ^ medId.hashCode;
+  int get hashCode => key.hashCode ^ medId.hashCode ^ heroTag.hashCode;
 }
 
 /// generated route for
