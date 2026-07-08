@@ -446,6 +446,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsHistoryAndAdherence => 'History & adherence';
 
   @override
+  String get settingsDebugLogs => 'Debug logs';
+
+  @override
   String get settingsLanguage => 'LANGUAGE';
 
   @override

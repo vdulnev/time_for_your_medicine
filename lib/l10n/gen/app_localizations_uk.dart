@@ -458,6 +458,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get settingsHistoryAndAdherence => 'Історія та дотримання';
 
   @override
+  String get settingsDebugLogs => 'Журнал діагностики';
+
+  @override
   String get settingsLanguage => 'МОВА';
 
   @override

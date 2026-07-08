@@ -824,6 +824,12 @@ abstract class AppLocalizations {
   /// **'History & adherence'**
   String get settingsHistoryAndAdherence;
 
+  /// No description provided for @settingsDebugLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Debug logs'**
+  String get settingsDebugLogs;
+
   /// No description provided for @settingsLanguage.
   ///
   /// In en, this message translates to:

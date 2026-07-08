@@ -8,6 +8,7 @@ import '../../features/done/done_page.dart';
 import '../../features/edit_reminder/edit_reminder_page.dart';
 import '../../features/history/history_page.dart';
 import '../../features/home/home_page.dart';
+import '../../features/logs/logs_page.dart';
 import '../../features/refills/refills_page.dart';
 import '../../features/reminders/notifications_page.dart';
 import '../../features/settings/settings_page.dart';
@@ -39,5 +40,6 @@ class AppRouter extends RootStackRouter {
     AutoRoute(page: HistoryRoute.page),
     AutoRoute(page: NotificationsRoute.page),
     AutoRoute(page: TransactionsRoute.page),
+    AutoRoute(page: LogsRoute.page),
   ];
 }

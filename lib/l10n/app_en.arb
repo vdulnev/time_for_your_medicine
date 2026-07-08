@@ -237,6 +237,7 @@
   "settingsRefillAlerts": "Refill alerts",
   "settingsMore": "MORE",
   "settingsHistoryAndAdherence": "History & adherence",
+  "settingsDebugLogs": "Debug logs",
   "settingsLanguage": "LANGUAGE",
   "settingsLanguageSystem": "System",
   "settingsLanguageEnglish": "English",

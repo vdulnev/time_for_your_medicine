@@ -142,6 +142,7 @@
   "settingsRefillAlerts": "Сповіщення про поповнення",
   "settingsMore": "ІНШЕ",
   "settingsHistoryAndAdherence": "Історія та дотримання",
+  "settingsDebugLogs": "Журнал діагностики",
   "settingsLanguage": "МОВА",
   "settingsLanguageSystem": "Системна",
   "settingsLanguageEnglish": "English",

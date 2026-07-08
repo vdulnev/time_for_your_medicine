@@ -168,6 +168,11 @@ class _SettingsContent extends ConsumerWidget {
                       label: l10n.navReminders,
                       onTap: () =>
                           context.router.push(const NotificationsRoute()),
+                      showDivider: true,
+                    ),
+                    _NavRow(
+                      label: l10n.settingsDebugLogs,
+                      onTap: () => context.router.push(const LogsRoute()),
                       showDivider: false,
                     ),
                   ],
