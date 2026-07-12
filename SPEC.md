@@ -61,6 +61,7 @@ pixel-faithfully from the Claude Design handoff
 | Models / unions | **Freezed 3** + `json_serializable` | sealed classes for state + DTOs |
 | Local DB | **drift** + **drift_flutter** (SQLite) | medicines, dose log, settings |
 | Logging | **Talker** (`talker_flutter` + `talker_riverpod_logger`) | single instance via provider; Riverpod observer |
+| OS notifications | **flutter_local_notifications** + `timezone` + `flutter_timezone` | daily-repeating zoned dose reminders, see §6b |
 | Fonts | `google_fonts` | Bricolage Grotesque + Plus Jakarta Sans |
 
 Code generation (`build_runner`) drives Freezed models, drift tables,
@@ -434,7 +435,9 @@ rows.
    the "doses left today" count, and can no longer block the "all
    doses taken" celebration. It still exists everywhere else: Detail,
    Refills, and History's adherence stats are unaffected, and it
-   reappears the moment the reminder is switched back on.
+   reappears the moment the reminder is switched back on. The same
+   switch also controls the medicine's **OS dose notifications** — a
+   reminder-off medicine gets none scheduled (see §6b).
 9. **Settings** — profile, preference switches, navigation rows.
 10. **Transactions** — the `SupplyTransactions` ledger, newest first, as
     a filterable list (see §6a). A medicine dropdown ("All medicines" +
@@ -559,6 +562,72 @@ field — duplicates an existing time or another slot in the same call.
 Two identical reminder times on one medicine would be indistinguishable
 in the UI. The Edit Reminder page (§6 item 4a) runs the same check to
 disable Save with a hint before the user even taps it.
+
+---
+
+## 6b. OS dose notifications
+
+Real system notifications (`flutter_local_notifications`) that fire **at
+each scheduled dose time** when that dose is still pending — a lock-screen
+reminder about a missed intake even when the app is closed. If a dose was
+already marked taken/rejected *before* its time today, nothing fires that
+day for that slot.
+
+**Scheduling model.** For every dose slot of every reminder-enabled
+medicine, one **daily-repeating** zoned notification (`zonedSchedule` +
+`matchDateTimeComponents: DateTimeComponents.time`). The first instance
+is today at the slot's clock time if that's still ahead and today's dose
+is pending, otherwise tomorrow. The pure logic lives in
+`buildDoseSchedules` (`lib/core/notifications/dose_schedule.dart`) — the
+plugin wrapper (`LocalNotificationService`,
+`lib/core/notifications/notification_service.dart`) stays thin.
+
+**Sync strategy: cancelAll + reschedule everything.** A few medicines ×
+a few slots is trivially small, so every relevant mutation just rebuilds
+the whole schedule — no notification-id bookkeeping (sequential ints per
+pass), and staleness self-heals on the next app open.
+`DataNotifier._syncNotifications()` runs fire-and-forget after
+`markTaken`/`markRejected`/`revertDose` (taking a dose early pushes that
+slot's first instance to tomorrow; reverting brings today back),
+`addMedicine`/`addReminderTimes`/`deleteMedicine`, `toggleNotif`,
+`toggleSetting` (sound/vibrate feed the channel settings), and
+`setLocaleOverride` (notification text is baked in at schedule time).
+Startup sync + the OS permission prompt happen in the splash's
+`_initNotificationsSafely()` (`lib/features/splash/splash_page.dart`).
+
+**Time parsing.** `DoseTime.time` is a free-text display string, so
+`DayUtils.parseDisplayTime` accepts "h:mm AM/PM" (the en format) and
+24-hour "HH:mm" (the uk hint format); anything unparseable falls back to
+the slot's `Period.defaultDisplayTime` clock time — the notification body
+still shows the string as typed.
+
+**DI / testability.** `notificationServiceProvider` defaults to
+`NoopNotificationService` (tests never touch platform channels — none of
+the pre-existing tests changed); `main()` overrides it with the real
+service, same pattern as `databaseProvider`. Every plugin call is
+try/catch → Talker: a notification failure must never break a dose
+mutation.
+
+**Platform notes.**
+- Android: core library desugaring enabled in
+  `android/app/build.gradle.kts` (plugin requirement); manifest declares
+  `POST_NOTIFICATIONS` / `SCHEDULE_EXACT_ALARM` / `RECEIVE_BOOT_COMPLETED`
+  / `VIBRATE` and the plugin's scheduled + boot receivers so schedules
+  survive reboot. Scheduling tries `exactAllowWhileIdle` and falls back
+  to inexact on `PlatformException` (Android 14+ may deny exact alarms).
+  A channel's sound/vibration freeze at creation, so the channel id
+  encodes the current settings pair (`doses_s1_v0`, …) — toggling a
+  setting switches to the matching channel variant.
+- iOS: no AppDelegate changes (plugin registration already flows through
+  the implicit-engine bridge); foreground presentation enabled per
+  notification via `DarwinNotificationDetails(presentAlert/presentBanner)`.
+- Locale without a `BuildContext`: `settings.localeOverride`, else
+  `resolveLocale(PlatformDispatcher.instance.locales, ...)`, then
+  `lookupAppLocalizations` — same resolution the app shell uses.
+
+Known limitations: unparseable free-text times notify at the period's
+default clock time, and tapping a notification opens the app at its last
+route (no deep link to Detail yet).
 
 ---
 
@@ -740,6 +809,11 @@ flutter test
 dart format .
 ```
 
+Android builds require **core library desugaring** (enabled in
+`android/app/build.gradle.kts` with a matching `desugar_jdk_libs`
+dependency) — a `flutter_local_notifications` requirement; removing it
+breaks `flutter build apk`.
+
 ---
 
 ## 10. Implementation Phases
@@ -756,10 +830,7 @@ dart format .
 5. History, Refills, Reminders, Settings. ✅
 6. Polish — animations, analyze/test clean, smoke tests. ✅
 7. Localization — English + Ukrainian via `flutter_localizations`/ARB. ✅
-
-**Out of scope (v1):** real OS notifications
-(`flutter_local_notifications`) — Reminders screen toggles state only.
-Tracked as a future phase.
+8. OS dose notifications (`flutter_local_notifications`) — see §6b. ✅
 
 ---
 
@@ -1565,3 +1636,41 @@ Tracked as a future phase.
     live: opened Settings → Debug logs and confirmed the screen lists
     real logged events (Riverpod provider transitions, DB
     reads/writes) with working filter chips and search.
+  - **OS dose notifications (missed-intake reminders), see §6b:**
+    - New deps: `flutter_local_notifications`, `timezone`,
+      `flutter_timezone`. Real system notifications fire at each dose
+      slot's scheduled time when the dose is still pending; a dose
+      marked taken/rejected before its time doesn't ring that day.
+    - `DayUtils.parseDisplayTime` parses the free-text display times
+      ("h:mm AM/PM" and 24-hour "HH:mm"); unparseable values fall back
+      to `Period.defaultDisplayTime`.
+    - Pure `buildDoseSchedules` (`lib/core/notifications/dose_schedule.dart`)
+      computes what to schedule; `LocalNotificationService`
+      (`notification_service.dart`) wraps the plugin — cancelAll +
+      reschedule-everything on every sync, daily-repeating zoned
+      notifications, localized text via `lookupAppLocalizations`,
+      channel id encoding the sound/vibrate settings pair,
+      exact→inexact Android alarm fallback, all failures logged and
+      swallowed.
+    - `notificationServiceProvider` defaults to a no-op (tests
+      untouched); `main()` injects the real service.
+      `DataNotifier._syncNotifications()` re-syncs fire-and-forget
+      after every relevant mutation; the splash's
+      `_initNotificationsSafely()` does startup init + sync and
+      triggers the OS permission prompt.
+    - Android: desugaring enabled + `desugar_jdk_libs`, manifest
+      permissions (`POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`,
+      `RECEIVE_BOOT_COMPLETED`, `VIBRATE`) and the plugin's scheduled +
+      boot receivers. iOS needed no native changes.
+    - New l10n keys (en + uk): `notifDoseTitle`, `notifDoseBody`,
+      `notifChannelName`, `notifChannelDescription`.
+    - Tests: `display_time_parse_test.dart` (parser),
+      `dose_schedule_test.dart` (today/tomorrow logic, reminder-off
+      exclusion, period fallback), `notification_sync_test.dart`
+      (recording fake proves DataNotifier re-syncs after mutations).
+      63 tests green, `flutter analyze` clean, `flutter build apk
+      --debug` OK.
+    - Verified live on the iOS Simulator: permission prompt on first
+      launch, "notifications: initialized / scheduled N slots" in
+      Debug logs, and a real banner fired at a just-added dose time
+      with the localized title/body.
