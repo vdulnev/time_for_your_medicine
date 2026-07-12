@@ -449,6 +449,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDebugLogs => 'Debug logs';
 
   @override
+  String get notifDoseTitle => 'Time to take your medicine';
+
+  @override
+  String notifDoseBody(String name, String dose, String time) {
+    return '$name · $dose · $time';
+  }
+
+  @override
+  String get notifChannelName => 'Dose reminders';
+
+  @override
+  String get notifChannelDescription =>
+      'Reminders at each medicine\'s scheduled dose times';
+
+  @override
   String get settingsLanguage => 'LANGUAGE';
 
   @override

@@ -5,6 +5,7 @@ import '../data/medicine_repository.dart';
 import '../db/app_database.dart';
 import '../logging/talker.dart';
 import '../models/medicine_registry.dart';
+import '../notifications/notification_service.dart';
 import 'data_notifier.dart';
 import 'data_state.dart';
 import 'medicine_registry_notifier.dart';
@@ -22,6 +23,13 @@ final medicineRepositoryProvider = Provider<MedicineRepository>((ref) {
     ref.watch(talkerProvider),
   );
 });
+
+/// OS dose notifications. Defaults to a no-op so tests (and any platform
+/// without the plugin) never touch platform channels; `main()` overrides
+/// it with [LocalNotificationService].
+final notificationServiceProvider = Provider<NotificationService>(
+  (ref) => const NoopNotificationService(),
+);
 
 /// The single source of truth for persisted domain data.
 final dataProvider = AsyncNotifierProvider<DataNotifier, DataState>(

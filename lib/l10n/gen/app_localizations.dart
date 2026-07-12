@@ -830,6 +830,30 @@ abstract class AppLocalizations {
   /// **'Debug logs'**
   String get settingsDebugLogs;
 
+  /// No description provided for @notifDoseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Time to take your medicine'**
+  String get notifDoseTitle;
+
+  /// No description provided for @notifDoseBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · {dose} · {time}'**
+  String notifDoseBody(String name, String dose, String time);
+
+  /// No description provided for @notifChannelName.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose reminders'**
+  String get notifChannelName;
+
+  /// No description provided for @notifChannelDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders at each medicine\'s scheduled dose times'**
+  String get notifChannelDescription;
+
   /// No description provided for @settingsLanguage.
   ///
   /// In en, this message translates to:

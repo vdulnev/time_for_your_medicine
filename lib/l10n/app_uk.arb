@@ -143,6 +143,11 @@
   "settingsMore": "ІНШЕ",
   "settingsHistoryAndAdherence": "Історія та дотримання",
   "settingsDebugLogs": "Журнал діагностики",
+
+  "notifDoseTitle": "Час прийняти ліки",
+  "notifDoseBody": "{name} · {dose} · {time}",
+  "notifChannelName": "Нагадування про прийом",
+  "notifChannelDescription": "Нагадування у запланований час прийому кожних ліків",
   "settingsLanguage": "МОВА",
   "settingsLanguageSystem": "Системна",
   "settingsLanguageEnglish": "English",

@@ -13,6 +13,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // Required by flutter_local_notifications (java.time backport).
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -44,6 +46,9 @@ dependencies {
     // MainActivity.kt's installSplashScreen() call and values/styles.xml's
     // LaunchTheme.
     implementation("androidx.core:core-splashscreen:1.0.1")
+
+    // Pairs with isCoreLibraryDesugaringEnabled above.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {

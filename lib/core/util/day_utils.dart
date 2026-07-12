@@ -59,4 +59,31 @@ abstract final class DayUtils {
 
   /// Monday-based weekday index (Mon = 0 … Sun = 6).
   static int mondayIndex(DateTime d) => (d.weekday + 6) % 7;
+
+  static final RegExp _displayTime = RegExp(
+    r'^\s*(\d{1,2}):(\d{2})\s*(AM|PM)?\s*$',
+    caseSensitive: false,
+  );
+
+  /// Parses a dose slot's display time — "8:00 AM" (the Add form's
+  /// English format) or 24-hour "08:00" (the Ukrainian hint format) —
+  /// into a clock time. Returns `null` when the string doesn't parse:
+  /// the TIME field is free text, so callers must fall back (see
+  /// `Period.defaultDisplayTime`).
+  static (int hour, int minute)? parseDisplayTime(String s) {
+    final m = _displayTime.firstMatch(s);
+    if (m == null) return null;
+    var hour = int.parse(m.group(1)!);
+    final minute = int.parse(m.group(2)!);
+    final meridiem = m.group(3)?.toUpperCase();
+    if (meridiem != null) {
+      if (hour < 1 || hour > 12) return null;
+      if (hour == 12) hour = 0;
+      if (meridiem == 'PM') hour += 12;
+    } else if (hour > 23) {
+      return null;
+    }
+    if (minute > 59) return null;
+    return (hour, minute);
+  }
 }

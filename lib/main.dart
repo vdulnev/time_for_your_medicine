@@ -8,6 +8,7 @@ import 'package:talker_riverpod_logger/talker_riverpod_logger.dart';
 import 'app.dart';
 import 'core/db/app_database.dart';
 import 'core/logging/talker.dart';
+import 'core/notifications/notification_service.dart';
 import 'core/state/providers.dart';
 
 void main() {
@@ -15,6 +16,7 @@ void main() {
 
   final talker = TalkerFlutter.init();
   final database = AppDatabase();
+  final notifications = LocalNotificationService(talker);
 
   FlutterError.onError = (details) {
     talker.handle(details.exception, details.stack);
@@ -30,6 +32,7 @@ void main() {
       overrides: [
         talkerProvider.overrideWithValue(talker),
         databaseProvider.overrideWithValue(database),
+        notificationServiceProvider.overrideWithValue(notifications),
       ],
       child: const PillnoteApp(),
     ),

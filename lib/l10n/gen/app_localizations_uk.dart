@@ -461,6 +461,21 @@ class AppLocalizationsUk extends AppLocalizations {
   String get settingsDebugLogs => 'Журнал діагностики';
 
   @override
+  String get notifDoseTitle => 'Час прийняти ліки';
+
+  @override
+  String notifDoseBody(String name, String dose, String time) {
+    return '$name · $dose · $time';
+  }
+
+  @override
+  String get notifChannelName => 'Нагадування про прийом';
+
+  @override
+  String get notifChannelDescription =>
+      'Нагадування у запланований час прийому кожних ліків';
+
+  @override
   String get settingsLanguage => 'МОВА';
 
   @override

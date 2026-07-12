@@ -76,7 +76,12 @@ class _SplashPageState extends ConsumerState<SplashPage>
   /// retry once the underlying providers land on `AsyncError`.
   Future<void> _bootstrap() async {
     final minShow = Future<void>.delayed(const Duration(milliseconds: 1400));
-    await Future.wait([_loadSafely(), _loadRegistrySafely(), minShow]);
+    await Future.wait([
+      _loadSafely(),
+      _loadRegistrySafely(),
+      _initNotificationsSafely(),
+      minShow,
+    ]);
     if (!mounted) return;
     context.router.replace(const DashboardRoute());
   }
@@ -94,6 +99,21 @@ class _SplashPageState extends ConsumerState<SplashPage>
       await ref.read(medicineRegistryProvider.future);
     } catch (_) {
       // Ignored here — Settings surfaces the failure itself.
+    }
+  }
+
+  /// Brings the OS notification schedule up to date with the loaded data
+  /// (and triggers the permission prompt on first launch). Failures are
+  /// already logged inside the service; notifications degrading must not
+  /// strand the splash.
+  Future<void> _initNotificationsSafely() async {
+    try {
+      final data = await ref.read(dataProvider.future);
+      final service = ref.read(notificationServiceProvider);
+      await service.init();
+      await service.sync(data);
+    } catch (_) {
+      // Ignored — the app works without notifications.
     }
   }
 

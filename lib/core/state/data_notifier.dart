@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fpdart/fpdart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,6 +35,16 @@ class DataNotifier extends AsyncNotifier<DataState> {
     );
   }
 
+  /// Reconciles the OS notification schedule with the current state.
+  /// Fire-and-forget after every mutation that changes what or when to
+  /// notify — the service is a no-op in tests and logs (never throws) on
+  /// platform failures, so this can't break the mutation it follows.
+  void _syncNotifications() {
+    final current = _current;
+    if (current == null) return;
+    unawaited(ref.read(notificationServiceProvider).sync(current));
+  }
+
   /// [supplyByMedId] with [medId]'s supply shifted by [delta], floored at
   /// 0. Mirrors what the repository does in the same call, so the UI
   /// updates immediately rather than waiting on the DB round-trip.
@@ -66,6 +78,7 @@ class DataNotifier extends AsyncNotifier<DataState> {
       supplyByMedId: supplyByMedId,
     );
     state = AsyncData(updated);
+    _syncNotifications();
 
     final repo = ref.read(medicineRepositoryProvider);
     _reportIfFailed(
@@ -90,6 +103,7 @@ class DataNotifier extends AsyncNotifier<DataState> {
     final key = '$iso|$medId|$doseTimeId';
     final doseStatus = {...current.doseStatus, key: DoseStatus.rejected};
     state = AsyncData(current.copyWith(doseStatus: doseStatus));
+    _syncNotifications();
 
     _reportIfFailed(
       await ref
@@ -114,6 +128,7 @@ class DataNotifier extends AsyncNotifier<DataState> {
     state = AsyncData(
       current.copyWith(doseStatus: doseStatus, supplyByMedId: supplyByMedId),
     );
+    _syncNotifications();
 
     final repo = ref.read(medicineRepositoryProvider);
     _reportIfFailed(
@@ -165,6 +180,7 @@ class DataNotifier extends AsyncNotifier<DataState> {
         supplyByMedId: {...current.supplyByMedId, med.id: supply},
       ),
     );
+    _syncNotifications();
     _reportIfFailed(
       await ref.read(medicineRepositoryProvider).addMedicine(med, supply),
     );
@@ -210,6 +226,7 @@ class DataNotifier extends AsyncNotifier<DataState> {
     final meds = [...current.meds];
     meds[medIndex] = med.copyWith(times: [...med.times, ...added]);
     state = AsyncData(current.copyWith(meds: meds));
+    _syncNotifications();
 
     _reportIfFailed(
       await ref
@@ -252,6 +269,7 @@ class DataNotifier extends AsyncNotifier<DataState> {
         supplyByMedId: supplyByMedId,
       ),
     );
+    _syncNotifications();
     _reportIfFailed(
       await ref.read(medicineRepositoryProvider).deleteMedicine(id),
     );
@@ -269,6 +287,8 @@ class DataNotifier extends AsyncNotifier<DataState> {
       _ => s,
     };
     state = AsyncData(current.copyWith(settings: next));
+    // sound/vibrate feed the scheduled notifications' channel settings.
+    _syncNotifications();
     _reportIfFailed(
       await ref.read(medicineRepositoryProvider).saveSettings(next),
     );
@@ -282,6 +302,9 @@ class DataNotifier extends AsyncNotifier<DataState> {
 
     final next = current.settings.copyWith(localeOverride: code);
     state = AsyncData(current.copyWith(settings: next));
+    // Scheduled notification text is baked in at schedule time, so a
+    // language change means rebuilding the schedules.
+    _syncNotifications();
     _reportIfFailed(
       await ref.read(medicineRepositoryProvider).saveSettings(next),
     );
@@ -299,6 +322,7 @@ class DataNotifier extends AsyncNotifier<DataState> {
       notifOff.remove(id);
     }
     state = AsyncData(current.copyWith(notifOff: notifOff));
+    _syncNotifications();
     _reportIfFailed(
       await ref.read(medicineRepositoryProvider).setNotifOff(id, off),
     );

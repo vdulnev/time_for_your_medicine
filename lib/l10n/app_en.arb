@@ -238,6 +238,18 @@
   "settingsMore": "MORE",
   "settingsHistoryAndAdherence": "History & adherence",
   "settingsDebugLogs": "Debug logs",
+
+  "notifDoseTitle": "Time to take your medicine",
+  "notifDoseBody": "{name} · {dose} · {time}",
+  "@notifDoseBody": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "dose": {"type": "String"},
+      "time": {"type": "String"}
+    }
+  },
+  "notifChannelName": "Dose reminders",
+  "notifChannelDescription": "Reminders at each medicine's scheduled dose times",
   "settingsLanguage": "LANGUAGE",
   "settingsLanguageSystem": "System",
   "settingsLanguageEnglish": "English",
